@@ -1,0 +1,268 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define to 1 if you have the `acl_create_entry' function. */
+#undef HAVE_ACL_CREATE_ENTRY
+
+/* Define to 1 if you have the `acl_init' function. */
+#undef HAVE_ACL_INIT
+
+/* Define to 1 if you have the `acl_set_fd' function. */
+#undef HAVE_ACL_SET_FD
+
+/* Define to 1 if you have the `acl_set_fd_np' function. */
+#undef HAVE_ACL_SET_FD_NP
+
+/* Define to 1 if you have the `acl_set_file' function. */
+#undef HAVE_ACL_SET_FILE
+
+/* True for systems with POSIX ACL support */
+#undef HAVE_ACL_USER
+
+/* Define to 1 if you have the <bzlib.h> header file. */
+#undef HAVE_BZLIB_H
+
+/* Define to 1 if you have the `chflags' function. */
+#undef HAVE_CHFLAGS
+
+/* Define to 1 if you have the declaration of `strerror_r', and to 0 if you
+   don't. */
+#undef HAVE_DECL_STRERROR_R
+
+/* A possible errno value for invalid file format errors */
+#undef HAVE_EFTYPE
+
+/* A possible errno value for invalid file format errors */
+#undef HAVE_EILSEQ
+
+/* Define to 1 if you have the <errno.h> header file. */
+#undef HAVE_ERRNO_H
+
+/* Define to 1 if you have the <ext2fs/ext2_fs.h> header file. */
+#undef HAVE_EXT2FS_EXT2_FS_H
+
+/* Define to 1 if you have the `fchdir' function. */
+#undef HAVE_FCHDIR
+
+/* Define to 1 if you have the `fchflags' function. */
+#undef HAVE_FCHFLAGS
+
+/* Define to 1 if you have the `fchmod' function. */
+#undef HAVE_FCHMOD
+
+/* Define to 1 if you have the `fchown' function. */
+#undef HAVE_FCHOWN
+
+/* Define to 1 if you have the <fcntl.h> header file. */
+#undef HAVE_FCNTL_H
+
+/* Define to 1 if you have the `futimes' function. */
+#undef HAVE_FUTIMES
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the `lchflags' function. */
+#undef HAVE_LCHFLAGS
+
+/* Define to 1 if you have the `lchmod' function. */
+#undef HAVE_LCHMOD
+
+/* Define to 1 if you have the `lchown' function. */
+#undef HAVE_LCHOWN
+
+/* Define to 1 if you have the `acl' library (-lacl). */
+#undef HAVE_LIBACL
+
+/* Define to 1 if you have the <limits.h> header file. */
+#undef HAVE_LIMITS_H
+
+/* Define to 1 if you have the <linux/ext2_fs.h> header file. */
+#undef HAVE_LINUX_EXT2_FS_H
+
+/* Define to 1 if you have the `lutimes' function. */
+#undef HAVE_LUTIMES
+
+/* Define to 1 if your system has a GNU libc compatible `malloc' function, and
+   to 0 otherwise. */
+#undef HAVE_MALLOC
+
+/* Define to 1 if you have the `memmove' function. */
+#undef HAVE_MEMMOVE
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the `memset' function. */
+#undef HAVE_MEMSET
+
+/* Define to 1 if you have the `mkdir' function. */
+#undef HAVE_MKDIR
+
+/* Define to 1 if you have the `mkfifo' function. */
+#undef HAVE_MKFIFO
+
+/* Define to 1 if `stat' has the bug that it succeeds when given the
+   zero-length file name argument. */
+#undef HAVE_STAT_EMPTY_STRING_BUG
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the `strchr' function. */
+#undef HAVE_STRCHR
+
+/* Define to 1 if you have the `strdup' function. */
+#undef HAVE_STRDUP
+
+/* Define to 1 if you have the `strerror' function. */
+#undef HAVE_STRERROR
+
+/* Define to 1 if you have the `strerror_r' function. */
+#undef HAVE_STRERROR_R
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the `strrchr' function. */
+#undef HAVE_STRRCHR
+
+/* Define to 1 if `st_mtimespec.tv_nsec' is member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC
+
+/* Define to 1 if `st_mtim.tv_nsec' is member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC
+
+/* Define to 1 if `st_rdev' is member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_RDEV
+
+/* Define to 1 if you have the <sys/acl.h> header file. */
+#undef HAVE_SYS_ACL_H
+
+/* Define to 1 if you have the <sys/ioctl.h> header file. */
+#undef HAVE_SYS_IOCTL_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/time.h> header file. */
+#undef HAVE_SYS_TIME_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
+#undef HAVE_SYS_WAIT_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the <wchar.h> header file. */
+#undef HAVE_WCHAR_H
+
+/* Define to 1 if you have the <zlib.h> header file. */
+#undef HAVE_ZLIB_H
+
+/* Define to 1 if `lstat' dereferences a symlink specified with a trailing
+   slash. */
+#undef LSTAT_FOLLOWS_SLASHED_SYMLINK
+
+/* Define to 1 if `major', `minor', and `makedev' are declared in <mkdev.h>.
+   */
+#undef MAJOR_IN_MKDEV
+
+/* Define to 1 if `major', `minor', and `makedev' are declared in
+   <sysmacros.h>. */
+#undef MAJOR_IN_SYSMACROS
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Define to 1 if strerror_r returns char *. */
+#undef STRERROR_R_CHAR_P
+
+/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
+#undef TIME_WITH_SYS_TIME
+
+/* Version number of package */
+#undef VERSION
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+#undef _FILE_OFFSET_BITS
+
+/* Define for large files, on AIX-style hosts. */
+#undef _LARGE_FILES
+
+/* Define to `long long' if <sys/types.h> does not define. */
+#undef __int64_t
+
+/* Define to `unsigned long long' if <sys/types.h> does not define. */
+#undef __uint64_t
+
+/* Define to `__int64_t' if <sys/types.h> does not define. */
+#undef _int64_t
+
+/* Define to `__uint64_t' if <sys/types.h> does not define. */
+#undef _uint64_t
+
+/* Define to empty if `const' does not conform to ANSI C. */
+#undef const
+
+/* Define to `int' if <sys/types.h> doesn't define. */
+#undef gid_t
+
+/* Define to `unsigned long' if <sys/types.h> does not define. */
+#undef id_t
+
+/* Define to `_int64_t' if <sys/types.h> does not define. */
+#undef int64_t
+
+/* Define to `int64_t' if <sys/types.h> does not define. */
+#undef intmax_t
+
+/* Define to rpl_malloc if the replacement function should be used. */
+#undef malloc
+
+/* Define to `int' if <sys/types.h> does not define. */
+#undef mode_t
+
+/* Define to `int64_t' if <sys/types.h> does not define. */
+#undef off_t
+
+/* Define to `unsigned' if <sys/types.h> does not define. */
+#undef size_t
+
+/* Define to `_uint64_t' if <sys/types.h> does not define. */
+#undef u_int64_t
+
+/* Define to `int' if <sys/types.h> doesn't define. */
+#undef uid_t
+
+/* Define to `u_int64_t' if <sys/types.h> does not define. */
+#undef uint64_t
+
+/* Define to `uint64_t' if <sys/types.h> does not define. */
+#undef uintmax_t
