@@ -1,3 +1,10 @@
+libarchive (1.02.034-2) unstable; urgency=low
+
+  * Split off manpages into separate package libarchive-doc.
+    The bsdtar manpages point readers to these.
+
+ -- John Goerzen <jgoerzen@complete.org>  Tue, 11 Oct 2005 05:36:28 -0500
+
 libarchive (1.02.034-1) unstable; urgency=low
 
   * Initial release Closes: #333222.
