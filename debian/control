@@ -1,18 +1,18 @@
 Source: libarchive
 Priority: optional
 Maintainer: John Goerzen <jgoerzen@complete.org>
-Build-Depends: debhelper (>= 4.0.0), autotools-dev
+Build-Depends: debhelper (>= 4.0.0), autotools-dev, libbz2-dev, zlib1g-dev
 Standards-Version: 3.6.2
 Section: libs
 
 Package: libarchive-dev
 Section: libdevel
 Architecture: any
-Depends: libarchiveBROKEN (= ${Source-Version})
+Depends: libarchive2 (= ${Source-Version})
 Description: <insert up to 60 chars description>
  <insert long description, indented with spaces>
 
-Package: libarchiveBROKEN
+Package: libarchive2
 Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
