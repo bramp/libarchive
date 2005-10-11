@@ -1,0 +1,6 @@
+libarchive (1.02.034-1) unstable; urgency=low
+
+  * Initial release Closes: #nnnn  (nnnn is the bug number of your ITP)
+
+ -- John Goerzen <jgoerzen@complete.org>  Mon, 10 Oct 2005 19:24:56 -0500
+
