@@ -29,6 +29,9 @@ Description: Single library to read/write tar, cpio, pax, zip, iso9660, etc.
  is built using libarchive. 
  .
  This package provides a static library only.
+ .
+ There is also a manpage, tar(5), in this package that provides
+ an excellent description of the various tar file formats.
 
 #Package: libarchive2
 #Section: libs
