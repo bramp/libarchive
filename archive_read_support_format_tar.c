@@ -25,7 +25,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_format_tar.c,v 1.36 2005/09/24 21:15:00 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_format_tar.c,v 1.38 2005/10/12 15:38:45 kientzle Exp $");
 
 #include <sys/stat.h>
 #include <errno.h>
@@ -148,9 +148,9 @@ struct tar {
 
 static size_t	UTF8_mbrtowc(wchar_t *pwc, const char *s, size_t n);
 static int	archive_block_is_null(const unsigned char *p);
-int		gnu_read_sparse_data(struct archive *, struct tar *,
+static int	gnu_read_sparse_data(struct archive *, struct tar *,
 		    const struct archive_entry_header_gnutar *header);
-void		gnu_parse_sparse_data(struct archive *, struct tar *,
+static void	gnu_parse_sparse_data(struct archive *, struct tar *,
 		    const struct gnu_sparse *sparse, int length);
 static int	header_Solaris_ACL(struct archive *,  struct tar *,
 		    struct archive_entry *, struct stat *, const void *);
@@ -450,24 +450,34 @@ archive_read_format_tar_read_data(struct archive *a,
 	struct sparse_block *p;
 
 	tar = *(a->pformat_data);
+	if (tar->sparse_list != NULL) {
+		/* Remove exhausted entries from sparse list. */
+		while (tar->sparse_list != NULL &&
+		    tar->sparse_list->remaining == 0) {
+			p = tar->sparse_list;
+			tar->sparse_list = p->next;
+			free(p);
+		}
+		if (tar->sparse_list == NULL) {
+			/* We exhausted the entire sparse list. */
+			tar->entry_bytes_remaining = 0;
+		}
+	}
+
 	if (tar->entry_bytes_remaining > 0) {
 		bytes_read = (a->compression_read_ahead)(a, buff, 1);
 		if (bytes_read <= 0)
 			return (ARCHIVE_FATAL);
 		if (bytes_read > tar->entry_bytes_remaining)
 			bytes_read = tar->entry_bytes_remaining;
-		while (tar->sparse_list != NULL &&
-		    tar->sparse_list->remaining == 0) {
-			p = tar->sparse_list;
-			tar->sparse_list = p->next;
-			free(p);
-			if (tar->sparse_list != NULL)
-				tar->entry_offset = tar->sparse_list->offset;
-		}
 		if (tar->sparse_list != NULL) {
+			/* Don't read more than is available in the
+			 * current sparse block. */
 			if (tar->sparse_list->remaining < bytes_read)
 				bytes_read = tar->sparse_list->remaining;
+			tar->entry_offset = tar->sparse_list->offset;
 			tar->sparse_list->remaining -= bytes_read;
+			tar->sparse_list->offset += bytes_read;
 		}
 		*size = bytes_read;
 		*offset = tar->entry_offset;
@@ -1370,7 +1380,7 @@ header_gnutar(struct archive *a, struct tar *tar, struct archive_entry *entry,
 	return (0);
 }
 
-int
+static int
 gnu_read_sparse_data(struct archive *a, struct tar *tar,
     const struct archive_entry_header_gnutar *header)
 {
@@ -1406,7 +1416,7 @@ gnu_read_sparse_data(struct archive *a, struct tar *tar,
 	return (ARCHIVE_OK);
 }
 
-void
+static void
 gnu_parse_sparse_data(struct archive *a, struct tar *tar,
     const struct gnu_sparse *sparse, int length)
 {

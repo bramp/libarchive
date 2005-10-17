@@ -1,14 +1,18 @@
 # $FreeBSD: src/lib/libarchive/configure.ac.in,v 1.7 2005/08/10 15:01:03 kientzle Exp $
 
 #Process this file with autoconf to produce a configure script.
-AC_INIT(libarchive, 1.02.034, kientzle@freebsd.org)
-AM_INIT_AUTOMAKE(libarchive, 1.02.034)
+AC_INIT(libarchive, 1.02.036, kientzle@freebsd.org)
+AM_INIT_AUTOMAKE(libarchive, 1.02.036)
 AC_CONFIG_SRCDIR([archive_write_set_format_ustar.c])
 AM_CONFIG_HEADER([config.h])
 
+# Yes, libtool version numbering is somewhat strange.
+LIBTOOL_VERSION=3:36:2
+AC_SUBST(LIBTOOL_VERSION)
+
 # Checks for programs.
 AC_PROG_CC
-AC_PROG_RANLIB
+AC_PROG_LIBTOOL
 AC_CHECK_TOOL([STRIP],[strip])
 
 # Checks for libraries.
@@ -87,8 +91,8 @@ AC_CHECK_DECL([ACL_USER],
 
 # Additional requirements
 AC_SYS_LARGEFILE
-AC_SUBST(ARCHIVE_API_VERSION,[1])
-AC_SUBST(ARCHIVE_API_FEATURE,[1])
+AC_SUBST(ARCHIVE_API_MAJOR,[1])
+AC_SUBST(ARCHIVE_API_MINOR,[2])
 
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([archive.h])

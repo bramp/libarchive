@@ -25,7 +25,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_format_zip.c,v 1.7 2005/09/24 21:15:00 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_format_zip.c,v 1.8 2005/10/12 15:38:45 kientzle Exp $");
 
 #include <sys/stat.h>
 #include <errno.h>
@@ -98,7 +98,7 @@ struct zip_file_header {
 	char	extra_length[2];
 };
 
-const char *compression_names[] = {
+static const char *compression_names[] = {
 	"uncompressed",
 	"shrinking",
 	"reduced-1",

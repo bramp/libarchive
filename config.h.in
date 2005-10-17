@@ -28,6 +28,9 @@
    don't. */
 #undef HAVE_DECL_STRERROR_R
 
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
+
 /* A possible errno value for invalid file format errors */
 #undef HAVE_EFTYPE
 

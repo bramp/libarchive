@@ -17,7 +17,7 @@
 # $FreeBSD: src/lib/libarchive/Makefile.am,v 1.3 2005/01/25 06:07:28 kientzle Exp $
 
 
-SOURCES = $(libarchive_a_SOURCES)
+SOURCES = $(libarchive_la_SOURCES)
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
@@ -39,11 +39,13 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-subdir = .
+host_triplet = @host@
 DIST_COMMON = $(am__configure_deps) $(dist_man_MANS) \
 	$(include_HEADERS) $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/archive.h.in $(srcdir)/config.h.in \
-	$(top_srcdir)/configure depcomp install-sh missing
+	$(top_srcdir)/configure config.guess config.sub depcomp \
+	install-sh ltmain.sh missing
+subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -54,84 +56,81 @@ mkinstalldirs = $(mkdir_p)
 CONFIG_HEADER = config.h
 CONFIG_CLEAN_FILES = archive.h
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(man3dir)" "$(DESTDIR)$(man5dir)" "$(DESTDIR)$(includedir)" "$(DESTDIR)$(includedir)"
-libLIBRARIES_INSTALL = $(INSTALL_DATA)
-LIBRARIES = $(lib_LIBRARIES)
-AR = ar
-ARFLAGS = cru
-libarchive_a_AR = $(AR) $(ARFLAGS)
-libarchive_a_LIBADD =
-am_libarchive_a_OBJECTS = archive_check_magic.$(OBJEXT) \
-	archive_entry.$(OBJEXT) archive_read.$(OBJEXT) \
-	archive_read_data_into_buffer.$(OBJEXT) \
-	archive_read_data_into_fd.$(OBJEXT) \
-	archive_read_extract.$(OBJEXT) archive_read_open_fd.$(OBJEXT) \
-	archive_read_open_file.$(OBJEXT) \
-	archive_read_support_compression_all.$(OBJEXT) \
-	archive_read_support_compression_bzip2.$(OBJEXT) \
-	archive_read_support_compression_compress.$(OBJEXT) \
-	archive_read_support_compression_gzip.$(OBJEXT) \
-	archive_read_support_compression_none.$(OBJEXT) \
-	archive_read_support_format_all.$(OBJEXT) \
-	archive_read_support_format_cpio.$(OBJEXT) \
-	archive_read_support_format_iso9660.$(OBJEXT) \
-	archive_read_support_format_tar.$(OBJEXT) \
-	archive_read_support_format_zip.$(OBJEXT) \
-	archive_string.$(OBJEXT) archive_string_sprintf.$(OBJEXT) \
-	archive_util.$(OBJEXT) archive_write.$(OBJEXT) \
-	archive_write_open_fd.$(OBJEXT) \
-	archive_write_open_file.$(OBJEXT) \
-	archive_write_set_compression_bzip2.$(OBJEXT) \
-	archive_write_set_compression_gzip.$(OBJEXT) \
-	archive_write_set_compression_none.$(OBJEXT) \
-	archive_write_set_format.$(OBJEXT) \
-	archive_write_set_format_by_name.$(OBJEXT) \
-	archive_write_set_format_cpio.$(OBJEXT) \
-	archive_write_set_format_pax.$(OBJEXT) \
-	archive_write_set_format_shar.$(OBJEXT) \
-	archive_write_set_format_ustar.$(OBJEXT)
-libarchive_a_OBJECTS = $(am_libarchive_a_OBJECTS)
+libLTLIBRARIES_INSTALL = $(INSTALL)
+LTLIBRARIES = $(lib_LTLIBRARIES)
+libarchive_la_DEPENDENCIES =
+am_libarchive_la_OBJECTS = archive_check_magic.lo archive_entry.lo \
+	archive_read.lo archive_read_data_into_buffer.lo \
+	archive_read_data_into_fd.lo archive_read_extract.lo \
+	archive_read_open_fd.lo archive_read_open_file.lo \
+	archive_read_support_compression_all.lo \
+	archive_read_support_compression_bzip2.lo \
+	archive_read_support_compression_compress.lo \
+	archive_read_support_compression_gzip.lo \
+	archive_read_support_compression_none.lo \
+	archive_read_support_format_all.lo \
+	archive_read_support_format_cpio.lo \
+	archive_read_support_format_iso9660.lo \
+	archive_read_support_format_tar.lo \
+	archive_read_support_format_zip.lo archive_string.lo \
+	archive_string_sprintf.lo archive_util.lo archive_write.lo \
+	archive_write_open_fd.lo archive_write_open_file.lo \
+	archive_write_set_compression_bzip2.lo \
+	archive_write_set_compression_gzip.lo \
+	archive_write_set_compression_none.lo \
+	archive_write_set_format.lo \
+	archive_write_set_format_by_name.lo \
+	archive_write_set_format_cpio.lo \
+	archive_write_set_format_pax.lo \
+	archive_write_set_format_shar.lo \
+	archive_write_set_format_ustar.lo
+libarchive_la_OBJECTS = $(am_libarchive_la_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/archive_check_magic.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_entry.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_read.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_read_data_into_buffer.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_read_data_into_fd.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_read_extract.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_read_open_fd.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_read_open_file.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_read_support_compression_all.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_read_support_compression_bzip2.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_read_support_compression_compress.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_read_support_compression_gzip.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_read_support_compression_none.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_read_support_format_all.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_read_support_format_cpio.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_read_support_format_iso9660.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_read_support_format_tar.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_read_support_format_zip.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_string.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_string_sprintf.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_util.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_write.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_write_open_fd.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_write_open_file.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_write_set_compression_bzip2.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_write_set_compression_gzip.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_write_set_compression_none.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_write_set_format.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_write_set_format_by_name.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_write_set_format_cpio.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_write_set_format_pax.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_write_set_format_shar.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/archive_write_set_format_ustar.Po
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/archive_check_magic.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_entry.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_read.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_read_data_into_buffer.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_read_data_into_fd.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_read_extract.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_read_open_fd.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_read_open_file.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_read_support_compression_all.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_read_support_compression_bzip2.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_read_support_compression_compress.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_read_support_compression_gzip.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_read_support_compression_none.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_read_support_format_all.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_read_support_format_cpio.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_read_support_format_iso9660.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_read_support_format_tar.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_read_support_format_zip.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_string.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_string_sprintf.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_util.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_write.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_write_open_fd.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_write_open_file.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_write_set_compression_bzip2.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_write_set_compression_gzip.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_write_set_compression_none.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_write_set_format.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_write_set_format_by_name.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_write_set_format_cpio.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_write_set_format_pax.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_write_set_format_shar.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/archive_write_set_format_ustar.Plo
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
-LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(libarchive_a_SOURCES)
-DIST_SOURCES = $(libarchive_a_SOURCES)
+LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+SOURCES = $(libarchive_la_SOURCES)
+DIST_SOURCES = $(libarchive_la_SOURCES)
 man3dir = $(mandir)/man3
 man5dir = $(mandir)/man5
 NROFF = nroff
@@ -156,8 +155,9 @@ ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
 AMDEP_TRUE = @AMDEP_TRUE@
 AMTAR = @AMTAR@
-ARCHIVE_API_FEATURE = @ARCHIVE_API_FEATURE@
-ARCHIVE_API_VERSION = @ARCHIVE_API_VERSION@
+AR = @AR@
+ARCHIVE_API_MAJOR = @ARCHIVE_API_MAJOR@
+ARCHIVE_API_MINOR = @ARCHIVE_API_MINOR@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -167,14 +167,21 @@ CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
+CXX = @CXX@
+CXXCPP = @CXXCPP@
+CXXDEPMODE = @CXXDEPMODE@
+CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+ECHO = @ECHO@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
+F77 = @F77@
+FFLAGS = @FFLAGS@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
@@ -182,6 +189,9 @@ INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
+LIBTOOL = @LIBTOOL@
+LIBTOOL_VERSION = @LIBTOOL_VERSION@
+LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 OBJEXT = @OBJEXT@
@@ -197,19 +207,32 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
+ac_ct_CXX = @ac_ct_CXX@
+ac_ct_F77 = @ac_ct_F77@
 ac_ct_RANLIB = @ac_ct_RANLIB@
 ac_ct_STRIP = @ac_ct_STRIP@
 am__fastdepCC_FALSE = @am__fastdepCC_FALSE@
 am__fastdepCC_TRUE = @am__fastdepCC_TRUE@
+am__fastdepCXX_FALSE = @am__fastdepCXX_FALSE@
+am__fastdepCXX_TRUE = @am__fastdepCXX_TRUE@
 am__include = @am__include@
 am__leading_dot = @am__leading_dot@
 am__quote = @am__quote@
 bindir = @bindir@
+build = @build@
 build_alias = @build_alias@
+build_cpu = @build_cpu@
+build_os = @build_os@
+build_vendor = @build_vendor@
 datadir = @datadir@
 exec_prefix = @exec_prefix@
+host = @host@
 host_alias = @host_alias@
+host_cpu = @host_cpu@
+host_os = @host_os@
+host_vendor = @host_vendor@
 includedir = @includedir@
 infodir = @infodir@
 install_sh = @install_sh@
@@ -225,12 +248,12 @@ sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-lib_LIBRARIES = libarchive.a
+lib_LTLIBRARIES = libarchive.la
 include_HEADERS = archive_entry.h
 # Note: archive.h is built from archive.h.in, so don't
 # include archive.h in the distfile, but do install it.
 nodist_include_HEADERS = archive.h
-libarchive_a_SOURCES = \
+libarchive_la_SOURCES = \
 	archive_check_magic.c				\
 	archive_entry.c					\
 	archive_entry.h					\
@@ -269,6 +292,8 @@ libarchive_a_SOURCES = \
 	archive_write_set_format_shar.c			\
 	archive_write_set_format_ustar.c
 
+libarchive_la_LIBADD = -lz -lbz2
+libarchive_la_LDFLAGS = -version-info $(LIBTOOL_VERSION)
 dist_man_MANS = archive_entry.3				\
 	archive_read.3					\
 	archive_util.3					\
@@ -281,7 +306,7 @@ all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .o .obj
+.SUFFIXES: .c .lo .o .obj
 am--refresh:
 	@:
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
@@ -334,39 +359,35 @@ distclean-hdr:
 	-rm -f config.h stamp-h1
 archive.h: $(top_builddir)/config.status $(srcdir)/archive.h.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
-install-libLIBRARIES: $(lib_LIBRARIES)
+install-libLTLIBRARIES: $(lib_LTLIBRARIES)
 	@$(NORMAL_INSTALL)
 	test -z "$(libdir)" || $(mkdir_p) "$(DESTDIR)$(libdir)"
-	@list='$(lib_LIBRARIES)'; for p in $$list; do \
+	@list='$(lib_LTLIBRARIES)'; for p in $$list; do \
 	  if test -f $$p; then \
 	    f="`echo $$p | sed -e 's|^.*/||'`"; \
-	    echo " $(libLIBRARIES_INSTALL) '$$p' '$(DESTDIR)$(libdir)/$$f'"; \
-	    $(libLIBRARIES_INSTALL) "$$p" "$(DESTDIR)$(libdir)/$$f"; \
-	  else :; fi; \
-	done
-	@$(POST_INSTALL)
-	@list='$(lib_LIBRARIES)'; for p in $$list; do \
-	  if test -f $$p; then \
-	    p="`echo $$p | sed -e 's|^.*/||'`"; \
-	    echo " $(RANLIB) '$(DESTDIR)$(libdir)/$$p'"; \
-	    $(RANLIB) "$(DESTDIR)$(libdir)/$$p"; \
+	    echo " $(LIBTOOL) --mode=install $(libLTLIBRARIES_INSTALL) $(INSTALL_STRIP_FLAG) '$$p' '$(DESTDIR)$(libdir)/$$f'"; \
+	    $(LIBTOOL) --mode=install $(libLTLIBRARIES_INSTALL) $(INSTALL_STRIP_FLAG) "$$p" "$(DESTDIR)$(libdir)/$$f"; \
 	  else :; fi; \
 	done
 
-uninstall-libLIBRARIES:
+uninstall-libLTLIBRARIES:
 	@$(NORMAL_UNINSTALL)
-	@list='$(lib_LIBRARIES)'; for p in $$list; do \
-	  p="`echo $$p | sed -e 's|^.*/||'`"; \
-	  echo " rm -f '$(DESTDIR)$(libdir)/$$p'"; \
-	  rm -f "$(DESTDIR)$(libdir)/$$p"; \
+	@list='$(lib_LTLIBRARIES)'; for p in $$list; do \
+	    p="`echo $$p | sed -e 's|^.*/||'`"; \
+	  echo " $(LIBTOOL) --mode=uninstall rm -f '$(DESTDIR)$(libdir)/$$p'"; \
+	  $(LIBTOOL) --mode=uninstall rm -f "$(DESTDIR)$(libdir)/$$p"; \
 	done
 
-clean-libLIBRARIES:
-	-test -z "$(lib_LIBRARIES)" || rm -f $(lib_LIBRARIES)
-libarchive.a: $(libarchive_a_OBJECTS) $(libarchive_a_DEPENDENCIES) 
-	-rm -f libarchive.a
-	$(libarchive_a_AR) libarchive.a $(libarchive_a_OBJECTS) $(libarchive_a_LIBADD)
-	$(RANLIB) libarchive.a
+clean-libLTLIBRARIES:
+	-test -z "$(lib_LTLIBRARIES)" || rm -f $(lib_LTLIBRARIES)
+	@list='$(lib_LTLIBRARIES)'; for p in $$list; do \
+	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
+	  test "$$dir" != "$$p" || dir=.; \
+	  echo "rm -f \"$${dir}/so_locations\""; \
+	  rm -f "$${dir}/so_locations"; \
+	done
+libarchive.la: $(libarchive_la_OBJECTS) $(libarchive_la_DEPENDENCIES) 
+	$(LINK) -rpath $(libdir) $(libarchive_la_LDFLAGS) $(libarchive_la_OBJECTS) $(libarchive_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -374,39 +395,39 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_check_magic.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_entry.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_data_into_buffer.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_data_into_fd.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_extract.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_open_fd.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_open_file.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_support_compression_all.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_support_compression_bzip2.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_support_compression_compress.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_support_compression_gzip.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_support_compression_none.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_support_format_all.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_support_format_cpio.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_support_format_iso9660.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_support_format_tar.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_support_format_zip.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_string.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_string_sprintf.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_util.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_write.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_write_open_fd.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_write_open_file.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_write_set_compression_bzip2.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_write_set_compression_gzip.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_write_set_compression_none.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_write_set_format.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_write_set_format_by_name.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_write_set_format_cpio.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_write_set_format_pax.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_write_set_format_shar.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_write_set_format_ustar.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_check_magic.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_entry.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_data_into_buffer.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_data_into_fd.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_extract.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_open_fd.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_open_file.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_support_compression_all.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_support_compression_bzip2.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_support_compression_compress.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_support_compression_gzip.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_support_compression_none.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_support_format_all.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_support_format_cpio.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_support_format_iso9660.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_support_format_tar.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_read_support_format_zip.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_string.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_string_sprintf.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_util.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_write.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_write_open_fd.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_write_open_file.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_write_set_compression_bzip2.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_write_set_compression_gzip.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_write_set_compression_none.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_write_set_format.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_write_set_format_by_name.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_write_set_format_cpio.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_write_set_format_pax.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_write_set_format_shar.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive_write_set_format_ustar.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -423,6 +444,23 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/$*.Po' tmpdepfile='$(DEPDIR)/$*.TPo' @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
+
+.c.lo:
+@am__fastdepCC_TRUE@	if $(LTCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/$*.Tpo" "$(DEPDIR)/$*.Plo"; else rm -f "$(DEPDIR)/$*.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	depfile='$(DEPDIR)/$*.Plo' tmpdepfile='$(DEPDIR)/$*.TPlo' @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
+
+mostlyclean-libtool:
+	-rm -f *.lo
+
+clean-libtool:
+	-rm -rf .libs _libs
+
+distclean-libtool:
+	-rm -f libtool
 uninstall-info-am:
 install-man3: $(man3_MANS) $(man_MANS)
 	@$(NORMAL_INSTALL)
@@ -726,7 +764,7 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 check: check-am
-all-am: Makefile $(LIBRARIES) $(MANS) $(HEADERS) config.h
+all-am: Makefile $(LTLIBRARIES) $(MANS) $(HEADERS) config.h
 installdirs:
 	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(man3dir)" "$(DESTDIR)$(man5dir)" "$(DESTDIR)$(includedir)" "$(DESTDIR)$(includedir)"; do \
 	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
@@ -757,14 +795,15 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libLIBRARIES mostlyclean-am
+clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
+	mostlyclean-am
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
-	distclean-hdr distclean-local distclean-tags
+	distclean-hdr distclean-libtool distclean-local distclean-tags
 
 dvi: dvi-am
 
@@ -779,7 +818,7 @@ info-am:
 install-data-am: install-includeHEADERS install-man \
 	install-nodist_includeHEADERS
 
-install-exec-am: install-libLIBRARIES
+install-exec-am: install-libLTLIBRARIES
 
 install-info: install-info-am
 
@@ -797,7 +836,8 @@ maintainer-clean-am: distclean-am maintainer-clean-generic \
 
 mostlyclean: mostlyclean-am
 
-mostlyclean-am: mostlyclean-compile mostlyclean-generic
+mostlyclean-am: mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool
 
 pdf: pdf-am
 
@@ -808,27 +848,29 @@ ps: ps-am
 ps-am:
 
 uninstall-am: uninstall-includeHEADERS uninstall-info-am \
-	uninstall-libLIBRARIES uninstall-man \
+	uninstall-libLTLIBRARIES uninstall-man \
 	uninstall-nodist_includeHEADERS
 
 uninstall-man: uninstall-man3 uninstall-man5
 
 .PHONY: CTAGS GTAGS all all-am am--refresh check check-am clean \
-	clean-generic clean-libLIBRARIES ctags dist dist-all \
-	dist-bzip2 dist-gzip dist-shar dist-tarZ dist-zip distcheck \
-	distclean distclean-compile distclean-generic distclean-hdr \
-	distclean-local distclean-tags distcleancheck distdir \
-	distuninstallcheck dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am install-exec \
-	install-exec-am install-includeHEADERS install-info \
-	install-info-am install-libLIBRARIES install-man install-man3 \
-	install-man5 install-nodist_includeHEADERS install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
+	clean-generic clean-libLTLIBRARIES clean-libtool ctags dist \
+	dist-all dist-bzip2 dist-gzip dist-shar dist-tarZ dist-zip \
+	distcheck distclean distclean-compile distclean-generic \
+	distclean-hdr distclean-libtool distclean-local distclean-tags \
+	distcleancheck distdir distuninstallcheck dvi dvi-am html \
+	html-am info info-am install install-am install-data \
+	install-data-am install-exec install-exec-am \
+	install-includeHEADERS install-info install-info-am \
+	install-libLTLIBRARIES install-man install-man3 install-man5 \
+	install-nodist_includeHEADERS install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic maintainer-clean-local mostlyclean \
-	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-includeHEADERS \
-	uninstall-info-am uninstall-libLIBRARIES uninstall-man \
-	uninstall-man3 uninstall-man5 uninstall-nodist_includeHEADERS
+	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+	pdf pdf-am ps ps-am tags uninstall uninstall-am \
+	uninstall-includeHEADERS uninstall-info-am \
+	uninstall-libLTLIBRARIES uninstall-man uninstall-man3 \
+	uninstall-man5 uninstall-nodist_includeHEADERS
 
 
 distclean-local:

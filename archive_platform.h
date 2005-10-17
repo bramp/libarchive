@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libarchive/archive_platform.h,v 1.17 2005/08/10 15:01:03 kientzle Exp $
+ * $FreeBSD: src/lib/libarchive/archive_platform.h,v 1.18 2005/10/12 03:28:38 kientzle Exp $
  */
 
 /*
@@ -49,7 +49,7 @@
 #define	HAVE_ACL_SET_FD 1
 #define	HAVE_ACL_SET_FD_NP 1
 #define	HAVE_ACL_SET_FILE 1
-#define HAVE_ACL_USER 1
+#define	HAVE_ACL_USER 1
 #endif
 #define	HAVE_BZLIB_H 1
 #define	HAVE_CHFLAGS 1

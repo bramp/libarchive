@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libarchive/archive_entry.h,v 1.17 2005/09/10 22:58:06 kientzle Exp $
+ * $FreeBSD: src/lib/libarchive/archive_entry.h,v 1.18 2005/10/12 03:26:09 kientzle Exp $
  */
 
 #ifndef ARCHIVE_ENTRY_H_INCLUDED
@@ -79,7 +79,9 @@ void			 archive_entry_fflags(struct archive_entry *,
 const char		*archive_entry_fflags_text(struct archive_entry *);
 gid_t			 archive_entry_gid(struct archive_entry *);
 const char		*archive_entry_gname(struct archive_entry *);
+const wchar_t		*archive_entry_gname_w(struct archive_entry *);
 const char		*archive_entry_hardlink(struct archive_entry *);
+const wchar_t		*archive_entry_hardlink_w(struct archive_entry *);
 ino_t			 archive_entry_ino(struct archive_entry *);
 mode_t			 archive_entry_mode(struct archive_entry *);
 time_t			 archive_entry_mtime(struct archive_entry *);
@@ -92,8 +94,10 @@ dev_t			 archive_entry_rdevminor(struct archive_entry *);
 int64_t			 archive_entry_size(struct archive_entry *);
 const struct stat	*archive_entry_stat(struct archive_entry *);
 const char		*archive_entry_symlink(struct archive_entry *);
+const wchar_t		*archive_entry_symlink_w(struct archive_entry *);
 uid_t			 archive_entry_uid(struct archive_entry *);
 const char		*archive_entry_uname(struct archive_entry *);
+const wchar_t		*archive_entry_uname_w(struct archive_entry *);
 
 /*
  * Set fields in an archive_entry.
