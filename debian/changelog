@@ -1,3 +1,11 @@
+libarchive (1.02.036-2) unstable; urgency=low
+
+  * Added conflict on old libarchive-doc package.
+    This package never existed in testing or stable, so this conflict
+    can be removed before long.
+
+ -- John Goerzen <jgoerzen@complete.org>  Tue, 18 Oct 2005 11:02:06 -0500
+
 libarchive (1.02.036-1) unstable; urgency=low
 
   * New upstream version, now with support for building as a .so.
