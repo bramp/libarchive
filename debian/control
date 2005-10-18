@@ -1,7 +1,7 @@
 Source: libarchive
 Priority: optional
 Maintainer: John Goerzen <jgoerzen@complete.org>
-Build-Depends: debhelper (>= 4.0.0), autotools-dev, libbz2-dev, zlib1g-dev, libacl1-dev, e2fslibs-dev
+Build-Depends: debhelper (>= 4.0.0), autotools-dev, libbz2-dev, zlib1g-dev, libacl1-dev, e2fslibs-dev, libattr1-dev
 Build-Depends-Indep: debhelper (>= 4.0.0), autotools-dev
 Standards-Version: 3.6.2
 Section: libs
