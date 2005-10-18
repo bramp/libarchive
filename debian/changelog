@@ -1,6 +1,9 @@
 libarchive (1.02.036-1) unstable; urgency=low
 
   * New upstream version, now with support for building as a .so.
+  * Added build-dep on libattr1-dev.
+  * No more libarchive-doc; its files now live in libarchive1.
+  * Thanks to Bernhard R. Link for ideas for this package.
 
  -- John Goerzen <jgoerzen@complete.org>  Mon, 17 Oct 2005 10:27:30 -0500
 
