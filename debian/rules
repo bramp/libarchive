@@ -35,11 +35,13 @@ major=`ls src/.libs/lib*.so.* | \
 
 config.status: configure
 	dh_testdir
+	-cp config.aux/config.sub config.aux/config.sub.save
 ifneq "$(wildcard /usr/share/misc/config.sub)" ""
-	cp -f /usr/share/misc/config.sub config.sub
+	cp -f /usr/share/misc/config.sub config.aux/config.sub
 endif
+	-cp config.aux/config.guess config.aux/config.guess.save
 ifneq "$(wildcard /usr/share/misc/config.guess)" ""
-	cp -f /usr/share/misc/config.guess config.guess
+	cp -f /usr/share/misc/config.guess config.aux/config.guess
 endif
 	# Add here commands to configure the package.
 	$(SHELL) ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info CFLAGS="$(CFLAGS)" LDFLAGS=" -Wl,-z,defs" 
@@ -50,6 +52,7 @@ build-stamp:  config.status
 	dh_testdir
 
 	# Add here commands to compile the package.
+	-mv tar/getdate.c tar/getdate.c.save
 	$(MAKE)
 
 	touch build-stamp
@@ -62,7 +65,9 @@ clean:
 	# Add here commands to clean up after the build process.
 	-$(MAKE) distclean
 
-	-rm config.guess config.sub
+	-mv config.aux/config.guess.save config.aux/config.guess
+	-mv config.aux/config.sub.save config.aux/config.sub
+	-mv tar/getdate.c.save tar/getdate.c
 
 	dh_clean 
 
@@ -81,7 +86,7 @@ binary-indep:
 binary-arch: build install
 	dh_testdir
 	dh_testroot
-	dh_installchangelogs  -a
+	dh_installchangelogs  -a NEWS
 	dh_installdocs -a
 	dh_installexamples -a
 	dh_install -a --autodest
@@ -94,15 +99,16 @@ binary-arch: build install
 #	dh_installinit
 #	dh_installcron
 #	dh_installinfo
-	dh_installman -plibarchive-dev *.[0-4,7-9]*
-	dh_installman -plibarchive1 *.5*
+	dh_installman -plibarchive-dev libarchive/*.[0-4,7-9]*
+	dh_installman -plibarchive1 libarchive/*.5*
+	dh_installman -pbsdtar tar/*.[1-9]
 	dh_link -a
 	dh_strip -a
 	dh_compress -a
 	dh_fixperms -a
 #	dh_perl
 #	dh_python
-	dh_makeshlibs -a
+	dh_makeshlibs -a -V
 	dh_installdeb -a
 	dh_shlibdeps -a
 	dh_gencontrol -a
