@@ -1,3 +1,12 @@
+libarchive (1.2.53-1) unstable; urgency=low
+
+  * New upstream version.
+  * The bsdtar program has been integrated into the libarchive source
+    package upstream.  This package, therefore, now generates the
+    bsdtar binary package.
+
+ -- John Goerzen <jgoerzen@complete.org>  Sat, 17 Jun 2006 10:44:05 -0500
+
 libarchive (1.02.036-2) unstable; urgency=low
 
   * Added conflict on old libarchive-doc package.
