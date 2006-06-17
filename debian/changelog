@@ -1,3 +1,9 @@
+libarchive (1.2.53-2) unstable; urgency=low
+
+  * Added build-dep on bison.  Closes: #374200.
+
+ -- John Goerzen <jgoerzen@complete.org>  Sat, 17 Jun 2006 17:24:44 -0500
+
 libarchive (1.2.53-1) unstable; urgency=low
 
   * New upstream version.
