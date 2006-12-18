@@ -33,7 +33,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read.c,v 1.20 2006/01/17 04:49:04 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_read.c,v 1.22 2006/09/05 05:59:45 kientzle Exp $");
 
 #include <errno.h>
 #include <stdio.h>
@@ -88,19 +88,16 @@ archive_read_new(void)
 }
 
 /*
- * Set the block size.
+ * Record the do-not-extract-to file. This belongs in archive_read_extract.c.
  */
-/*
-int
-archive_read_set_bytes_per_block(struct archive *a, int bytes_per_block)
+void
+archive_read_extract_set_skip_file(struct archive *a, dev_t d, ino_t i)
 {
-	__archive_check_magic(a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW, "archive_read_set_bytes_per_block");
-	if (bytes_per_block < 1)
-		bytes_per_block = 1;
-	a->bytes_per_block = bytes_per_block;
-	return (0);
+	__archive_check_magic(a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_ANY, "archive_read_extract_set_skip_file");
+	a->skip_file_dev = d;
+	a->skip_file_ino = i;
 }
-*/
+
 
 /*
  * Open the archive
@@ -108,6 +105,19 @@ archive_read_set_bytes_per_block(struct archive *a, int bytes_per_block)
 int
 archive_read_open(struct archive *a, void *client_data,
     archive_open_callback *client_opener, archive_read_callback *client_reader,
+    archive_close_callback *client_closer)
+{
+	/* Old archive_read_open() is just a thin shell around
+	 * archive_read_open2. */
+	return archive_read_open2(a, client_data, client_opener,
+	    client_reader, NULL, client_closer);
+}
+
+int
+archive_read_open2(struct archive *a, void *client_data,
+    archive_open_callback *client_opener,
+    archive_read_callback *client_reader,
+    archive_skip_callback *client_skipper,
     archive_close_callback *client_closer)
 {
 	const void *buffer;
@@ -129,6 +139,7 @@ archive_read_open(struct archive *a, void *client_data,
 	 */
 	a->client_opener = NULL;
 	a->client_reader = NULL;
+	a->client_skipper = NULL;
 	a->client_closer = NULL;
 	a->client_data = NULL;
 
@@ -167,6 +178,7 @@ archive_read_open(struct archive *a, void *client_data,
 	/* Now that the client callbacks have worked, remember them. */
 	a->client_opener = client_opener; /* Do we need to remember this? */
 	a->client_reader = client_reader;
+	a->client_skipper = client_skipper;
 	a->client_closer = client_closer;
 	a->client_data = client_data;
 
@@ -489,33 +501,45 @@ archive_read_data_block(struct archive *a,
 int
 archive_read_close(struct archive *a)
 {
+	int r = ARCHIVE_OK, r1 = ARCHIVE_OK;
+
 	__archive_check_magic(a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_ANY, "archive_read_close");
 	a->state = ARCHIVE_STATE_CLOSED;
 
 	/* Call cleanup functions registered by optional components. */
 	if (a->cleanup_archive_extract != NULL)
-		(a->cleanup_archive_extract)(a);
+		r = (a->cleanup_archive_extract)(a);
 
 	/* TODO: Finish the format processing. */
 
 	/* Close the input machinery. */
-	if (a->compression_finish != NULL)
-		(a->compression_finish)(a);
-	return (ARCHIVE_OK);
+	if (a->compression_finish != NULL) {
+		r1 = (a->compression_finish)(a);
+		if (r1 < r)
+			r = r1;
+	}
+
+	return (r);
 }
 
 /*
  * Release memory and other resources.
  */
+#if ARCHIVE_API_VERSION > 1
+int
+#else
+/* Temporarily allow library to compile with either 1.x or 2.0 API. */
 void
+#endif
 archive_read_finish(struct archive *a)
 {
 	int i;
 	int slots;
+	int r = ARCHIVE_OK;
 
 	__archive_check_magic(a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_ANY, "archive_read_finish");
 	if (a->state != ARCHIVE_STATE_CLOSED)
-		archive_read_close(a);
+		r = archive_read_close(a);
 
 	/* Cleanup format-specific data. */
 	slots = sizeof(a->formats) / sizeof(a->formats[0]);
@@ -532,6 +556,9 @@ archive_read_finish(struct archive *a)
 		archive_entry_free(a->entry);
 	a->magic = 0;
 	free(a);
+#if ARCHIVE_API_VERSION > 1
+	return (r);
+#endif
 }
 
 /*

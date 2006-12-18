@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $FreeBSD: src/usr.bin/tar/bsdtar.1,v 1.31 2006/01/17 19:37:07 simon Exp $
+.\" $FreeBSD: src/usr.bin/tar/bsdtar.1,v 1.32 2006/05/01 01:34:21 kientzle Exp $
 .\"
 .Dd April 13, 2004
 .Dt BSDTAR 1
@@ -445,16 +445,16 @@ option.
 .Sh EXAMPLES
 The following creates a new archive
 called
-.Ar file.tar
+.Ar file.tar.gz
 that contains two files
 .Ar source.c
 and
 .Ar source.h :
-.Dl Nm Fl czf Pa file.tar Pa source.c Pa source.h
+.Dl Nm Fl czf Pa file.tar.gz Pa source.c Pa source.h
 .Pp
 To view a detailed table of contents for this
 archive:
-.Dl Nm Fl tvf Pa file.tar
+.Dl Nm Fl tvf Pa file.tar.gz
 .Pp
 To extract all entries from the archive on
 the default tape drive:

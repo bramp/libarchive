@@ -56,9 +56,9 @@ struct shar {
 static int	archive_write_shar_finish(struct archive *);
 static int	archive_write_shar_header(struct archive *,
 		    struct archive_entry *);
-static int	archive_write_shar_data_sed(struct archive *,
+static ssize_t	archive_write_shar_data_sed(struct archive *,
 		    const void * buff, size_t);
-static int	archive_write_shar_data_uuencode(struct archive *,
+static ssize_t	archive_write_shar_data_uuencode(struct archive *,
 		    const void * buff, size_t);
 static int	archive_write_shar_finish_entry(struct archive *);
 static int	shar_printf(struct archive *, const char *fmt, ...);
@@ -315,12 +315,13 @@ archive_write_shar_header(struct archive *a, struct archive_entry *entry)
 }
 
 /* XXX TODO: This could be more efficient XXX */
-static int
+static ssize_t
 archive_write_shar_data_sed(struct archive *a, const void *buff, size_t n)
 {
 	struct shar *shar;
 	const char *src;
 	int ret;
+	size_t written = n;
 
 	shar = a->format_data;
 	if (!shar->has_data)
@@ -349,7 +350,9 @@ archive_write_shar_data_sed(struct archive *a, const void *buff, size_t n)
 
 	if (shar->outpos > 0)
 		ret = (a->compression_write)(a, shar->outbuff, shar->outpos);
-	return (ret);
+	if (ret != ARCHIVE_OK)
+		return (ret);
+	return (written);
 }
 
 #define	UUENC(c)	(((c)!=0) ? ((c) & 077) + ' ': '`')
@@ -376,7 +379,7 @@ uuencode_group(struct shar *shar)
 	shar->outbuff[shar->outpos] = 0;
 }
 
-static int
+static ssize_t
 archive_write_shar_data_uuencode(struct archive *a, const void *buff,
     size_t length)
 {
@@ -405,7 +408,7 @@ archive_write_shar_data_uuencode(struct archive *a, const void *buff,
 		shar->uubuffer[shar->uuavail++] = *src++;
 		shar->outbytes++;
 	}
-	return (ARCHIVE_OK);
+	return (length);
 }
 
 static int

@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $FreeBSD: src/lib/libarchive/libarchive-formats.5,v 1.10 2006/01/17 03:40:42 kientzle Exp $
+.\" $FreeBSD: src/lib/libarchive/libarchive-formats.5,v 1.11 2006/07/29 23:49:25 kientzle Exp $
 .\"
 .Dd April 27, 2004
 .Dt libarchive-formats 3
@@ -235,16 +235,6 @@ compressed with the
 .Dq deflate
 algorithm.
 Older zip compression algorithms are not supported.
-.Ss Tp Formats
-The libarchive library has experimental support for tp format,
-which was used in Fourth Edition through Sixth Edition Unix.
-(It was supplanted by tar in Seventh Edition Unix.)
-There were several distinct variants of this format; libarchive
-supports the original tp format and the itp variant.
-Currently, tp format support is not enabled by
-.Fn archive_read_support_format_all ,
-it must be explicitly enabled by calling
-.Fn archive_read_support_format_tp .
 .Sh SEE ALSO
 .Xr cpio 1 ,
 .Xr mkisofs 1 ,

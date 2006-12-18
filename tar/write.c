@@ -25,7 +25,7 @@
  */
 
 #include "bsdtar_platform.h"
-__FBSDID("$FreeBSD: src/usr.bin/tar/write.c,v 1.45 2006/03/21 17:03:51 kientzle Exp $");
+__FBSDID("$FreeBSD: src/usr.bin/tar/write.c,v 1.47 2006/07/31 04:57:46 kientzle Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -276,7 +276,6 @@ tar_mode_u(struct bsdtar *bsdtar)
 	off_t			 end_offset;
 	struct archive		*a;
 	struct archive_entry	*entry;
-	const char		*filename;
 	int			 format;
 	struct archive_dir_entry	*p;
 	struct archive_dir	 archive_dir;
@@ -284,7 +283,6 @@ tar_mode_u(struct bsdtar *bsdtar)
 	bsdtar->archive_dir = &archive_dir;
 	memset(&archive_dir, 0, sizeof(archive_dir));
 
-	filename = NULL;
 	format = ARCHIVE_FORMAT_TAR_PAX_RESTRICTED;
 
 	/* Sanity-test some arguments and the file. */
@@ -629,15 +627,18 @@ write_hierarchy(struct bsdtar *bsdtar, struct archive *a, const char *path)
 		 */
 		switch(symlink_mode) {
 		case 'H':
-			/* 'H': First item (from command line) like 'L'. */
-			lst = tree_current_stat(tree);
 			/* 'H': After the first item, rest like 'P'. */
 			symlink_mode = 'P';
-			break;
+			/* 'H': First item (from command line) like 'L'. */
+			/* FALLTHROUGH */
 		case 'L':
 			/* 'L': Do descend through a symlink to dir. */
 			/* 'L': Archive symlink to file as file. */
 			lst = tree_current_stat(tree);
+			/* If stat fails, we have a broken symlink;
+			 * in that case, archive the link as such. */
+			if (lst == NULL)
+				lst = tree_current_lstat(tree);
 			break;
 		default:
 			/* 'P': Don't descend through a symlink to dir. */
@@ -903,12 +904,8 @@ lookup_hardlink(struct bsdtar *bsdtar, struct archive_entry *entry,
 	/* If the links cache is getting too full, enlarge the hash table. */
 	if (links_cache->number_entries > links_cache->number_buckets * 2)
 	{
-		int count;
-
 		new_size = links_cache->number_buckets * 2;
 		new_buckets = malloc(new_size * sizeof(struct links_entry *));
-
-		count = 0;
 
 		if (new_buckets != NULL) {
 			memset(new_buckets, 0,

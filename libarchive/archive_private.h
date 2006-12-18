@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libarchive/archive_private.h,v 1.21 2005/11/08 07:44:39 kientzle Exp $
+ * $FreeBSD: src/lib/libarchive/archive_private.h,v 1.23 2006/09/05 05:59:45 kientzle Exp $
  */
 
 #ifndef ARCHIVE_PRIVATE_H_INCLUDED
@@ -68,6 +68,7 @@ struct archive {
 	/* Callbacks to open/read/write/close archive stream. */
 	archive_open_callback	*client_opener;
 	archive_read_callback	*client_reader;
+	archive_skip_callback	*client_skipper;
 	archive_write_callback	*client_writer;
 	archive_close_callback	*client_closer;
 	void			*client_data;
@@ -132,6 +133,7 @@ struct archive {
 	ssize_t	(*compression_read_ahead)(struct archive *,
 		    const void **, size_t request);
 	ssize_t	(*compression_read_consume)(struct archive *, size_t);
+	ssize_t (*compression_skip)(struct archive *, size_t);
 
 	/*
 	 * Format detection is mostly the same as compression
@@ -180,7 +182,7 @@ struct archive {
 	int	(*format_finish_entry)(struct archive *);
 	int 	(*format_write_header)(struct archive *,
 		    struct archive_entry *);
-	int	(*format_write_data)(struct archive *,
+	ssize_t	(*format_write_data)(struct archive *,
 		    const void *buff, size_t);
 
 	/*
@@ -189,7 +191,7 @@ struct archive {
 	struct extract		 *extract;
 	void			(*extract_progress)(void *);
 	void			 *extract_progress_user_data;
-	void			(*cleanup_archive_extract)(struct archive *);
+	int			(*cleanup_archive_extract)(struct archive *);
 
 	int		  archive_error_number;
 	const char	 *error;

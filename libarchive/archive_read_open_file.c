@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2003-2004 Tim Kientzle
+ * Copyright (c) 2003-2006 Tim Kientzle
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,142 +25,111 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_open_file.c,v 1.9 2005/09/21 04:25:05 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_open_file.c,v 1.11 2006/09/05 05:59:46 kientzle Exp $");
 
 #include <sys/stat.h>
 #include <errno.h>
-#include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "archive.h"
-#include "archive_private.h"
 
-struct read_file_data {
-	int	 fd;
+struct read_FILE_data {
+	FILE    *f;
 	size_t	 block_size;
 	void	*buffer;
-	mode_t	 st_mode;  /* Mode bits for opened file. */
-	char	 filename[1]; /* Must be last! */
 };
 
 static int	file_close(struct archive *, void *);
 static int	file_open(struct archive *, void *);
 static ssize_t	file_read(struct archive *, void *, const void **buff);
+static ssize_t	file_skip(struct archive *, void *, size_t request);
 
 int
-archive_read_open_file(struct archive *a, const char *filename,
-    size_t block_size)
+archive_read_open_FILE(struct archive *a, FILE *f)
 {
-	struct read_file_data *mine;
+	struct read_FILE_data *mine;
 
-	if (filename == NULL || filename[0] == '\0') {
-		mine = malloc(sizeof(*mine));
-		if (mine == NULL) {
-			archive_set_error(a, ENOMEM, "No memory");
-			return (ARCHIVE_FATAL);
-		}
-		mine->filename[0] = '\0';
-	} else {
-		mine = malloc(sizeof(*mine) + strlen(filename));
-		if (mine == NULL) {
-			archive_set_error(a, ENOMEM, "No memory");
-			return (ARCHIVE_FATAL);
-		}
-		strcpy(mine->filename, filename);
+	mine = malloc(sizeof(*mine));
+	if (mine == NULL) {
+		archive_set_error(a, ENOMEM, "No memory");
+		return (ARCHIVE_FATAL);
 	}
-	mine->block_size = block_size;
-	mine->buffer = NULL;
-	mine->fd = -1;
-	return (archive_read_open(a, mine, file_open, file_read, file_close));
+	mine->block_size = 128 * 1024;
+	mine->buffer = malloc(mine->block_size);
+	if (mine->buffer == NULL) {
+		archive_set_error(a, ENOMEM, "No memory");
+		free(mine);
+		return (ARCHIVE_FATAL);
+	}
+	mine->f = f;
+	return (archive_read_open2(a, mine, file_open, file_read,
+		    file_skip, file_close));
 }
 
 static int
 file_open(struct archive *a, void *client_data)
 {
-	struct read_file_data *mine = client_data;
+	struct read_FILE_data *mine = client_data;
 	struct stat st;
 
-	mine->buffer = malloc(mine->block_size);
-	if (mine->buffer == NULL) {
-		archive_set_error(a, ENOMEM, "No memory");
-		return (ARCHIVE_FATAL);
-	}
-	if (mine->filename[0] != '\0')
-		mine->fd = open(mine->filename, O_RDONLY);
-	else
-		mine->fd = 0; /* Fake "open" for stdin. */
-	if (mine->fd < 0) {
-		archive_set_error(a, errno, "Failed to open '%s'",
-		    mine->filename);
-		return (ARCHIVE_FATAL);
-	}
-	if (fstat(mine->fd, &st) == 0) {
-		/* Set dev/ino of archive file so extract won't overwrite. */
-		a->skip_file_dev = st.st_dev;
-		a->skip_file_ino = st.st_ino;
-		/* Remember mode so close can decide whether to flush. */
-		mine->st_mode = st.st_mode;
-	} else {
-		if (mine->filename[0] == '\0')
-			archive_set_error(a, errno, "Can't stat stdin");
-		else
-			archive_set_error(a, errno, "Can't stat '%s'",
-			    mine->filename);
-		return (ARCHIVE_FATAL);
-	}
-	return (0);
+	/*
+	 * If we can't fstat() the file, it may just be that
+	 * it's not a file.  (FILE * objects can wrap many kinds
+	 * of I/O streams.)
+	 */
+	if (fstat(fileno(mine->f), &st) == 0 && S_ISREG(st.st_mode))
+		archive_read_extract_set_skip_file(a, st.st_dev, st.st_ino);
+
+	return (ARCHIVE_OK);
 }
 
 static ssize_t
 file_read(struct archive *a, void *client_data, const void **buff)
 {
-	struct read_file_data *mine = client_data;
+	struct read_FILE_data *mine = client_data;
 	ssize_t bytes_read;
 
-	(void)a; /* UNUSED */
 	*buff = mine->buffer;
-	bytes_read = read(mine->fd, mine->buffer, mine->block_size);
+	bytes_read = fread(mine->buffer, 1, mine->block_size, mine->f);
 	if (bytes_read < 0) {
-		if (mine->filename[0] == '\0')
-			archive_set_error(a, errno, "Error reading stdin");
-		else
-			archive_set_error(a, errno, "Error reading '%s'",
-			    mine->filename);
+		archive_set_error(a, errno, "Error reading file");
 	}
 	return (bytes_read);
+}
+
+static ssize_t
+file_skip(struct archive *a, void *client_data, size_t request)
+{
+	struct read_FILE_data *mine = client_data;
+	off_t old_offset, new_offset;
+
+	/* Reduce request to the next smallest multiple of block_size */
+	request = (request / mine->block_size) * mine->block_size;
+	/*
+	 * Note: the 'fd' and 'filename' versions round the request
+	 * down to a multiple of the block size to ensure proper
+	 * operation on block-oriented media such as tapes.  But stdio
+	 * doesn't work with such media (it doesn't ensure blocking),
+	 * so we don't need to bother.
+	 */
+	old_offset = ftello(mine->f);
+	fseeko(mine->f, request, SEEK_CUR);
+	new_offset = ftello(mine->f);
+	if (old_offset < 0 || new_offset < 0) {
+		archive_set_error(a, errno, "Error skipping forward");
+		return (ARCHIVE_FATAL);
+	}
+	return (new_offset - old_offset);
 }
 
 static int
 file_close(struct archive *a, void *client_data)
 {
-	struct read_file_data *mine = client_data;
+	struct read_FILE_data *mine = client_data;
 
 	(void)a; /* UNUSED */
-
-	/*
-	 * Sometimes, we should flush the input before closing.
-	 *   Regular files: faster to just close without flush.
-	 *   Devices: must not flush (user might need to
-	 *      read the "next" item on a non-rewind device).
-	 *   Pipes and sockets:  must flush (otherwise, the
-	 *      program feeding the pipe or socket may complain).
-	 * Here, I flush everything except for regular files and
-	 * device nodes.
-	 */
-	if (!S_ISREG(mine->st_mode)
-	    && !S_ISCHR(mine->st_mode)
-	    && !S_ISBLK(mine->st_mode)) {
-		ssize_t bytesRead;
-		do {
-			bytesRead = read(mine->fd, mine->buffer,
-			    mine->block_size);
-		} while (bytesRead > 0);
-	}
-	/* If a named file was opened, then it needs to be closed. */
-	if (mine->filename[0] != '\0')
-		close(mine->fd);
 	if (mine->buffer != NULL)
 		free(mine->buffer);
 	free(mine);

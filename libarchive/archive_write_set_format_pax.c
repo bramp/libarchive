@@ -60,7 +60,7 @@ static void		 add_pax_attr_time(struct archive_string *,
 			     unsigned long nanos);
 static void		 add_pax_attr_w(struct archive_string *,
 			     const char *key, const wchar_t *wvalue);
-static int		 archive_write_pax_data(struct archive *,
+static ssize_t		 archive_write_pax_data(struct archive *,
 			     const void *, size_t);
 static int		 archive_write_pax_finish(struct archive *);
 static int		 archive_write_pax_finish_entry(struct archive *);
@@ -1071,7 +1071,7 @@ write_nulls(struct archive *a, size_t padding)
 	return (ARCHIVE_OK);
 }
 
-static int
+static ssize_t
 archive_write_pax_data(struct archive *a, const void *buff, size_t s)
 {
 	struct pax *pax;
@@ -1084,7 +1084,10 @@ archive_write_pax_data(struct archive *a, const void *buff, size_t s)
 
 	ret = (a->compression_write)(a, buff, s);
 	pax->entry_bytes_remaining -= s;
-	return (ret);
+	if (ret == ARCHIVE_OK)
+		return (s);
+	else
+		return (ret);
 }
 
 static int

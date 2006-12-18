@@ -25,7 +25,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_entry.c,v 1.34 2006/03/21 16:55:46 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_entry.c,v 1.35 2006/05/01 00:55:44 kientzle Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>

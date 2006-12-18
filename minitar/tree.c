@@ -387,6 +387,7 @@ tree_close(struct tree *t)
 }
 
 
+#if 0
 /* Main function for testing. */
 #include <stdio.h>
 
@@ -419,3 +420,4 @@ int main(int argc, char **argv)
 	}
 	return (0);
 }
+#endif

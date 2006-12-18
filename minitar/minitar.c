@@ -259,14 +259,13 @@ create(const char *filename, int compress, const char **argv)
 	archive_write_open_file(a, filename);
 	while (*argv != NULL) {
 		struct tree *t = tree_open(*argv);
-		const char *p;
-		while ((p = tree_next_path(t))) {
+		while (tree_next(t)) {
 			entry = archive_entry_new();
 			archive_entry_copy_stat(entry, tree_current_stat(t));
-			archive_entry_set_pathname(entry, p);
+			archive_entry_set_pathname(entry, tree_current_path(t));
 			if (verbose) {
 				msg("a ");
-				msg(p);
+				msg(tree_current_path(t));
 			}
 			archive_write_header(a, entry);
 			fd = open(tree_current_access_path(t), O_RDONLY);
@@ -378,12 +377,12 @@ usage(void)
 	exit(1);
 }
 
+#if 0
 /*
  * These override functions in libc (which are called by libarchive).
  * The libc functions are pretty large; this bit of subterfuge
  * reduces the size of the executable by about 70%.
  */
-#if 0
 struct passwd *getpwnam(const char *);
 struct group *getgrnam(const char *);
 

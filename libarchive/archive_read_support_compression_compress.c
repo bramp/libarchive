@@ -65,7 +65,7 @@
 
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_compression_compress.c,v 1.4 2005/11/08 07:42:42 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_compression_compress.c,v 1.5 2006/07/30 00:29:00 kientzle Exp $");
 
 #include <errno.h>
 #include <stdlib.h>
@@ -190,6 +190,7 @@ init(struct archive *a, const void *buff, size_t n)
 
 	a->compression_read_ahead = read_ahead;
 	a->compression_read_consume = read_consume;
+	a->compression_skip = NULL; /* not supported */
 	a->compression_finish = finish;
 
 	state = malloc(sizeof(*state));
@@ -404,7 +405,7 @@ next_code(struct archive *a, struct private_data *state)
 
 	if (code > state->free_ent) {
 		/* An invalid code is a fatal error. */
-		archive_set_error(a, -1, "Invalid compressed data");
+		archive_set_error(a, -1, "Invalid compressed data: code %d is larger than max code %d (input address %X)", code, state->free_ent, state->next_in);
 		return (ARCHIVE_FATAL);
 	}
 

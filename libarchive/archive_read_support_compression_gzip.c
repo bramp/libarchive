@@ -26,7 +26,7 @@
 
 #include "archive_platform.h"
 
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_compression_gzip.c,v 1.9 2005/03/13 01:48:33 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_compression_gzip.c,v 1.10 2006/07/30 00:29:01 kientzle Exp $");
 
 
 #include <errno.h>
@@ -191,6 +191,7 @@ init(struct archive *a, const void *buff, size_t n)
 
 	a->compression_read_ahead = read_ahead;
 	a->compression_read_consume = read_consume;
+	a->compression_skip = NULL; /* not supported */
 	a->compression_finish = finish;
 
 	/*

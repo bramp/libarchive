@@ -25,11 +25,14 @@
  */
 
 #include "bsdtar_platform.h"
-__FBSDID("$FreeBSD: src/usr.bin/tar/read.c,v 1.25 2006/03/21 17:03:51 kientzle Exp $");
+__FBSDID("$FreeBSD: src/usr.bin/tar/read.c,v 1.26 2006/07/30 18:34:40 kientzle Exp $");
 
+#ifdef MAJOR_IN_MKDEV
+#include <sys/mkdev.h>
+#endif
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 #include <errno.h>
 #include <grp.h>

@@ -47,6 +47,8 @@ libarchive_la_SOURCES=						\
 	libarchive/archive_read_extract.c			\
 	libarchive/archive_read_open_fd.c			\
 	libarchive/archive_read_open_file.c			\
+	libarchive/archive_read_open_filename.c			\
+	libarchive/archive_read_open_memory.c			\
 	libarchive/archive_read_support_compression_all.c	\
 	libarchive/archive_read_support_compression_bzip2.c	\
 	libarchive/archive_read_support_compression_compress.c	\
@@ -64,6 +66,8 @@ libarchive_la_SOURCES=						\
 	libarchive/archive_write.c				\
 	libarchive/archive_write_open_fd.c			\
 	libarchive/archive_write_open_file.c			\
+	libarchive/archive_write_open_filename.c		\
+	libarchive/archive_write_open_memory.c			\
 	libarchive/archive_write_set_compression_bzip2.c	\
 	libarchive/archive_write_set_compression_gzip.c		\
 	libarchive/archive_write_set_compression_none.c		\

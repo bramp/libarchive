@@ -25,7 +25,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_write.c,v 1.16 2005/09/24 21:15:00 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_write.c,v 1.18 2006/09/05 05:59:46 kientzle Exp $");
 
 /*
  * This file contains the "essential" portions of the write API, that
@@ -88,7 +88,6 @@ archive_write_new(void)
 	return (a);
 }
 
-
 /*
  * Set the block size.  Returns 0 if successful.
  */
@@ -100,6 +99,15 @@ archive_write_set_bytes_per_block(struct archive *a, int bytes_per_block)
 	return (ARCHIVE_OK);
 }
 
+/*
+ * Get the current block size.  -1 if it has never been set.
+ */
+int
+archive_write_get_bytes_per_block(struct archive *a)
+{
+	__archive_check_magic(a, ARCHIVE_WRITE_MAGIC, ARCHIVE_STATE_ANY, "archive_write_get_bytes_per_block");
+	return (a->bytes_per_block);
+}
 
 /*
  * Set the size for the last block.
@@ -110,6 +118,30 @@ archive_write_set_bytes_in_last_block(struct archive *a, int bytes)
 {
 	__archive_check_magic(a, ARCHIVE_WRITE_MAGIC, ARCHIVE_STATE_ANY, "archive_write_set_bytes_in_last_block");
 	a->bytes_in_last_block = bytes;
+	return (ARCHIVE_OK);
+}
+
+/*
+ * Return the value set above.  -1 indicates it has not been set.
+ */
+int
+archive_write_get_bytes_in_last_block(struct archive *a)
+{
+	__archive_check_magic(a, ARCHIVE_WRITE_MAGIC, ARCHIVE_STATE_ANY, "archive_write_get_bytes_in_last_block");
+	return (a->bytes_in_last_block);
+}
+
+
+/*
+ * dev/ino of a file to be rejected.  Used to prevent adding
+ * an archive to itself recursively.
+ */
+int
+archive_write_set_skip_file(struct archive *a, dev_t d, ino_t i)
+{
+	__archive_check_magic(a, ARCHIVE_WRITE_MAGIC, ARCHIVE_STATE_ANY, "archive_write_set_skip_file");
+	a->skip_file_dev = d;
+	a->skip_file_ino = i;
 	return (ARCHIVE_OK);
 }
 
@@ -149,39 +181,58 @@ archive_write_open(struct archive *a, void *client_data,
 int
 archive_write_close(struct archive *a)
 {
+	int r = ARCHIVE_OK, r1 = ARCHIVE_OK;
+
 	__archive_check_magic(a, ARCHIVE_WRITE_MAGIC, ARCHIVE_STATE_ANY, "archive_write_close");
 
 	/* Finish the last entry. */
 	if (a->state & ARCHIVE_STATE_DATA)
-		((a->format_finish_entry)(a));
+		r = ((a->format_finish_entry)(a));
 
 	/* Finish off the archive. */
-	if (a->format_finish != NULL)
-		(a->format_finish)(a);
+	if (a->format_finish != NULL) {
+		r1 = (a->format_finish)(a);
+		if (r1 < r)
+			r = r1;
+	}
 
 	/* Finish the compression and close the stream. */
-	if (a->compression_finish != NULL)
-		(a->compression_finish)(a);
+	if (a->compression_finish != NULL) {
+		r1 = (a->compression_finish)(a);
+		if (r1 < r)
+			r = r1;
+	}
 
 	a->state = ARCHIVE_STATE_CLOSED;
-	return (ARCHIVE_OK);
+	return (r);
 }
 
 /*
  * Destroy the archive structure.
  */
+#if ARCHIVE_API_VERSION > 1
+int
+#else
+/* Temporarily allow library to compile with either 1.x or 2.0 API. */
 void
+#endif
 archive_write_finish(struct archive *a)
 {
+	int r = ARCHIVE_OK;
+
 	__archive_check_magic(a, ARCHIVE_WRITE_MAGIC, ARCHIVE_STATE_ANY, "archive_write_finish");
 	if (a->state != ARCHIVE_STATE_CLOSED)
-		archive_write_close(a);
+		r = archive_write_close(a);
 
 	/* Release various dynamic buffers. */
 	free((void *)(uintptr_t)(const void *)a->nulls);
 	archive_string_free(&a->error_string);
 	a->magic = 0;
 	free(a);
+#if ARCHIVE_API_VERSION > 1
+	/* libarchive 1.x erroneously declares this function "void" */
+	return (r);
+#endif
 }
 
 
@@ -201,7 +252,9 @@ archive_write_header(struct archive *a, struct archive_entry *entry)
 	if (a->state & ARCHIVE_STATE_DATA)
 		((a->format_finish_entry)(a));
 
-	if (archive_entry_dev(entry) == a->skip_file_dev &&
+	if (a->skip_file_dev != 0 &&
+	    archive_entry_dev(entry) == a->skip_file_dev &&
+	    a->skip_file_ino != 0 &&
 	    archive_entry_ino(entry) == a->skip_file_ino) {
 		archive_set_error(a, 0, "Can't add archive to itself");
 		return (ARCHIVE_WARN);
@@ -217,13 +270,15 @@ archive_write_header(struct archive *a, struct archive_entry *entry)
 /*
  * Note that the compressor is responsible for blocking.
  */
-/* Should be "ssize_t", but that breaks the ABI.  <sigh> */
+#if ARCHIVE_API_VERSION > 1
+ssize_t
+#else
+/* Temporarily allow library to compile with either 1.x or 2.0 API. */
 int
+#endif
 archive_write_data(struct archive *a, const void *buff, size_t s)
 {
-	int ret;
 	__archive_check_magic(a, ARCHIVE_WRITE_MAGIC, ARCHIVE_STATE_DATA, "archive_write_data");
 	archive_string_empty(&a->error_string);
-	ret = (a->format_write_data)(a, buff, s);
-	return (ret == ARCHIVE_OK ? (ssize_t)s : -1);
+	return ((a->format_write_data)(a, buff, s));
 }
