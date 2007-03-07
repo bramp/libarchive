@@ -1,0 +1,6 @@
+(^|/)\_darcs($|/)
+(^|/)\.hg($|/)
+(^|/)\.hgtags($|/)
+^state$
+^state.old$
+^state.journal$
