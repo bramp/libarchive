@@ -3,6 +3,7 @@ libarchive (2.0.25-1) unstable; urgency=low
   * New upstream version
   * Remove unnecessary dep on libarchive1.  Closes: #396756.
   * Bump standards-version
+  * Rename libarchive1 to libarchive2 to match new soname.
 
  -- John Goerzen <jgoerzen@complete.org>  Tue, 13 Mar 2007 07:03:53 -0500
 
