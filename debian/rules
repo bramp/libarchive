@@ -100,7 +100,7 @@ binary-arch: build install
 #	dh_installcron
 #	dh_installinfo
 	dh_installman -plibarchive-dev libarchive/*.[0-4,7-9]*
-	dh_installman -plibarchive1 libarchive/*.5*
+	dh_installman -plibarchive2 libarchive/*.5*
 	dh_installman -pbsdtar tar/*.[1-9]
 	dh_link -a
 	dh_strip -a
