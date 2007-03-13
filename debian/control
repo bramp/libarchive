@@ -1,7 +1,7 @@
 Source: libarchive
 Priority: optional
 Maintainer: John Goerzen <jgoerzen@complete.org>
-Build-Depends: debhelper (>= 4.0.0), autotools-dev, libbz2-dev, zlib1g-dev, libacl1-dev, e2fslibs-dev, libattr1-dev, linux-kernel-headers, bison
+Build-Depends: debhelper (>= 4.0.0), autotools-dev, libbz2-dev, zlib1g-dev, libacl1-dev, e2fslibs-dev, libattr1-dev, bison
 Standards-Version: 3.7.2
 Section: libs
 
