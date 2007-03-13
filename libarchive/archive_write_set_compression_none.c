@@ -1,13 +1,12 @@
 /*-
- * Copyright (c) 2003-2004 Tim Kientzle
+ * Copyright (c) 2003-2007 Tim Kientzle
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer
- *    in this position and unchanged.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
@@ -25,19 +24,26 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_compression_none.c,v 1.8 2005/06/01 15:52:39 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_compression_none.c,v 1.12 2007/03/03 07:37:36 kientzle Exp $");
 
+#ifdef HAVE_ERRNO_H
 #include <errno.h>
+#endif
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
+#ifdef HAVE_STRING_H
 #include <string.h>
+#endif
 
 #include "archive.h"
 #include "archive_private.h"
+#include "archive_write_private.h"
 
-static int	archive_compressor_none_finish(struct archive *a);
-static int	archive_compressor_none_init(struct archive *);
-static int	archive_compressor_none_write(struct archive *, const void *,
-		    size_t);
+static int	archive_compressor_none_finish(struct archive_write *a);
+static int	archive_compressor_none_init(struct archive_write *);
+static int	archive_compressor_none_write(struct archive_write *,
+		    const void *, size_t);
 
 struct archive_none {
 	char	*buffer;
@@ -47,12 +53,12 @@ struct archive_none {
 };
 
 int
-archive_write_set_compression_none(struct archive *a)
+archive_write_set_compression_none(struct archive *_a)
 {
-	__archive_check_magic(a, ARCHIVE_WRITE_MAGIC, ARCHIVE_STATE_NEW, "archive_write_set_compression_none");
+	struct archive_write *a = (struct archive_write *)_a;
+	__archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
+	    ARCHIVE_STATE_NEW, "archive_write_set_compression_none");
 	a->compression_init = &archive_compressor_none_init;
-	a->compression_code = ARCHIVE_COMPRESSION_NONE;
-	a->compression_name = "none";
 	return (0);
 }
 
@@ -60,36 +66,37 @@ archive_write_set_compression_none(struct archive *a)
  * Setup callback.
  */
 static int
-archive_compressor_none_init(struct archive *a)
+archive_compressor_none_init(struct archive_write *a)
 {
 	int ret;
 	struct archive_none *state;
 
-	a->compression_code = ARCHIVE_COMPRESSION_NONE;
-	a->compression_name = "none";
+	a->archive.compression_code = ARCHIVE_COMPRESSION_NONE;
+	a->archive.compression_name = "none";
 
 	if (a->client_opener != NULL) {
-		ret = (a->client_opener)(a, a->client_data);
+		ret = (a->client_opener)(&a->archive, a->client_data);
 		if (ret != 0)
 			return (ret);
 	}
 
 	state = (struct archive_none *)malloc(sizeof(*state));
 	if (state == NULL) {
-		archive_set_error(a, ENOMEM,
+		archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate data for output buffering");
 		return (ARCHIVE_FATAL);
 	}
 	memset(state, 0, sizeof(*state));
 
 	state->buffer_size = a->bytes_per_block;
-	state->buffer = malloc(state->buffer_size);
-
-	if (state->buffer == NULL) {
-		archive_set_error(a, ENOMEM,
-		    "Can't allocate output buffer");
-		free(state);
-		return (ARCHIVE_FATAL);
+	if (state->buffer_size != 0) {
+		state->buffer = (char *)malloc(state->buffer_size);
+		if (state->buffer == NULL) {
+			archive_set_error(&a->archive, ENOMEM,
+			    "Can't allocate output buffer");
+			free(state);
+			return (ARCHIVE_FATAL);
+		}
 	}
 
 	state->next = state->buffer;
@@ -105,7 +112,7 @@ archive_compressor_none_init(struct archive *a)
  * Write data to the stream.
  */
 static int
-archive_compressor_none_write(struct archive *a, const void *vbuff,
+archive_compressor_none_write(struct archive_write *a, const void *vbuff,
     size_t length)
 {
 	const char *buff;
@@ -113,28 +120,48 @@ archive_compressor_none_write(struct archive *a, const void *vbuff,
 	ssize_t bytes_written;
 	struct archive_none *state;
 
-	state = a->compression_data;
-	buff = vbuff;
+	state = (struct archive_none *)a->compression_data;
+	buff = (const char *)vbuff;
 	if (a->client_writer == NULL) {
-		archive_set_error(a, ARCHIVE_ERRNO_PROGRAMMER,
+		archive_set_error(&a->archive, ARCHIVE_ERRNO_PROGRAMMER,
 		    "No write callback is registered?  "
 		    "This is probably an internal programming error.");
 		return (ARCHIVE_FATAL);
 	}
 
 	remaining = length;
-	while (remaining > 0) {
+
+	/*
+	 * If there is no buffer for blocking, just pass the data
+	 * straight through to the client write callback.  In
+	 * particular, this supports "no write delay" operation for
+	 * special applications.  Just set the block size to zero.
+	 */
+	if (state->buffer_size == 0) {
+		while (remaining > 0) {
+			bytes_written = (a->client_writer)(&a->archive,
+			    a->client_data, buff, remaining);
+			if (bytes_written <= 0)
+				return (ARCHIVE_FATAL);
+			remaining -= bytes_written;
+			buff += bytes_written;
+		}
+		a->archive.file_position += length;
+		return (ARCHIVE_OK);
+	}
+
+	while ((remaining > 0) || (state->avail == 0)) {
 		/*
 		 * If we have a full output block, write it and reset the
 		 * output buffer.
 		 */
 		if (state->avail == 0) {
-			bytes_written = (a->client_writer)(a, a->client_data,
-			    state->buffer, state->buffer_size);
+			bytes_written = (a->client_writer)(&a->archive,
+			    a->client_data, state->buffer, state->buffer_size);
 			if (bytes_written <= 0)
 				return (ARCHIVE_FATAL);
 			/* XXX TODO: if bytes_written < state->buffer_size */
-			a->raw_position += bytes_written;
+			a->archive.raw_position += bytes_written;
 			state->next = state->buffer;
 			state->avail = state->buffer_size;
 		}
@@ -148,7 +175,7 @@ archive_compressor_none_write(struct archive *a, const void *vbuff,
 		buff += to_copy;
 		remaining -= to_copy;
 	}
-	a->file_position += length;
+	a->archive.file_position += length;
 	return (ARCHIVE_OK);
 }
 
@@ -157,7 +184,7 @@ archive_compressor_none_write(struct archive *a, const void *vbuff,
  * Finish the compression.
  */
 static int
-archive_compressor_none_finish(struct archive *a)
+archive_compressor_none_finish(struct archive_write *a)
 {
 	ssize_t block_length;
 	ssize_t target_block_length;
@@ -166,10 +193,10 @@ archive_compressor_none_finish(struct archive *a)
 	int ret2;
 	struct archive_none *state;
 
-	state = a->compression_data;
+	state = (struct archive_none *)a->compression_data;
 	ret = ret2 = ARCHIVE_OK;
 	if (a->client_writer == NULL) {
-		archive_set_error(a, ARCHIVE_ERRNO_PROGRAMMER,
+		archive_set_error(&a->archive, ARCHIVE_ERRNO_PROGRAMMER,
 		    "No write callback is registered?  "
 		    "This is probably an internal programming error.");
 		return (ARCHIVE_FATAL);
@@ -196,19 +223,19 @@ archive_compressor_none_finish(struct archive *a)
 			    target_block_length - block_length);
 			block_length = target_block_length;
 		}
-		bytes_written = (a->client_writer)(a, a->client_data,
-		    state->buffer, block_length);
+		bytes_written = (a->client_writer)(&a->archive,
+		    a->client_data, state->buffer, block_length);
 		if (bytes_written <= 0)
 			ret = ARCHIVE_FATAL;
 		else {
-			a->raw_position += bytes_written;
+			a->archive.raw_position += bytes_written;
 			ret = ARCHIVE_OK;
 		}
 	}
 
 	/* Close the output */
 	if (a->client_closer != NULL)
-		ret2 = (a->client_closer)(a, a->client_data);
+		ret2 = (a->client_closer)(&a->archive, a->client_data);
 
 	free(state->buffer);
 	free(state);

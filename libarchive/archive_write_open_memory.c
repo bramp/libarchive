@@ -1,13 +1,12 @@
 /*-
- * Copyright (c) 2003-2006 Tim Kientzle
+ * Copyright (c) 2003-2007 Tim Kientzle
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer
- *    in this position and unchanged.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
@@ -25,14 +24,13 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD$");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_open_memory.c,v 1.3 2007/01/09 08:05:56 kientzle Exp $");
 
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "archive.h"
-#include "archive_private.h"
 
 /*
  * This is a little tricky.  I used to allow the
@@ -55,7 +53,7 @@ struct write_memory_data {
 
 static int	memory_write_close(struct archive *, void *);
 static int	memory_write_open(struct archive *, void *);
-static ssize_t	memory_write(struct archive *, void *, void *buff, size_t);
+static ssize_t	memory_write(struct archive *, void *, const void *buff, size_t);
 
 /*
  * Client provides a pointer to a block of memory to receive
@@ -67,7 +65,7 @@ archive_write_open_memory(struct archive *a, void *buff, size_t buffSize, size_t
 {
 	struct write_memory_data *mine;
 
-	mine = malloc(sizeof(*mine));
+	mine = (struct write_memory_data *)malloc(sizeof(*mine));
 	if (mine == NULL) {
 		archive_set_error(a, ENOMEM, "No memory");
 		return (ARCHIVE_FATAL);
@@ -101,7 +99,7 @@ memory_write_open(struct archive *a, void *client_data)
  * how much has been written into their buffer at any time.
  */
 static ssize_t
-memory_write(struct archive *a, void *client_data, void *buff, size_t length)
+memory_write(struct archive *a, void *client_data, const void *buff, size_t length)
 {
 	struct write_memory_data *mine;
 	mine = client_data;

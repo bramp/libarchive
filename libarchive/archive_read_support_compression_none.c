@@ -1,13 +1,12 @@
 /*-
- * Copyright (c) 2003-2004 Tim Kientzle
+ * Copyright (c) 2003-2007 Tim Kientzle
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer
- *    in this position and unchanged.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
@@ -25,16 +24,27 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_compression_none.c,v 1.8 2006/08/29 04:59:25 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_compression_none.c,v 1.15 2007/03/03 07:37:36 kientzle Exp $");
 
-#include <assert.h>
+#ifdef HAVE_ERRNO_H
 #include <errno.h>
+#endif
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
+#ifdef HAVE_STRING_H
 #include <string.h>
+#endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 #include "archive.h"
 #include "archive_private.h"
+#include "archive_read_private.h"
 
 struct archive_decompress_none {
 	char		*buffer;
@@ -65,18 +75,19 @@ struct archive_decompress_none {
 #define minimum(a, b) (a < b ? a : b)
 
 static int	archive_decompressor_none_bid(const void *, size_t);
-static int	archive_decompressor_none_finish(struct archive *);
-static int	archive_decompressor_none_init(struct archive *,
+static int	archive_decompressor_none_finish(struct archive_read *);
+static int	archive_decompressor_none_init(struct archive_read *,
 		    const void *, size_t);
-static ssize_t	archive_decompressor_none_read_ahead(struct archive *,
+static ssize_t	archive_decompressor_none_read_ahead(struct archive_read *,
 		    const void **, size_t);
-static ssize_t	archive_decompressor_none_read_consume(struct archive *,
+static ssize_t	archive_decompressor_none_read_consume(struct archive_read *,
 		    size_t);
-static ssize_t	archive_decompressor_none_skip(struct archive *, size_t);
+static off_t	archive_decompressor_none_skip(struct archive_read *, off_t);
 
 int
-archive_read_support_compression_none(struct archive *a)
+archive_read_support_compression_none(struct archive *_a)
 {
+	struct archive_read *a = (struct archive_read *)_a;
 	return (__archive_read_register_compression(a,
 		    archive_decompressor_none_bid,
 		    archive_decompressor_none_init));
@@ -95,31 +106,31 @@ archive_decompressor_none_bid(const void *buff, size_t len)
 }
 
 static int
-archive_decompressor_none_init(struct archive *a, const void *buff, size_t n)
+archive_decompressor_none_init(struct archive_read *a, const void *buff, size_t n)
 {
 	struct archive_decompress_none	*state;
 
-	a->compression_code = ARCHIVE_COMPRESSION_NONE;
-	a->compression_name = "none";
+	a->archive.compression_code = ARCHIVE_COMPRESSION_NONE;
+	a->archive.compression_name = "none";
 
 	state = (struct archive_decompress_none *)malloc(sizeof(*state));
 	if (!state) {
-		archive_set_error(a, ENOMEM, "Can't allocate input data");
+		archive_set_error(&a->archive, ENOMEM, "Can't allocate input data");
 		return (ARCHIVE_FATAL);
 	}
 	memset(state, 0, sizeof(*state));
 
 	state->buffer_size = BUFFER_SIZE;
-	state->buffer = malloc(state->buffer_size);
+	state->buffer = (char *)malloc(state->buffer_size);
 	state->next = state->buffer;
 	if (state->buffer == NULL) {
 		free(state);
-		archive_set_error(a, ENOMEM, "Can't allocate input buffer");
+		archive_set_error(&a->archive, ENOMEM, "Can't allocate input buffer");
 		return (ARCHIVE_FATAL);
 	}
 
 	/* Save reference to first block of data. */
-	state->client_buff = buff;
+	state->client_buff = (const char *)buff;
 	state->client_total = n;
 	state->client_next = state->client_buff;
 	state->client_avail = state->client_total;
@@ -139,13 +150,13 @@ archive_decompressor_none_init(struct archive *a, const void *buff, size_t n)
  * buffer to combine reads.
  */
 static ssize_t
-archive_decompressor_none_read_ahead(struct archive *a, const void **buff,
+archive_decompressor_none_read_ahead(struct archive_read *a, const void **buff,
     size_t min)
 {
 	struct archive_decompress_none *state;
 	ssize_t bytes_read;
 
-	state = a->compression_data;
+	state = (struct archive_decompress_none *)a->compression_data;
 	if (state->fatal)
 		return (-1);
 
@@ -207,7 +218,8 @@ archive_decompressor_none_read_ahead(struct archive *a, const void **buff,
 			 * char ** should be compatible, but they
 			 * aren't, hence the cast.
 			 */
-			bytes_read = (a->client_reader)(a, a->client_data,
+			bytes_read = (a->client_reader)(&a->archive,
+			    a->client_data,
 			    (const void **)&state->client_buff);
 			if (bytes_read < 0) {		/* Read error. */
 				state->client_total = state->client_avail = 0;
@@ -221,7 +233,7 @@ archive_decompressor_none_read_ahead(struct archive *a, const void **buff,
 				state->end_of_file = 1;
 				break;
 			}
-			a->raw_position += bytes_read;
+			a->archive.raw_position += bytes_read;
 			state->client_total = bytes_read;
 			state->client_avail = state->client_total;
 			state->client_next = state->client_buff;
@@ -238,11 +250,11 @@ archive_decompressor_none_read_ahead(struct archive *a, const void **buff,
  * request.
  */
 static ssize_t
-archive_decompressor_none_read_consume(struct archive *a, size_t request)
+archive_decompressor_none_read_consume(struct archive_read *a, size_t request)
 {
 	struct archive_decompress_none *state;
 
-	state = a->compression_data;
+	state = (struct archive_decompress_none *)a->compression_data;
 	if (state->avail > 0) {
 		/* Read came from copy buffer. */
 		state->next += request;
@@ -252,34 +264,36 @@ archive_decompressor_none_read_consume(struct archive *a, size_t request)
 		state->client_next += request;
 		state->client_avail -= request;
 	}
-	a->file_position += request;
+	a->archive.file_position += request;
 	return (request);
 }
 
 /*
- * Skip at most request bytes. Skipped data is marked as consumed.
+ * Skip forward by exactly the requested bytes or else return
+ * ARCHIVE_FATAL.  Note that this differs from the contract for
+ * read_ahead, which does not guarantee a minimum count.
  */
-static ssize_t
-archive_decompressor_none_skip(struct archive *a, size_t request)
+static off_t
+archive_decompressor_none_skip(struct archive_read *a, off_t request)
 {
 	struct archive_decompress_none *state;
-	ssize_t bytes_skipped, total_bytes_skipped = 0;
+	off_t bytes_skipped, total_bytes_skipped = 0;
 	size_t min;
 
-	state = a->compression_data;
+	state = (struct archive_decompress_none *)a->compression_data;
 	if (state->fatal)
 		return (-1);
 	/*
 	 * If there is data in the buffers already, use that first.
 	 */
 	if (state->avail > 0) {
-		min = minimum(request, state->avail);
+		min = minimum(request, (off_t)state->avail);
 		bytes_skipped = archive_decompressor_none_read_consume(a, min);
 		request -= bytes_skipped;
 		total_bytes_skipped += bytes_skipped;
 	}
 	if (state->client_avail > 0) {
-		min = minimum(request, state->client_avail);
+		min = minimum(request, (off_t)state->client_avail);
 		bytes_skipped = archive_decompressor_none_read_consume(a, min);
 		request -= bytes_skipped;
 		total_bytes_skipped += bytes_skipped;
@@ -287,13 +301,15 @@ archive_decompressor_none_skip(struct archive *a, size_t request)
 	if (request == 0)
 		return (total_bytes_skipped);
 	/*
-	 * If no client_skipper is provided, just read the old way. It is very
-	 * likely that after skipping, the request has not yet been fully
-	 * satisfied (and is still > 0). In that case, read as well.
+	 * If a client_skipper was provided, try that first.
 	 */
+#if ARCHIVE_API_VERSION < 2
+	if ((a->client_skipper != NULL) && (request < SSIZE_MAX)) {
+#else
 	if (a->client_skipper != NULL) {
-		bytes_skipped = (a->client_skipper)(a, a->client_data,
-		    request);
+#endif
+		bytes_skipped = (a->client_skipper)(&a->archive,
+		    a->client_data, request);
 		if (bytes_skipped < 0) {	/* error */
 			state->client_total = state->client_avail = 0;
 			state->client_next = state->client_buff = NULL;
@@ -301,12 +317,18 @@ archive_decompressor_none_skip(struct archive *a, size_t request)
 			return (bytes_skipped);
 		}
 		total_bytes_skipped += bytes_skipped;
-		a->file_position += bytes_skipped;
+		a->archive.file_position += bytes_skipped;
 		request -= bytes_skipped;
 		state->client_next = state->client_buff;
-		a->raw_position += bytes_skipped;
+		a->archive.raw_position += bytes_skipped;
 		state->client_avail = state->client_total = 0;
 	}
+	/*
+	 * Note that client_skipper will usually not satisfy the
+	 * full request (due to low-level blocking concerns),
+	 * so even if client_skipper is provided, we may still
+	 * have to use ordinary reads to finish out the request.
+	 */
 	while (request > 0) {
 		const void* dummy_buffer;
 		ssize_t bytes_read;
@@ -314,26 +336,31 @@ archive_decompressor_none_skip(struct archive *a, size_t request)
 		    &dummy_buffer, request);
 		if (bytes_read < 0)
 			return (bytes_read);
-		assert(bytes_read >= 0); /* precondition for cast below */
-		min = minimum((size_t)bytes_read, request);
+		if (bytes_read == 0) {
+			/* We hit EOF before we satisfied the skip request. */
+			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			    "Truncated input file (need to skip %jd bytes)",
+			    (intmax_t)request);
+			return (ARCHIVE_FATAL);
+		}
+		min = (size_t)(minimum(bytes_read, request));
 		bytes_read = archive_decompressor_none_read_consume(a, min);
 		total_bytes_skipped += bytes_read;
 		request -= bytes_read;
 	}
-	assert(request == 0);
 	return (total_bytes_skipped);
 }
 
 static int
-archive_decompressor_none_finish(struct archive *a)
+archive_decompressor_none_finish(struct archive_read *a)
 {
 	struct archive_decompress_none	*state;
 
-	state = a->compression_data;
+	state = (struct archive_decompress_none *)a->compression_data;
 	free(state->buffer);
 	free(state);
 	a->compression_data = NULL;
 	if (a->client_closer != NULL)
-		return ((a->client_closer)(a, a->client_data));
+		return ((a->client_closer)(&a->archive, a->client_data));
 	return (ARCHIVE_OK);
 }

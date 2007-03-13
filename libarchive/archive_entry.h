@@ -1,13 +1,12 @@
 /*-
- * Copyright (c) 2003-2004 Tim Kientzle
+ * Copyright (c) 2003-2007 Tim Kientzle
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer
- *    in this position and unchanged.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
@@ -23,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libarchive/archive_entry.h,v 1.19 2006/03/21 16:55:46 kientzle Exp $
+ * $FreeBSD: src/lib/libarchive/archive_entry.h,v 1.21 2007/03/01 06:22:34 kientzle Exp $
  */
 
 #ifndef ARCHIVE_ENTRY_H_INCLUDED
@@ -131,6 +130,7 @@ void	archive_entry_set_rdevmajor(struct archive_entry *, dev_t);
 void	archive_entry_set_rdevminor(struct archive_entry *, dev_t);
 void	archive_entry_set_size(struct archive_entry *, int64_t);
 void	archive_entry_set_symlink(struct archive_entry *, const char *);
+void	archive_entry_copy_symlink(struct archive_entry *, const char *);
 void	archive_entry_copy_symlink_w(struct archive_entry *, const wchar_t *);
 void	archive_entry_set_uid(struct archive_entry *, uid_t);
 void	archive_entry_set_uname(struct archive_entry *, const char *);

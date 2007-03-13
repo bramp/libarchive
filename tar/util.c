@@ -1,13 +1,12 @@
 /*-
- * Copyright (c) 2003-2004 Tim Kientzle
+ * Copyright (c) 2003-2007 Tim Kientzle
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer
- *    in this position and unchanged.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
@@ -25,16 +24,28 @@
  */
 
 #include "bsdtar_platform.h"
-__FBSDID("$FreeBSD: src/usr.bin/tar/util.c,v 1.14 2006/03/21 17:03:51 kientzle Exp $");
+__FBSDID("$FreeBSD: src/usr.bin/tar/util.c,v 1.16 2007/03/11 10:36:42 kientzle Exp $");
 
+#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>  /* Linux doesn't define mode_t, etc. in sys/stat.h. */
+#endif
 #include <ctype.h>
+#ifdef HAVE_ERRNO_H
 #include <errno.h>
+#endif
+#ifdef HAVE_STDARG_H
 #include <stdarg.h>
+#endif
 #include <stdio.h>
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
+#ifdef HAVE_STRING_H
 #include <string.h>
+#endif
 
 #include "bsdtar.h"
 
@@ -383,6 +394,8 @@ do_chdir(struct bsdtar *bsdtar)
 /*
  * Handle --strip-components and any future path-rewriting options.
  * Returns non-zero if the pathname should not be extracted.
+ *
+ * TODO: Support pax-style regex path rewrites.
  */
 int
 edit_pathname(struct bsdtar *bsdtar, struct archive_entry *entry)
@@ -406,10 +419,6 @@ edit_pathname(struct bsdtar *bsdtar, struct archive_entry *entry)
 			}
 		}
 	}
-
-	/* Strip redundant "./" from start of filename. */
-	if (name[0] == '.' && name[1] == '/' && name[2] != '\0')
-		name += 2;
 
 	/* Strip redundant leading '/' characters. */
 	while (name[0] == '/' && name[1] == '/')
@@ -436,4 +445,20 @@ edit_pathname(struct bsdtar *bsdtar, struct archive_entry *entry)
 		free(q);
 	}
 	return (0);
+}
+
+/*
+ * Like strcmp(), but try to be a little more aware of the fact that
+ * we're comparing two paths.
+ *
+ * TODO: Make this better, so that "./a//b/./c" == "a/b/c"
+ */
+int
+pathcmp(const char *a, const char *b)
+{
+	if (a[0] == '.' && a[1] == '/' && a[2] != '\0')
+		a += 2;
+	if (b[0] == '.' && b[1] == '/' && b[2] != '\0')
+		b += 2;
+	return (strcmp(a, b));
 }

@@ -1,13 +1,12 @@
 /*-
- * Copyright (c) 2003-2004 Tim Kientzle
+ * Copyright (c) 2003-2007 Tim Kientzle
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer
- *    in this position and unchanged.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
@@ -25,10 +24,14 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_entry.c,v 1.35 2006/05/01 00:55:44 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_entry.c,v 1.40 2007/03/11 10:29:52 kientzle Exp $");
 
+#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 #ifdef MAJOR_IN_MKDEV
 #include <sys/mkdev.h>
 #else
@@ -39,11 +42,23 @@ __FBSDID("$FreeBSD: src/lib/libarchive/archive_entry.c,v 1.35 2006/05/01 00:55:4
 #ifdef HAVE_EXT2FS_EXT2_FS_H
 #include <ext2fs/ext2_fs.h>	/* for Linux file flags */
 #endif
+#ifdef HAVE_LIMITS_H
 #include <limits.h>
+#endif
+#ifdef HAVE_LINUX_FS_H
+#include <linux/fs.h>	/* for Linux file flags */
+#endif
+#ifdef HAVE_LINUX_EXT2_FS_H
+#include <linux/ext2_fs.h>	/* for Linux file flags */
+#endif
 #include <stddef.h>
 #include <stdio.h>
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
+#ifdef HAVE_STRING_H
 #include <string.h>
+#endif
 
 /* Obtain suitable wide-character manipulation functions. */
 #ifdef HAVE_WCHAR_H
@@ -113,6 +128,7 @@ static void	aes_set_mbs(struct aes *, const char *mbs);
 static void	aes_copy_mbs(struct aes *, const char *mbs);
 /* static void	aes_set_wcs(struct aes *, const wchar_t *wcs); */
 static void	aes_copy_wcs(struct aes *, const wchar_t *wcs);
+static void	aes_copy_wcs_len(struct aes *, const wchar_t *wcs, size_t);
 
 static char *	 ae_fflagstostr(unsigned long bitset, unsigned long bitclear);
 static const wchar_t	*ae_wcstofflags(const wchar_t *stringp,
@@ -125,10 +141,14 @@ static int	acl_special(struct archive_entry *entry,
 		    int type, int permset, int tag);
 static struct ae_acl *acl_new_entry(struct archive_entry *entry,
 		    int type, int permset, int tag, int id);
+static int	isint_w(const wchar_t *start, const wchar_t *end, int *result);
 static void	next_field_w(const wchar_t **wp, const wchar_t **start,
 		    const wchar_t **end, wchar_t *sep);
 static int	prefix_w(const wchar_t *start, const wchar_t *end,
 		    const wchar_t *test);
+static void
+archive_entry_acl_add_entry_w_len(struct archive_entry *entry, int type,
+		    int permset, int tag, int id, const wchar_t *name, size_t);
 
 
 /*
@@ -209,7 +229,7 @@ aes_copy(struct aes *dest, struct aes *src)
 	}
 
 	if (src->aes_wcs != NULL) {
-		dest->aes_wcs_alloc = malloc((wcslen(src->aes_wcs) + 1)
+		dest->aes_wcs_alloc = (wchar_t *)malloc((wcslen(src->aes_wcs) + 1)
 		    * sizeof(wchar_t));
 		dest->aes_wcs = dest->aes_wcs_alloc;
 		if (dest->aes_wcs == NULL)
@@ -231,7 +251,7 @@ aes_get_mbs(struct aes *aes)
 		 * be a better way... XXX
 		 */
 		int mbs_length = wcslen(aes->aes_wcs) * 3 + 64;
-		aes->aes_mbs_alloc = malloc(mbs_length);
+		aes->aes_mbs_alloc = (char *)malloc(mbs_length);
 		aes->aes_mbs = aes->aes_mbs_alloc;
 		if (aes->aes_mbs == NULL)
 			__archive_errx(1, "No memory for aes_get_mbs()");
@@ -253,7 +273,7 @@ aes_get_wcs(struct aes *aes)
 		 */
 		int wcs_length = strlen(aes->aes_mbs);
 		aes->aes_wcs_alloc
-		    = malloc((wcs_length + 1) * sizeof(wchar_t));
+		    = (wchar_t *)malloc((wcs_length + 1) * sizeof(wchar_t));
 		aes->aes_wcs = aes->aes_wcs_alloc;
 		if (aes->aes_wcs == NULL)
 			__archive_errx(1, "No memory for aes_get_wcs()");
@@ -289,7 +309,7 @@ aes_copy_mbs(struct aes *aes, const char *mbs)
 		free(aes->aes_wcs_alloc);
 		aes->aes_wcs_alloc = NULL;
 	}
-	aes->aes_mbs_alloc = malloc((strlen(mbs) + 1) * sizeof(char));
+	aes->aes_mbs_alloc = (char *)malloc((strlen(mbs) + 1) * sizeof(char));
 	if (aes->aes_mbs_alloc == NULL)
 		__archive_errx(1, "No memory for aes_copy_mbs()");
 	strcpy(aes->aes_mbs_alloc, mbs);
@@ -317,6 +337,12 @@ aes_set_wcs(struct aes *aes, const wchar_t *wcs)
 static void
 aes_copy_wcs(struct aes *aes, const wchar_t *wcs)
 {
+	aes_copy_wcs_len(aes, wcs, wcslen(wcs));
+}
+
+static void
+aes_copy_wcs_len(struct aes *aes, const wchar_t *wcs, size_t len)
+{
 	if (aes->aes_mbs_alloc) {
 		free(aes->aes_mbs_alloc);
 		aes->aes_mbs_alloc = NULL;
@@ -326,10 +352,11 @@ aes_copy_wcs(struct aes *aes, const wchar_t *wcs)
 		aes->aes_wcs_alloc = NULL;
 	}
 	aes->aes_mbs = NULL;
-	aes->aes_wcs_alloc = malloc((wcslen(wcs) + 1) * sizeof(wchar_t));
+	aes->aes_wcs_alloc = (wchar_t *)malloc((len + 1) * sizeof(wchar_t));
 	if (aes->aes_wcs_alloc == NULL)
 		__archive_errx(1, "No memory for aes_copy_wcs()");
-	wcscpy(aes->aes_wcs_alloc, wcs);
+	wmemcpy(aes->aes_wcs_alloc, wcs, len);
+	aes->aes_wcs_alloc[len] = L'\0';
 	aes->aes_wcs = aes->aes_wcs_alloc;
 }
 
@@ -354,7 +381,7 @@ archive_entry_clone(struct archive_entry *entry)
 	struct archive_entry *entry2;
 
 	/* Allocate new structure and copy over all of the fields. */
-	entry2 = malloc(sizeof(*entry2));
+	entry2 = (struct archive_entry *)malloc(sizeof(*entry2));
 	if (entry2 == NULL)
 		return (NULL);
 	memset(entry2, 0, sizeof(*entry2));
@@ -386,7 +413,7 @@ archive_entry_new(void)
 {
 	struct archive_entry *entry;
 
-	entry = malloc(sizeof(*entry));
+	entry = (struct archive_entry *)malloc(sizeof(*entry));
 	if (entry == NULL)
 		return (NULL);
 	memset(entry, 0, sizeof(*entry));
@@ -751,6 +778,12 @@ archive_entry_set_symlink(struct archive_entry *entry, const char *linkname)
 }
 
 void
+archive_entry_copy_symlink(struct archive_entry *entry, const char *linkname)
+{
+	aes_copy_mbs(&entry->ae_symlink, linkname);
+}
+
+void
 archive_entry_copy_symlink_w(struct archive_entry *entry, const wchar_t *linkname)
 {
 	aes_copy_wcs(&entry->ae_symlink, linkname);
@@ -831,6 +864,13 @@ void
 archive_entry_acl_add_entry_w(struct archive_entry *entry,
     int type, int permset, int tag, int id, const wchar_t *name)
 {
+	archive_entry_acl_add_entry_w_len(entry, type, permset, tag, id, name, wcslen(name));
+}
+
+void
+archive_entry_acl_add_entry_w_len(struct archive_entry *entry,
+    int type, int permset, int tag, int id, const wchar_t *name, size_t len)
+{
 	struct ae_acl *ap;
 
 	if (acl_special(entry, type, permset, tag) == 0)
@@ -840,8 +880,8 @@ archive_entry_acl_add_entry_w(struct archive_entry *entry,
 		/* XXX Error XXX */
 		return;
 	}
-	if (name != NULL  &&  *name != L'\0')
-		aes_copy_wcs(&ap->name, name);
+	if (name != NULL  &&  *name != L'\0' && len > 0)
+		aes_copy_wcs_len(&ap->name, name, len);
 	else
 		aes_clean(&ap->name);
 }
@@ -901,7 +941,7 @@ acl_new_entry(struct archive_entry *entry,
 	}
 
 	/* Add a new entry to the list. */
-	ap = malloc(sizeof(*ap));
+	ap = (struct ae_acl *)malloc(sizeof(*ap));
 	if (ap == NULL)
 		return (NULL);
 	memset(ap, 0, sizeof(*ap));
@@ -1017,7 +1057,7 @@ archive_entry_acl_next(struct archive_entry *entry, int want_type, int *type,
 		entry->acl_p = entry->acl_p->next;
 	if (entry->acl_p == NULL) {
 		entry->acl_state = 0;
-		return (ARCHIVE_WARN);
+		return (ARCHIVE_EOF); /* End of ACL entries. */
 	}
 	*type = entry->acl_p->type;
 	*permset = entry->acl_p->permset;
@@ -1064,6 +1104,8 @@ archive_entry_acl_text_w(struct archive_entry *entry, int flags)
 			wname = aes_get_wcs(&ap->name);
 			if (wname != NULL)
 				length += wcslen(wname);
+			else
+				length += sizeof(uid_t) * 3 + 1;
 			length ++; /* colon */
 			length += 3; /* rwx */
 			length += 1; /* colon */
@@ -1083,7 +1125,7 @@ archive_entry_acl_text_w(struct archive_entry *entry, int flags)
 		return (NULL);
 
 	/* Now, allocate the string and actually populate it. */
-	wp = entry->acl_text_w = malloc(length * sizeof(wchar_t));
+	wp = entry->acl_text_w = (wchar_t *)malloc(length * sizeof(wchar_t));
 	if (wp == NULL)
 		__archive_errx(1, "No memory to generate the text version of the ACL");
 	count = 0;
@@ -1146,6 +1188,8 @@ archive_entry_acl_text_w(struct archive_entry *entry, int flags)
 static void
 append_id_w(wchar_t **wp, int id)
 {
+	if (id < 0)
+		id = 0;
 	if (id > 9)
 		append_id_w(wp, id / 10);
 	*(*wp)++ = L"0123456789"[id % 10];
@@ -1190,6 +1234,10 @@ append_entry_w(wchar_t **wp, const wchar_t *prefix, int tag,
 	if (wname != NULL) {
 		wcscpy(*wp, wname);
 		*wp += wcslen(*wp);
+	} else if (tag == ARCHIVE_ENTRY_ACL_USER
+	    || tag == ARCHIVE_ENTRY_ACL_GROUP) {
+		append_id_w(wp, id);
+		id = -1;
 	}
 	*(*wp)++ = L':';
 	*(*wp)++ = (perm & 0444) ? L'r' : L'-';
@@ -1212,73 +1260,47 @@ int
 __archive_entry_acl_parse_w(struct archive_entry *entry,
     const wchar_t *text, int default_type)
 {
-	int type, tag, permset, id;
-	const wchar_t *start, *end;
-	const wchar_t *name_start, *name_end;
-	wchar_t sep;
-	wchar_t *namebuff;
-	int namebuff_length;
+	struct {
+		const wchar_t *start;
+		const wchar_t *end;
+	} field[4];
 
-	name_start = name_end = NULL;
-	namebuff = NULL;
-	namebuff_length = 0;
+	int fields;
+	int type, tag, permset, id;
+	const wchar_t *p;
+	wchar_t sep;
 
 	while (text != NULL  &&  *text != L'\0') {
-		next_field_w(&text, &start, &end, &sep);
-		if (sep != L':')
-			goto fail;
-
 		/*
-		 * Solaris extension:  "defaultuser::rwx" is the
-		 * default ACL corresponding to "user::rwx", etc.
+		 * Parse the fields out of the next entry,
+		 * advance 'text' to start of next entry.
 		 */
-		if (end-start > 7  && wmemcmp(start, L"default", 7) == 0) {
-			type = ARCHIVE_ENTRY_ACL_TYPE_DEFAULT;
-			start += 7;
-		} else
-			type = default_type;
+		fields = 0;
+		do {
+			const wchar_t *start, *end;
+			next_field_w(&text, &start, &end, &sep);
+			if (fields < 4) {
+				field[fields].start = start;
+				field[fields].end = end;
+			}
+			++fields;
+		} while (sep == L':');
 
-		if (prefix_w(start, end, L"user")) {
-			next_field_w(&text, &start, &end, &sep);
-			if (sep != L':')
-				goto fail;
-			if (end > start) {
-				tag = ARCHIVE_ENTRY_ACL_USER;
-				name_start = start;
-				name_end = end;
-			} else
-				tag = ARCHIVE_ENTRY_ACL_USER_OBJ;
-		} else if (prefix_w(start, end, L"group")) {
-			next_field_w(&text, &start, &end, &sep);
-			if (sep != L':')
-				goto fail;
-			if (end > start) {
-				tag = ARCHIVE_ENTRY_ACL_GROUP;
-				name_start = start;
-				name_end = end;
-			} else
-				tag = ARCHIVE_ENTRY_ACL_GROUP_OBJ;
-		} else if (prefix_w(start, end, L"other")) {
-			next_field_w(&text, &start, &end, &sep);
-			if (sep != L':')
-				goto fail;
-			if (end > start)
-				goto fail;
-			tag = ARCHIVE_ENTRY_ACL_OTHER;
-		} else if (prefix_w(start, end, L"mask")) {
-			next_field_w(&text, &start, &end, &sep);
-			if (sep != L':')
-				goto fail;
-			if (end > start)
-				goto fail;
-			tag = ARCHIVE_ENTRY_ACL_MASK;
-		} else
-			goto fail;
+		if (fields < 3)
+			return (ARCHIVE_WARN);
 
-		next_field_w(&text, &start, &end, &sep);
+		/* Check for a numeric ID in field 1 or 3. */
+		id = -1;
+		isint_w(field[1].start, field[1].end, &id);
+		/* Field 3 is optional. */
+		if (id == -1 && fields > 3)
+			isint_w(field[3].start, field[3].end, &id);
+
+		/* Parse the permissions from field 2. */
 		permset = 0;
-		while (start < end) {
-			switch (*start++) {
+		p = field[2].start;
+		while (p < field[2].end) {
+			switch (*p++) {
 			case 'r': case 'R':
 				permset |= ARCHIVE_ENTRY_ACL_READ;
 				break;
@@ -1291,71 +1313,47 @@ __archive_entry_acl_parse_w(struct archive_entry *entry,
 			case '-':
 				break;
 			default:
-				goto fail;
+				return (ARCHIVE_WARN);
 			}
 		}
 
 		/*
-		 * Support star-compatible numeric UID/GID extension.
-		 * This extension adds a ":" followed by the numeric
-		 * ID so that "group:groupname:rwx", for example,
-		 * becomes "group:groupname:rwx:999", where 999 is the
-		 * numeric GID.  This extension makes it possible, for
-		 * example, to correctly restore ACLs on a system that
-		 * might have a damaged passwd file or be disconnected
-		 * from a central NIS server.  This extension is compatible
-		 * with POSIX.1e draft 17.
+		 * Solaris extension:  "defaultuser::rwx" is the
+		 * default ACL corresponding to "user::rwx", etc.
 		 */
-		if (sep == L':' && (tag == ARCHIVE_ENTRY_ACL_USER ||
-		    tag == ARCHIVE_ENTRY_ACL_GROUP)) {
-			next_field_w(&text, &start, &end, &sep);
-
-			id = 0;
-			while (start < end  && *start >= '0' && *start <= '9') {
-				if (id > (INT_MAX / 10))
-					id = INT_MAX;
-				else {
-					id *= 10;
-					id += *start - '0';
-					start++;
-				}
-			}
+		if (field[0].end-field[0].start > 7
+		    && wmemcmp(field[0].start, L"default", 7) == 0) {
+			type = ARCHIVE_ENTRY_ACL_TYPE_DEFAULT;
+			field[0].start += 7;
 		} else
-			id = -1; /* No id specified. */
+			type = default_type;
 
-		/* Skip any additional entries. */
-		while (sep == L':') {
-			next_field_w(&text, &start, &end, &sep);
-		}
+		if (prefix_w(field[0].start, field[0].end, L"user")) {
+			if (id != -1 || field[1].start < field[1].end)
+				tag = ARCHIVE_ENTRY_ACL_USER;
+			else
+				tag = ARCHIVE_ENTRY_ACL_USER_OBJ;
+		} else if (prefix_w(field[0].start, field[0].end, L"group")) {
+			if (id != -1 || field[1].start < field[1].end)
+				tag = ARCHIVE_ENTRY_ACL_GROUP;
+			else
+				tag = ARCHIVE_ENTRY_ACL_GROUP_OBJ;
+		} else if (prefix_w(field[0].start, field[0].end, L"other")) {
+			if (id != -1 || field[1].start < field[1].end)
+				return (ARCHIVE_WARN);
+			tag = ARCHIVE_ENTRY_ACL_OTHER;
+		} else if (prefix_w(field[0].start, field[0].end, L"mask")) {
+			if (id != -1 || field[1].start < field[1].end)
+				return (ARCHIVE_WARN);
+			tag = ARCHIVE_ENTRY_ACL_MASK;
+		} else
+			return (ARCHIVE_WARN);
 
 		/* Add entry to the internal list. */
-		if (name_end == name_start) {
-			archive_entry_acl_add_entry_w(entry, type, permset,
-			    tag, id, NULL);
-		} else {
-			if (namebuff_length <= name_end - name_start) {
-				if (namebuff != NULL)
-					free(namebuff);
-				namebuff_length = name_end - name_start + 256;
-				namebuff =
-				    malloc(namebuff_length * sizeof(wchar_t));
-				if (namebuff == NULL)
-					goto fail;
-			}
-			wmemcpy(namebuff, name_start, name_end - name_start);
-			namebuff[name_end - name_start] = L'\0';
-			archive_entry_acl_add_entry_w(entry, type,
-			    permset, tag, id, namebuff);
-		}
+		archive_entry_acl_add_entry_w_len(entry, type, permset,
+		    tag, id, field[1].start, field[1].end - field[1].start);
 	}
-	if (namebuff != NULL)
-		free(namebuff);
 	return (ARCHIVE_OK);
-
-fail:
-	if (namebuff != NULL)
-		free(namebuff);
-	return (ARCHIVE_WARN);
 }
 
 /*
@@ -1387,16 +1385,16 @@ archive_entry_xattr_add_entry(struct archive_entry *entry,
 	for (xp = entry->xattr_head; xp != NULL; xp = xp->next)
 		;
 
-	if ((xp = malloc(sizeof(struct ae_xattr))) == NULL)
+	if ((xp = (struct ae_xattr *)malloc(sizeof(struct ae_xattr))) == NULL)
 		/* XXX Error XXX */
 		return;
 
 	xp->name = strdup(name);
-	if ((xp -> value = malloc(size)) != NULL) {
-		memcpy(xp -> value, value, size);
-		xp -> size = size;
+	if ((xp->value = malloc(size)) != NULL) {
+		memcpy(xp->value, value, size);
+		xp->size = size;
 	} else
-		xp -> size = 0;
+		xp->size = 0;
 
 	xp->next = entry->xattr_head;
 	entry->xattr_head = xp;
@@ -1451,6 +1449,32 @@ archive_entry_xattr_next(struct archive_entry * entry,
  */
 
 /*
+ * Parse a string to a positive decimal integer.  Returns true if
+ * the string is non-empty and consists only of decimal digits,
+ * false otherwise.
+ */
+static int
+isint_w(const wchar_t *start, const wchar_t *end, int *result)
+{
+	int n = 0;
+	if (start >= end)
+		return (0);
+	while (start < end) {
+		if (*start < '0' || *start > '9')
+			return (0);
+		if (n > (INT_MAX / 10))
+			n = INT_MAX;
+		else {
+			n *= 10;
+			n += *start - '0';
+		}
+		start++;
+	}
+	*result = n;
+	return (1);
+}
+
+/*
  * Match "[:whitespace:]*(.*)[:whitespace:]*[:,\n]".  *wp is updated
  * to point to just after the separator.  *start points to the first
  * character of the matched text and *end just after the last
@@ -1487,6 +1511,10 @@ next_field_w(const wchar_t **wp, const wchar_t **start,
 		(*wp)++;
 }
 
+/*
+ * Return true if the characters [start...end) are a prefix of 'test'.
+ * This makes it easy to handle the obvious abbreviations: 'u' for 'user', etc.
+ */
 static int
 prefix_w(const wchar_t *start, const wchar_t *end, const wchar_t *test)
 {
@@ -1632,7 +1660,7 @@ ae_fflagstostr(unsigned long bitset, unsigned long bitclear)
 
 	if (length == 0)
 		return (NULL);
-	string = malloc(length);
+	string = (char *)malloc(length);
 	if (string == NULL)
 		return (NULL);
 

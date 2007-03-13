@@ -1,13 +1,12 @@
 /*-
- * Copyright (c) 2003-2004 Tim Kientzle
+ * Copyright (c) 2003-2007 Tim Kientzle
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer
- *    in this position and unchanged.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
@@ -26,19 +25,28 @@
 
 #include "archive_platform.h"
 
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_compression_bzip2.c,v 1.9 2006/07/30 00:29:00 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_compression_bzip2.c,v 1.13 2007/03/03 07:37:36 kientzle Exp $");
 
+#ifdef HAVE_ERRNO_H
 #include <errno.h>
+#endif
 #include <stdio.h>
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
+#ifdef HAVE_STRING_H
 #include <string.h>
+#endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #ifdef HAVE_BZLIB_H
 #include <bzlib.h>
 #endif
 
 #include "archive.h"
 #include "archive_private.h"
+#include "archive_read_private.h"
 
 #if HAVE_BZLIB_H
 struct private_data {
@@ -49,19 +57,20 @@ struct private_data {
 	int64_t		 total_out;
 };
 
-static int	finish(struct archive *);
-static ssize_t	read_ahead(struct archive *, const void **, size_t);
-static ssize_t	read_consume(struct archive *, size_t);
-static int	drive_decompressor(struct archive *a, struct private_data *);
+static int	finish(struct archive_read *);
+static ssize_t	read_ahead(struct archive_read *, const void **, size_t);
+static ssize_t	read_consume(struct archive_read *, size_t);
+static int	drive_decompressor(struct archive_read *a, struct private_data *);
 #endif
 
 /* These two functions are defined even if we lack bzlib.  See below. */
 static int	bid(const void *, size_t);
-static int	init(struct archive *, const void *, size_t);
+static int	init(struct archive_read *, const void *, size_t);
 
 int
-archive_read_support_compression_bzip2(struct archive *a)
+archive_read_support_compression_bzip2(struct archive *_a)
 {
+	struct archive_read *a = (struct archive_read *)_a;
 	return (__archive_read_register_compression(a, bid, init));
 }
 
@@ -81,7 +90,7 @@ bid(const void *buff, size_t len)
 	if (len < 1)
 		return (0);
 
-	buffer = buff;
+	buffer = (const unsigned char *)buff;
 	bits_checked = 0;
 	if (buffer[0] != 'B')	/* Verify first ID byte. */
 		return (0);
@@ -112,7 +121,7 @@ bid(const void *buff, size_t len)
 	 * thorough check.  It's especially troubling that the BZip2
 	 * signature begins with all ASCII characters; a tar archive
 	 * whose first filename begins with 'BZh3' would potentially
-	 * fool this logic.  (It may also be possible to gaurd against
+	 * fool this logic.  (It may also be possible to guard against
 	 * such anomalies in archive_read_support_compression_none.)
 	 */
 
@@ -145,33 +154,33 @@ init(struct archive *a, const void *buff, size_t n)
  * Setup the callbacks.
  */
 static int
-init(struct archive *a, const void *buff, size_t n)
+init(struct archive_read *a, const void *buff, size_t n)
 {
 	struct private_data *state;
 	int ret;
 
-	a->compression_code = ARCHIVE_COMPRESSION_BZIP2;
-	a->compression_name = "bzip2";
+	a->archive.compression_code = ARCHIVE_COMPRESSION_BZIP2;
+	a->archive.compression_name = "bzip2";
 
-	state = malloc(sizeof(*state));
+	state = (struct private_data *)malloc(sizeof(*state));
 	if (state == NULL) {
-		archive_set_error(a, ENOMEM,
+		archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate data for %s decompression",
-		    a->compression_name);
+		    a->archive.compression_name);
 		return (ARCHIVE_FATAL);
 	}
 	memset(state, 0, sizeof(*state));
 
 	state->uncompressed_buffer_size = 64 * 1024;
-	state->uncompressed_buffer = malloc(state->uncompressed_buffer_size);
+	state->uncompressed_buffer = (char *)malloc(state->uncompressed_buffer_size);
 	state->stream.next_out = state->uncompressed_buffer;
 	state->read_next = state->uncompressed_buffer;
 	state->stream.avail_out = state->uncompressed_buffer_size;
 
 	if (state->uncompressed_buffer == NULL) {
-		archive_set_error(a, ENOMEM,
+		archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate %s decompression buffers",
-		    a->compression_name);
+		    a->archive.compression_name);
 		free(state);
 		return (ARCHIVE_FATAL);
 	}
@@ -182,7 +191,7 @@ init(struct archive *a, const void *buff, size_t n)
 	 * next_in pointer, only reads it).  The result: this ugly
 	 * cast to remove 'const'.
 	 */
-	state->stream.next_in = (void *)(uintptr_t)(const void *)buff;
+	state->stream.next_in = (char *)(uintptr_t)(const void *)buff;
 	state->stream.avail_in = n;
 
 	a->compression_read_ahead = read_ahead;
@@ -208,25 +217,26 @@ init(struct archive *a, const void *buff, size_t n)
 	}
 
 	/* Library setup failed: Clean up. */
-	archive_set_error(a, ARCHIVE_ERRNO_MISC,
-	    "Internal error initializing %s library", a->compression_name);
+	archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+	    "Internal error initializing %s library",
+	    a->archive.compression_name);
 	free(state->uncompressed_buffer);
 	free(state);
 
 	/* Override the error message if we know what really went wrong. */
 	switch (ret) {
 	case BZ_PARAM_ERROR:
-		archive_set_error(a, ARCHIVE_ERRNO_MISC,
+		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Internal error initializing compression library: "
 		    "invalid setup parameter");
 		break;
 	case BZ_MEM_ERROR:
-		archive_set_error(a, ARCHIVE_ERRNO_MISC,
+		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Internal error initializing compression library: "
 		    "out of memory");
 		break;
 	case BZ_CONFIG_ERROR:
-		archive_set_error(a, ARCHIVE_ERRNO_MISC,
+		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Internal error initializing compression library: "
 		    "mis-compiled library");
 		break;
@@ -240,15 +250,15 @@ init(struct archive *a, const void *buff, size_t n)
  * as necessary.
  */
 static ssize_t
-read_ahead(struct archive *a, const void **p, size_t min)
+read_ahead(struct archive_read *a, const void **p, size_t min)
 {
 	struct private_data *state;
 	int read_avail, was_avail, ret;
 
-	state = a->compression_data;
+	state = (struct private_data *)a->compression_data;
 	was_avail = -1;
 	if (!a->client_reader) {
-		archive_set_error(a, ARCHIVE_ERRNO_PROGRAMMER,
+		archive_set_error(&a->archive, ARCHIVE_ERRNO_PROGRAMMER,
 		    "No read callback is registered?  "
 		    "This is probably an internal programming error.");
 		return (ARCHIVE_FATAL);
@@ -282,12 +292,12 @@ read_ahead(struct archive *a, const void **p, size_t min)
  * Mark a previously-returned block of data as read.
  */
 static ssize_t
-read_consume(struct archive *a, size_t n)
+read_consume(struct archive_read *a, size_t n)
 {
 	struct private_data *state;
 
-	state = a->compression_data;
-	a->file_position += n;
+	state = (struct private_data *)a->compression_data;
+	a->archive.file_position += n;
 	state->read_next += n;
 	if (state->read_next > state->stream.next_out)
 		__archive_errx(1, "Request to consume too many "
@@ -299,19 +309,20 @@ read_consume(struct archive *a, size_t n)
  * Clean up the decompressor.
  */
 static int
-finish(struct archive *a)
+finish(struct archive_read *a)
 {
 	struct private_data *state;
 	int ret;
 
-	state = a->compression_data;
+	state = (struct private_data *)a->compression_data;
 	ret = ARCHIVE_OK;
 	switch (BZ2_bzDecompressEnd(&(state->stream))) {
 	case BZ_OK:
 		break;
 	default:
-		archive_set_error(a, ARCHIVE_ERRNO_MISC,
-		    "Failed to clean up %s compressor", a->compression_name);
+		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		    "Failed to clean up %s compressor",
+		    a->archive.compression_name);
 		ret = ARCHIVE_FATAL;
 	}
 
@@ -320,7 +331,7 @@ finish(struct archive *a)
 
 	a->compression_data = NULL;
 	if (a->client_closer != NULL)
-		(a->client_closer)(a, a->client_data);
+		(a->client_closer)(&a->archive, a->client_data);
 
 	return (ret);
 }
@@ -330,7 +341,7 @@ finish(struct archive *a)
  * blocks as necessary.
  */
 static int
-drive_decompressor(struct archive *a, struct private_data *state)
+drive_decompressor(struct archive_read *a, struct private_data *state)
 {
 	ssize_t ret;
 	int decompressed, total_decompressed;
@@ -339,7 +350,7 @@ drive_decompressor(struct archive *a, struct private_data *state)
 	total_decompressed = 0;
 	for (;;) {
 		if (state->stream.avail_in == 0) {
-			ret = (a->client_reader)(a, a->client_data,
+			ret = (a->client_reader)(&a->archive, a->client_data,
 			    (const void **)&state->stream.next_in);
 			if (ret < 0) {
 				/*
@@ -349,12 +360,12 @@ drive_decompressor(struct archive *a, struct private_data *state)
 				goto fatal;
 			}
 			if (ret == 0  &&  total_decompressed == 0) {
-				archive_set_error(a, EIO,
+				archive_set_error(&a->archive, EIO,
 				    "Premature end of %s compressed data",
-				    a->compression_name);
+				    a->archive.compression_name);
 				return (ARCHIVE_FATAL);
 			}
-			a->raw_position += ret;
+			a->archive.raw_position += ret;
 			state->stream.avail_in = ret;
 		}
 
@@ -386,8 +397,8 @@ drive_decompressor(struct archive *a, struct private_data *state)
 
 	/* Return a fatal error. */
 fatal:
-	archive_set_error(a, ARCHIVE_ERRNO_MISC, "%s decompression failed",
-	    a->compression_name);
+	archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+	    "%s decompression failed", a->archive.compression_name);
 	return (ARCHIVE_FATAL);
 }
 

@@ -8,6 +8,7 @@
  * (eliminate some state variables and post-processing).  Among other
  * things, these changes eliminated two shift/reduce conflicts.  (Went
  * from 10 to 8.)
+ * All of Tim Kientzle's changes to this file are public domain.
  */
 
 /*
@@ -25,7 +26,7 @@
 
 #ifdef __FreeBSD__
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/usr.bin/tar/getdate.y,v 1.6 2006/03/21 17:03:51 kientzle Exp $");
+__FBSDID("$FreeBSD: src/usr.bin/tar/getdate.y,v 1.8 2007/03/11 10:36:42 kientzle Exp $");
 #endif
 
 #include <ctype.h>
@@ -270,11 +271,11 @@ relunit	: '-' tUNUMBER tSEC_UNIT {
 	}
 	| tUNUMBER tSEC_UNIT {
 		/* "1 day" */
-		yyRelSeconds += $1;
+		yyRelSeconds += $1 * $2;
 	}
 	| tSEC_UNIT {
 		/* "hour" */
-		yyRelSeconds++;
+		yyRelSeconds += $1;
 	}
 	| '-' tUNUMBER tMONTH_UNIT {
 		/* "-3 months" */

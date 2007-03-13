@@ -1,13 +1,12 @@
 /*-
- * Copyright (c) 2003-2004 Tim Kientzle
+ * Copyright (c) 2003-2007 Tim Kientzle
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer
- *    in this position and unchanged.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
@@ -25,14 +24,26 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD$");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_open_filename.c,v 1.18 2007/01/09 08:05:55 kientzle Exp $");
 
+#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
+#endif
+#ifdef HAVE_ERRNO_H
 #include <errno.h>
+#endif
+#ifdef HAVE_FCNTL_H
 #include <fcntl.h>
+#endif
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
+#ifdef HAVE_STRING_H
 #include <string.h>
+#endif
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 #include "archive.h"
 
@@ -47,7 +58,11 @@ struct read_file_data {
 static int	file_close(struct archive *, void *);
 static int	file_open(struct archive *, void *);
 static ssize_t	file_read(struct archive *, void *, const void **buff);
+#if ARCHIVE_API_VERSION < 2
 static ssize_t	file_skip(struct archive *, void *, size_t request);
+#else
+static off_t	file_skip(struct archive *, void *, off_t request);
+#endif
 
 int
 archive_read_open_file(struct archive *a, const char *filename,
@@ -63,14 +78,14 @@ archive_read_open_filename(struct archive *a, const char *filename,
 	struct read_file_data *mine;
 
 	if (filename == NULL || filename[0] == '\0') {
-		mine = malloc(sizeof(*mine));
+		mine = (struct read_file_data *)malloc(sizeof(*mine));
 		if (mine == NULL) {
 			archive_set_error(a, ENOMEM, "No memory");
 			return (ARCHIVE_FATAL);
 		}
 		mine->filename[0] = '\0';
 	} else {
-		mine = malloc(sizeof(*mine) + strlen(filename));
+		mine = (struct read_file_data *)malloc(sizeof(*mine) + strlen(filename));
 		if (mine == NULL) {
 			archive_set_error(a, ENOMEM, "No memory");
 			return (ARCHIVE_FATAL);
@@ -86,7 +101,7 @@ archive_read_open_filename(struct archive *a, const char *filename,
 static int
 file_open(struct archive *a, void *client_data)
 {
-	struct read_file_data *mine = client_data;
+	struct read_file_data *mine = (struct read_file_data *)client_data;
 	struct stat st;
 
 	mine->buffer = malloc(mine->block_size);
@@ -104,11 +119,10 @@ file_open(struct archive *a, void *client_data)
 		return (ARCHIVE_FATAL);
 	}
 	if (fstat(mine->fd, &st) == 0) {
-		if (S_ISREG(st.st_mode)) {
-			/* Set dev/ino of archive file so extract
-			   won't overwrite. */
+		/* If we're reading a file from disk, ensure that we don't
+		   overwrite it with an extracted file. */
+		if (S_ISREG(st.st_mode))
 			archive_read_extract_set_skip_file(a, st.st_dev, st.st_ino);
-		}
 		/* Remember mode so close can decide whether to flush. */
 		mine->st_mode = st.st_mode;
 	} else {
@@ -125,7 +139,7 @@ file_open(struct archive *a, void *client_data)
 static ssize_t
 file_read(struct archive *a, void *client_data, const void **buff)
 {
-	struct read_file_data *mine = client_data;
+	struct read_file_data *mine = (struct read_file_data *)client_data;
 	ssize_t bytes_read;
 
 	*buff = mine->buffer;
@@ -140,12 +154,17 @@ file_read(struct archive *a, void *client_data, const void **buff)
 	return (bytes_read);
 }
 
+#if ARCHIVE_API_VERSION < 2
 static ssize_t
 file_skip(struct archive *a, void *client_data, size_t request)
+#else
+static off_t
+file_skip(struct archive *a, void *client_data, off_t request)
+#endif
 {
-	struct read_file_data *mine = client_data;
+	struct read_file_data *mine = (struct read_file_data *)client_data;
 	off_t old_offset, new_offset;
-	
+
 	/* Reduce request to the next smallest multiple of block_size */
 	request = (request / mine->block_size) * mine->block_size;
 	/*
@@ -188,7 +207,7 @@ file_skip(struct archive *a, void *client_data, size_t request)
 static int
 file_close(struct archive *a, void *client_data)
 {
-	struct read_file_data *mine = client_data;
+	struct read_file_data *mine = (struct read_file_data *)client_data;
 
 	(void)a; /* UNUSED */
 

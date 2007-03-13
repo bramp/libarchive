@@ -138,6 +138,7 @@ static void	create(const char *filename, int compress, const char **argv);
 #endif
 static void	errmsg(const char *);
 static void	extract(const char *filename, int do_extract, int flags);
+static int	copy_data(struct archive *, struct archive *);
 static void	msg(const char *);
 static void	usage(void);
 
@@ -290,18 +291,21 @@ static void
 extract(const char *filename, int do_extract, int flags)
 {
 	struct archive *a;
+	struct archive *ext;
 	struct archive_entry *entry;
 	int r;
 
 	a = archive_read_new();
+	ext = archive_write_disk_new();
+	archive_write_disk_set_options(ext, flags);
 #ifndef NO_BZIP2_EXTRACT
-//	archive_read_support_compression_bzip2(a);
+	archive_read_support_compression_bzip2(a);
 #endif
 #ifndef NO_GZIP_EXTRACT
-//	archive_read_support_compression_gzip(a);
+	archive_read_support_compression_gzip(a);
 #endif
 #ifndef NO_COMPRESS_EXTRACT
-//	archive_read_support_compression_compress(a);
+	archive_read_support_compression_compress(a);
 #endif
 #ifndef NO_TAR_EXTRACT
 	archive_read_support_format_tar(a);
@@ -312,7 +316,6 @@ extract(const char *filename, int do_extract, int flags)
 	if (filename != NULL && strcmp(filename, "-") == 0)
 		filename = NULL;
 	if ((r = archive_read_open_file(a, filename, 10240))) {
-		printf("%d: ", r);
 		errmsg(archive_error_string(a));
 		errmsg("\n");
 		exit(r);
@@ -330,15 +333,43 @@ extract(const char *filename, int do_extract, int flags)
 			msg("x ");
 		if (verbose || !do_extract)
 			msg(archive_entry_pathname(entry));
-		if (do_extract)
-			if (archive_read_extract(a, entry, flags))
+		if (do_extract) {
+			r = archive_write_header(ext, entry);
+			if (r != ARCHIVE_OK)
 				errmsg(archive_error_string(a));
+			else
+				copy_data(a, ext);
+		}
 		if (verbose || !do_extract)
 			msg("\n");
 	}
 	archive_read_close(a);
 	archive_read_finish(a);
 	exit(0);
+}
+
+static int
+copy_data(struct archive *ar, struct archive *aw)
+{
+	int r;
+	const void *buff;
+	size_t size;
+	off_t offset;
+
+	for (;;) {
+		r = archive_read_data_block(ar, &buff, &size, &offset);
+		if (r == ARCHIVE_EOF) {
+			errmsg(archive_error_string(ar));
+			return (ARCHIVE_OK);
+		}
+		if (r != ARCHIVE_OK)
+			return (r);
+		r = archive_write_data_block(aw, buff, size, offset);
+		if (r != ARCHIVE_OK) {
+			errmsg(archive_error_string(ar));
+			return (r);
+		}
+	}
 }
 
 static void

@@ -17,10 +17,11 @@ AM_INIT_AUTOMAKE()
 AC_CONFIG_COMMANDS_PRE([
 # Autoconf assigns the version above to PACKAGE_VERSION
 ARCHIVE_VERSION=$PACKAGE_VERSION
+
 # Peel off first three numbers major.minor.revision
-ARCHIVE_MAJOR=`echo $ARCHIVE_VERSION | sed -e 's/\..*//'`
-ARCHIVE_MINOR=`echo $ARCHIVE_VERSION | sed -e 's/^[[0-9]]*\.//' | sed -e 's/\..*//'`
-ARCHIVE_REVISION=`echo $ARCHIVE_VERSION | sed -e 's/^[[0-9]]*\.[[0-9]]*\.//' | sed -e 's/\..*//'`
+ARCHIVE_MAJOR=`echo $ARCHIVE_VERSION | sed -e 's/[[^0-9]]/./g' -e 's/\..*//'`
+ARCHIVE_MINOR=`echo $ARCHIVE_VERSION | sed -e 's/[[^0-9]]/./g' -e 's/^[[0-9]]*\.//' -e 's/\..*//'`
+ARCHIVE_REVISION=`echo $ARCHIVE_VERSION | sed -e 's/[[^0-9]]/./g' -e 's/^[[0-9]]*\.[[0-9]]*\.//' -e 's/\..*//'`
 # Major/minor indicate the API version
 ARCHIVE_API_MAJOR=$ARCHIVE_MAJOR
 ARCHIVE_API_MINOR=$ARCHIVE_MINOR
@@ -56,8 +57,8 @@ AC_HEADER_STDC
 AC_HEADER_DIRENT
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS([attr/xattr.h])
-AC_CHECK_HEADERS([bzlib.h errno.h ext2fs/ext2_fs.h fcntl.h])
-AC_CHECK_HEADERS([inttypes.h langinfo.h limits.h linux/ext2_fs.h])
+AC_CHECK_HEADERS([bzlib.h errno.h ext2fs/ext2_fs.h fcntl.h  grp.h])
+AC_CHECK_HEADERS([inttypes.h langinfo.h limits.h linux/ext2_fs.h linux/fs.h])
 # Include inttypes.h into archive.h only if appropriate.
 # We can't use the HAVE_INTTYPES_H macro here because archive.h
 # gets installed as a system header and then included into client code
@@ -67,9 +68,9 @@ AC_CHECK_HEADERS([inttypes.h langinfo.h limits.h linux/ext2_fs.h])
 AC_CHECK_HEADER(inttypes.h,
 	 [AC_SUBST(ARCHIVE_H_INCLUDE_INTTYPES_H,['#include <inttypes.h> /* For int64_t */'])],
 	 [AC_SUBST(ARCHIVE_H_INCLUDE_INTTYPES_H,[''])])
-AC_CHECK_HEADERS([locale.h paths.h])
+AC_CHECK_HEADERS([locale.h paths.h pwd.h stdarg.h])
 AC_CHECK_HEADERS([stdint.h stdlib.h string.h sys/acl.h sys/ioctl.h])
-AC_CHECK_HEADERS([sys/param.h sys/time.h unistd.h wchar.h zlib.h])
+AC_CHECK_HEADERS([sys/param.h sys/time.h time.h unistd.h wchar.h zlib.h])
 
 # Checks for libraries.
 AC_CHECK_LIB(acl,acl_set_file)
@@ -130,6 +131,7 @@ AC_HEADER_TIME
 # Checks for library functions.
 AC_PROG_GCC_TRADITIONAL
 AC_HEADER_MAJOR
+AC_FUNC_FSEEKO
 AC_FUNC_MEMCMP
 AC_FUNC_LSTAT
 AC_FUNC_STAT

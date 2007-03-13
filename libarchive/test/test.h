@@ -21,6 +21,8 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * $FreeBSD: src/lib/libarchive/test/test.h,v 1.2 2007/03/11 10:29:52 kientzle Exp $
  */
 
 /* Every test program should #include "test.h" as the first thing. */
@@ -30,19 +32,66 @@
  * simplify the very repetitive test-*.c test programs.
  */
 
+#define _FILE_OFFSET_BITS 64
+
 #include <archive.h>
 #include <archive_entry.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 
+#if defined(HAVE_CONFIG_H)
+/* Most POSIX platforms use the 'configure' script to build config.h */
+#include "../../config.h"
+#elif defined(__FreeBSD__)
+/* Building as part of FreeBSD system requires a pre-built config.h. */
+#include "../config_freebsd.h"
+#elif defined(_WIN32)
+/* Win32 can't run the 'configure' script. */
+#include "../config_windows.h"
+#else
+/* Warn if the library hasn't been (automatically or manually) configured. */
+#error Oops: No config.h and no pre-built configuration in test.h.
+#endif
+
+/* No non-FreeBSD platform will have __FBSDID, so just define it here. */
+#ifdef __FreeBSD__
+#include <sys/cdefs.h>  /* For __FBSDID */
+#else
+#define	__FBSDID(a)     /* null */
+#endif
+
+/*
+ * "list.h" is simply created by "grep DEFINE_TEST"; it has
+ * a line like
+ *      DEFINE_TEST(test_function)
+ * for each test.
+ * Include it here with a suitable DEFINE_TEST to declare all of the
+ * test functions.
+ */
+#define DEFINE_TEST(name) void name(void);
+#include "list.h"
+/*
+ * Redefine DEFINE_TEST for use in defining the test functions.
+ */
+#undef DEFINE_TEST
+#define DEFINE_TEST(name) void name(void)
+
 /* An implementation of the standard assert() macro */
-#define assert(e)   ((e) ? (void)0 : test_assert(__FILE__, __LINE__, #e, NULL))
+#define assert(e)   test_assert(__FILE__, __LINE__, (e), #e, NULL)
 /* As above, but reports any archive_error found in variable 'a' */
-#define assertA(e)   ((e) ? (void)0 : test_assert(__FILE__, __LINE__, #e, a))
+#define assertA(e)   test_assert(__FILE__, __LINE__, (e), #e, (a))
+/* Asserts that two values are the same.  Reports value of each one if not. */
+#define assertEqualIntA(a,v1,v2)   \
+  test_assert_equal_int(__FILE__, __LINE__, (v1), #v1, (v2), #v2, (a))
+/* Asserts that two values are the same.  Reports value of each one if not. */
+#define assertEqualInt(v1,v2)   \
+  test_assert_equal_int(__FILE__, __LINE__, (v1), #v1, (v2), #v2, NULL)
 
 /* Function declarations.  These are defined in test_utility.c. */
-
-void test_assert(const char *, int, const char *, struct archive *);
+void failure(const char *fmt, ...);
+void test_assert(const char *, int, int, const char *, struct archive *);
+void test_assert_equal_int(const char *, int, int, const char *, int, const char *, struct archive *);
 

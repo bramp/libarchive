@@ -1,13 +1,12 @@
 /*-
- * Copyright (c) 2003-2004 Tim Kientzle
+ * Copyright (c) 2003-2007 Tim Kientzle
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer
- *    in this position and unchanged.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
@@ -25,29 +24,59 @@
  */
 
 #include "bsdtar_platform.h"
-__FBSDID("$FreeBSD: src/usr.bin/tar/write.c,v 1.47 2006/07/31 04:57:46 kientzle Exp $");
+__FBSDID("$FreeBSD: src/usr.bin/tar/write.c,v 1.55 2007/03/11 10:36:42 kientzle Exp $");
 
-#include <sys/stat.h>
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
-#ifdef HAVE_POSIX_ACL
+#endif
+#ifdef HAVE_SYS_ACL_H
 #include <sys/acl.h>
+#endif
+#ifdef HAVE_SYS_IOCTL_H
+#include <sys/ioctl.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
 #endif
 #ifdef HAVE_ATTR_XATTR_H
 #include <attr/xattr.h>
 #endif
+#ifdef HAVE_ERRNO_H
 #include <errno.h>
-#include <fcntl.h>
-#include <fnmatch.h>
-#include <grp.h>
-#include <limits.h>
-#include <pwd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#ifdef __linux
+#endif
+#ifdef HAVE_EXT2FS_EXT2_FS_H
 #include <ext2fs/ext2_fs.h>
-#include <sys/ioctl.h>
+#endif
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+#ifdef HAVE_FNMATCH_H
+#include <fnmatch.h>
+#endif
+#ifdef HAVE_GRP_H
+#include <grp.h>
+#endif
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
+#endif
+#ifdef HAVE_LINUX_FS_H
+#include <linux/fs.h>	/* for Linux file flags */
+#endif
+#ifdef HAVE_LINUX_EXT2_FS_H
+#include <linux/ext2_fs.h>	/* for Linux file flags */
+#endif
+#ifdef HAVE_PWD_H
+#include <pwd.h>
+#endif
+#include <stdio.h>
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
 #endif
 
 #include "bsdtar.h"
@@ -204,8 +233,8 @@ tar_mode_c(struct bsdtar *bsdtar)
 }
 
 /*
- * Same as 'c', except we only support tar formats in uncompressed
- * files on disk.
+ * Same as 'c', except we only support tar or empty formats in
+ * uncompressed files on disk.
  */
 void
 tar_mode_r(struct bsdtar *bsdtar)
@@ -214,13 +243,14 @@ tar_mode_r(struct bsdtar *bsdtar)
 	int	format;
 	struct archive *a;
 	struct archive_entry *entry;
+	int	r;
 
 	/* Sanity-test some arguments and the file. */
 	test_for_append(bsdtar);
 
 	format = ARCHIVE_FORMAT_TAR_PAX_RESTRICTED;
 
-	bsdtar->fd = open(bsdtar->filename, O_RDWR);
+	bsdtar->fd = open(bsdtar->filename, O_RDWR | O_CREAT, 0666);
 	if (bsdtar->fd < 0)
 		bsdtar_errc(bsdtar, 1, errno,
 		    "Cannot open %s", bsdtar->filename);
@@ -229,7 +259,11 @@ tar_mode_r(struct bsdtar *bsdtar)
 	archive_read_support_compression_all(a);
 	archive_read_support_format_tar(a);
 	archive_read_support_format_gnutar(a);
-	archive_read_open_fd(a, bsdtar->fd, 10240);
+	r = archive_read_open_fd(a, bsdtar->fd, 10240);
+	if (r != ARCHIVE_OK)
+		bsdtar_errc(bsdtar, 1, archive_errno(a),
+		    "Can't read archive %s: %s", bsdtar->filename,
+		    archive_error_string(a));
 	while (0 == archive_read_next_header(a, &entry)) {
 		if (archive_compression(a) != ARCHIVE_COMPRESSION_NONE) {
 			archive_read_finish(a);
@@ -248,13 +282,37 @@ tar_mode_r(struct bsdtar *bsdtar)
 	a = archive_write_new();
 	archive_write_set_compression_none(a);
 	/*
-	 * Set format to same one auto-detected above, except use
-	 * ustar for appending to GNU tar, since the library doesn't
-	 * write GNU tar format.
+	 * Set the format to be used for writing.  To allow people to
+	 * extend empty files, we need to allow them to specify the format,
+	 * which opens the possibility that they will specify a format that
+	 * doesn't match the existing format.  Hence, the following bit
+	 * of arcane ugliness.
 	 */
-	if (format == ARCHIVE_FORMAT_TAR_GNUTAR)
-		format = ARCHIVE_FORMAT_TAR_USTAR;
-	archive_write_set_format(a, format);
+
+	if (bsdtar->create_format != NULL) {
+		/* If the user requested a format, use that, but ... */
+		archive_write_set_format_by_name(a,
+		    bsdtar->create_format);
+		/* ... complain if it's not compatible. */
+		format &= ARCHIVE_FORMAT_BASE_MASK;
+		if (format != (int)(archive_format(a) & ARCHIVE_FORMAT_BASE_MASK)
+		    && format != ARCHIVE_FORMAT_EMPTY) {
+			bsdtar_errc(bsdtar, 1, 0,
+			    "Format %s is incompatible with the archive %s.",
+			    bsdtar->create_format, bsdtar->filename);
+		}
+	} else {
+		/*
+		 * Just preserve the current format, with a little care
+		 * for formats that libarchive can't write.
+		 */
+		if (format == ARCHIVE_FORMAT_TAR_GNUTAR)
+			/* TODO: When gtar supports pax, use pax restricted. */
+			format = ARCHIVE_FORMAT_TAR_USTAR;
+		if (format == ARCHIVE_FORMAT_EMPTY)
+			format = ARCHIVE_FORMAT_TAR_PAX_RESTRICTED;
+		archive_write_set_format(a, format);
+	}
 	lseek(bsdtar->fd, end_offset, SEEK_SET); /* XXX check return val XXX */
 	archive_write_open_fd(a, bsdtar->fd); /* XXX check return val XXX */
 
@@ -404,7 +462,10 @@ write_archive(struct archive *a, struct bsdtar *bsdtar)
 	}
 
 	create_cleanup(bsdtar);
-	archive_write_close(a);
+	if (archive_write_close(a)) {
+		bsdtar_warnc(bsdtar, 0, "%s", archive_error_string(a));
+		bsdtar->return_value = 1;
+	}
 }
 
 /*
@@ -485,7 +546,7 @@ append_archive(struct bsdtar *bsdtar, struct archive *a, const char *filename)
 		/* XXX handle/report errors XXX */
 		if (archive_write_header(a, in_entry)) {
 			bsdtar_warnc(bsdtar, 0, "%s",
-			    archive_error_string(ina));
+			    archive_error_string(a));
 			bsdtar->return_value = 1;
 			return (-1);
 		}
@@ -510,6 +571,7 @@ append_archive(struct bsdtar *bsdtar, struct archive *a, const char *filename)
 		    filename, archive_error_string(ina));
 		bsdtar->return_value = 1;
 	}
+	archive_read_finish(ina);
 
 	/* Note: If we got here, we saw no write errors, so return success. */
 	return (0);
@@ -788,8 +850,9 @@ write_entry(struct bsdtar *bsdtar, struct archive *a, const struct stat *st,
 	 * to inform us that the archive body won't get stored.  In
 	 * that case, just skip the write.
 	 */
-	if (fd >= 0 && archive_entry_size(entry) > 0)
-		write_file_data(bsdtar, a, fd);
+	if (e >= ARCHIVE_WARN && fd >= 0 && archive_entry_size(entry) > 0)
+		if (write_file_data(bsdtar, a, fd))
+			exit(1);
 
 cleanup:
 	if (bsdtar->verbose)
@@ -814,13 +877,21 @@ write_file_data(struct bsdtar *bsdtar, struct archive *a, int fd)
 
 	/* XXX TODO: Allocate buffer on heap and store pointer to
 	 * it in bsdtar structure; arrange cleanup as well. XXX */
-	(void)bsdtar;
 
 	bytes_read = read(fd, buff, sizeof(buff));
 	while (bytes_read > 0) {
 		bytes_written = archive_write_data(a, buff, bytes_read);
-		if (bytes_written <= 0)
-			return (-1); /* Write failed; this is bad */
+		if (bytes_written < 0) {
+			/* Write failed; this is bad */
+			bsdtar_warnc(bsdtar, 0, "%s", archive_error_string(a));
+			return (-1);
+		}
+		if (bytes_written < bytes_read) {
+			/* Write was truncated; warn but continue. */
+			bsdtar_warnc(bsdtar, 0,
+			    "Truncated write; file may have grown while being archived.");
+			return (0);
+		}
 		bytes_read = read(fd, buff, sizeof(buff));
 	}
 	return 0;
@@ -1354,7 +1425,7 @@ new_enough(struct bsdtar *bsdtar, const char *path, const struct stat *st)
 	if (bsdtar->archive_dir != NULL &&
 	    bsdtar->archive_dir->head != NULL) {
 		for (p = bsdtar->archive_dir->head; p != NULL; p = p->next) {
-			if (strcmp(path, p->name)==0)
+			if (pathcmp(path, p->name)==0)
 				return (p->mtime_sec < st->st_mtime ||
 				    (p->mtime_sec == st->st_mtime &&
 					p->mtime_nsec
@@ -1376,9 +1447,6 @@ add_dir_list(struct bsdtar *bsdtar, const char *path,
     time_t mtime_sec, int mtime_nsec)
 {
 	struct archive_dir_entry	*p;
-
-	if (path[0] == '.' && path[1] == '/' && path[2] != '\0')
-		path += 2;
 
 	/*
 	 * Search entire list to see if this file has appeared before.
@@ -1427,8 +1495,7 @@ test_for_append(struct bsdtar *bsdtar)
 		    "Cannot append to %s with compression", bsdtar->filename);
 
 	if (stat(bsdtar->filename, &s) != 0)
-		bsdtar_errc(bsdtar, 1, errno,
-		    "Cannot stat %s", bsdtar->filename);
+		return;
 
 	if (!S_ISREG(s.st_mode))
 		bsdtar_errc(bsdtar, 1, 0,

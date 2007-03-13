@@ -1,4 +1,4 @@
-.\" Copyright (c) 2003-2006 Tim Kientzle
+.\" Copyright (c) 2003-2007 Tim Kientzle
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $FreeBSD: src/lib/libarchive/libarchive.3,v 1.7 2005/01/21 20:50:38 ru Exp $
+.\" $FreeBSD: src/lib/libarchive/libarchive.3,v 1.11 2007/01/09 08:05:56 kientzle Exp $
 .\"
 .Dd August 19, 2006
 .Dt LIBARCHIVE 3
@@ -255,7 +255,7 @@ Users familiar with historic formats should be aware that the newer
 variants have eliminated most restrictions on the length of textual fields.
 Clients should not assume that filenames, link names, user names, or
 group names are limited in length.
-In particular, pax interchange format can easily accomodate pathnames
+In particular, pax interchange format can easily accommodate pathnames
 in arbitrary character sets that exceed
 .Va PATH_MAX .
 .Sh RETURN VALUES
