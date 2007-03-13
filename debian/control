@@ -1,0 +1,87 @@
+Source: libarchive
+Priority: optional
+Maintainer: John Goerzen <jgoerzen@complete.org>
+Build-Depends: debhelper (>= 4.0.0), autotools-dev, libbz2-dev, zlib1g-dev, libacl1-dev, e2fslibs-dev, libattr1-dev, linux-kernel-headers, bison
+Standards-Version: 3.6.2
+Section: libs
+
+Package: libarchive-dev
+Section: libdevel
+Architecture: any
+Conflicts: libarchive-doc
+Depends: ${shlibs:Depends}, ${misc:Depends}, libbz2-dev, zlib1g-dev, libacl1-dev, e2fslibs-dev, libarchive1 (= ${Source-Version}), libattr1-dev
+Description: Single library to read/write tar, cpio, pax, zip, iso9660, etc.
+ The libarchive library provides a flexible interface for reading and
+ writing streaming archive files such as tar and cpio.  The library is
+ inherently stream-oriented; readers serially iterate through the archive,
+ writers serially add things to the archive.  In particular, note that
+ there is no built-in support for random access nor for in-place
+ modification.
+ .
+ libarchive can read at least five tar formats, four cpio formats,
+ ISO9660 CD/DVD images (including RockRidge extensions), and ZIP
+ files.
+ .
+ libarchive can write two tar formats (ustar and pax), one cpio format
+ (odc/POSIX), and two types of shar files (with and without uuencoding).
+ .
+ The bsdtar Debian package, which is the default tar(1) on FreeBSD,
+ is built using libarchive. 
+ .
+ There is also a manpage, tar(5), in libarchive1 that provides
+ an excellent description of the various tar file formats.
+
+Package: libarchive1
+Section: libs
+Architecture: any
+Conflicts: libarchive-doc
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Single library to read/write tar, cpio, pax, zip, iso9660, etc.
+ The libarchive library provides a flexible interface for reading and
+ writing streaming archive files such as tar and cpio.  The library is
+ inherently stream-oriented; readers serially iterate through the archive,
+ writers serially add things to the archive.  In particular, note that
+ there is no built-in support for random access nor for in-place
+ modification.
+ .
+ libarchive can read at least five tar formats, four cpio formats,
+ ISO9660 CD/DVD images (including RockRidge extensions), and ZIP
+ files.
+ .
+ libarchive can write two tar formats (ustar and pax), one cpio format
+ (odc/POSIX), and two types of shar files (with and without uuencoding).
+ .
+ The bsdtar Debian package, which is the default tar(1) on FreeBSD,
+ is built using libarchive. 
+ .
+ There is also a manpage, tar(5), that provides an excellent description
+ of the various tar file formats.
+
+Package: bsdtar
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libarchive1 (>= ${Source-Version})
+Description: tar(1) from FreeBSD, using libarchive
+ The bsdtar program has a number of advantages over previous tar
+ implementations:
+ .
+  * Library. Since the core functionality is in a library, it can be
+    used by other tools, such as pkg_add.
+ .
+  * Automatic format detection. Libarchive automatically detects the
+    compression (none/gzip/bzip2) and format (old tar, ustar, gnutar,
+    pax, cpio, iso9660, zip) when reading archives. It does this for
+    any data source.
+ .
+  * Pax Interchange Format Support. This is a POSIX/SUSv3 extension to
+    the old "ustar" tar format that adds arbitrary extended attributes
+    to each entry. Does everything that GNU tar format does, only
+    better.
+ .
+  * Handles file flags, ACLs, arbitrary pathnames, etc. Pax interchange
+    format supports key/value attributes using an easily-extensible
+    technique. Arbitrary pathnames, group names, user names, file sizes
+    are part of the POSIX standard; libarchive extends this with
+    support for file flags, ACLs, and arbitrary device numbers.
+ .
+  * GNU tar support. Libarchive reads most GNU tar archives. If there
+    is demand, this can be improved further.
