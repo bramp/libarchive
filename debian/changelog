@@ -1,3 +1,10 @@
+libarchive (2.0.25-1) unstable; urgency=low
+
+  * New upstream version
+  * Remove unnecessary dep on libarchive1.  Closes: #396756.
+
+ -- John Goerzen <jgoerzen@complete.org>  Tue, 13 Mar 2007 07:03:53 -0500
+
 libarchive (1.3.1-1) unstable; urgency=high
 
   * New upstream release.
