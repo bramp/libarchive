@@ -1,4 +1,4 @@
-libarchive (2.0.25-2.1) unstable; urgency=low
+libarchive (2.0.25-3) unstable; urgency=low
 
   * SONAME should not be tied to the tarball version string 
   (Closes: #418637) Provide libarchive.so.1 as a backwards-compatible 
