@@ -1,11 +1,11 @@
 libarchive (2.0.25-2.1) unstable; urgency=low
 
-  * Non-maintainer upload.
   * SONAME should not be tied to the tarball version string 
   (Closes: #418637) Provide libarchive.so.1 as a backwards-compatible 
   symlink to libarchive.so.2, reverting the package name to libarchive1.
+  Patch from Neil Williams.
 
- -- Neil Williams <codehelp@debian.org>  Mon, 16 Apr 2007 13:50:29 +0100
+ -- John Goerzen <jgoerzen@complete.org>  Mon, 16 Apr 2007 13:50:29 +0100
 
 libarchive (2.0.25-2) unstable; urgency=low
 
