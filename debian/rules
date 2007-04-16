@@ -79,6 +79,10 @@ install: build
 
 	# Add here commands to install the package into debian/tmp
 	$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
+	ln -s -T libarchive.so.2 debian/tmp/usr/lib/libarchive.so.1
+	install -d debian/tmp/usr/share/lintian/overrides/
+	install -m 0644 debian/lintian-override debian/tmp/usr/share/lintian/overrides/libarchive1
+	${RM} -r debian/libarchive2/usr/share/
 
 binary-indep: 
 
@@ -100,7 +104,7 @@ binary-arch: build install
 #	dh_installcron
 #	dh_installinfo
 	dh_installman -plibarchive-dev libarchive/*.[0-4,7-9]*
-	dh_installman -plibarchive2 libarchive/*.5*
+	dh_installman -plibarchive1 libarchive/*.5*
 	dh_installman -pbsdtar tar/*.[1-9]
 	dh_link -a
 	dh_strip -a
