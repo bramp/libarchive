@@ -1,3 +1,10 @@
+libarchive (2.0.25-2) unstable; urgency=low
+
+  * Remove build-dep on linux-kernel-headers for compatibility with BSD
+    ports.  Closes: #377480.
+
+ -- John Goerzen <jgoerzen@complete.org>  Tue, 13 Mar 2007 20:03:37 -0500
+
 libarchive (2.0.25-1) unstable; urgency=low
 
   * New upstream version
