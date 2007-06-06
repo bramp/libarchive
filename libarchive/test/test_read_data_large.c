@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_data_large.c,v 1.1 2007/03/03 07:37:37 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_data_large.c,v 1.2 2007/04/15 04:30:02 kientzle Exp $");
 
 /*
  * Test read/write of a 10M block of data in a single operation.
@@ -42,8 +42,8 @@ DEFINE_TEST(test_read_data_large)
 	struct archive_entry *ae;
 	struct archive *a;
 	char tmpfilename[] = "largefile";
-	int tmpfile;
-	int i;
+	int tmpfilefd;
+	unsigned int i;
 	size_t used;
 
 	/* Create a new archive in memory. */
@@ -62,6 +62,7 @@ DEFINE_TEST(test_read_data_large)
 		buff2[i] = (unsigned char)rand();
 	archive_entry_set_size(ae, sizeof(buff2));
 	assertA(0 == archive_write_header(a, ae));
+	archive_entry_free(ae);
 	assertA(sizeof(buff2) == archive_write_data(a, buff2, sizeof(buff2)));
 
 	/* Close out the archive. */
@@ -95,21 +96,21 @@ DEFINE_TEST(test_read_data_large)
 	assertA(0 == archive_read_support_compression_all(a));
 	assertA(0 == archive_read_open_memory(a, buff1, sizeof(buff1)));
 	assertA(0 == archive_read_next_header(a, &ae));
-	tmpfile = open(tmpfilename, O_WRONLY | O_CREAT, 0777);
-	assert(tmpfile != 0);
-	assertEqualIntA(a, 0, archive_read_data_into_fd(a, tmpfile));
+	tmpfilefd = open(tmpfilename, O_WRONLY | O_CREAT, 0777);
+	assert(tmpfilefd != 0);
+	assertEqualIntA(a, 0, archive_read_data_into_fd(a, tmpfilefd));
 	assert(0 == archive_read_close(a));
 #if ARCHIVE_API_VERSION > 1
 	assert(0 == archive_read_finish(a));
 #else
 	archive_read_finish(a);
 #endif
-	close(tmpfile);
+	close(tmpfilefd);
 
-	tmpfile = open(tmpfilename, O_RDONLY);
-	assert(tmpfile != 0);
-	assertEqualIntA(NULL, sizeof(buff3), read(tmpfile, buff3, sizeof(buff3)));
-	close(tmpfile);
+	tmpfilefd = open(tmpfilename, O_RDONLY);
+	assert(tmpfilefd != 0);
+	assertEqualIntA(NULL, sizeof(buff3), read(tmpfilefd, buff3, sizeof(buff3)));
+	close(tmpfilefd);
 	assert(0 == memcmp(buff2, buff3, sizeof(buff3)));
 
 	unlink(tmpfilename);

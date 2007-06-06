@@ -8,9 +8,8 @@ This distribution bundle includes the following components:
    * minitar: a compact sample demonstrating use of libarchive
 
 The top-level directory contains the following information files:
-   * AUTHORS - who wrote all of this
+   * NEWS - highlights of recent changes
    * COPYING - what you can do with this
-   * ChangeLog - highlights of recent changes
    * INSTALL - installation instructions
    * README - this file
    * configure - configuration script, see INSTALL for details.
@@ -27,8 +26,8 @@ The following files in the top-level directory are used by the
 Guide to Documentation installed by this system:
  * bsdtar.1 explains the use of the bsdtar program
  * libarchive.3 gives an overview of the library as a whole
- * archive_read.3 and archive_write.3 provide detailed calling
-   sequences for the read and write APIs
+ * archive_read.3, archive_write.3, and archive_write_disk.3 provide
+   detailed calling sequences for the read and write APIs
  * archive_entry.3 details the "struct archive_entry" utility class
  * libarchive-formats.5 documents the file formats supported by the library
  * tar.5 provides some detailed information about a variety of different
@@ -53,7 +52,7 @@ Currently, the library automatically detects and reads the following:
   * Binary cpio (big-endian or little-endian)
   * ISO9660 CD-ROM images (with optional Rockridge extensions)
   * ZIP archives (with uncompressed or "deflate" compressed entries)
-  * Experimental support for Unix 4th Edition "tp" archives
+  * GNU and BSD 'ar' archives
 
 The library can write:
   * gzip compression
@@ -64,6 +63,7 @@ The library can write:
     entries that require pax extensions (for long filenames, ACLs, etc).
   * POSIX octet-oriented cpio
   * shar archives
+  * GNU and BSD 'ar' archives
 
 Notes about the library architecture:
 

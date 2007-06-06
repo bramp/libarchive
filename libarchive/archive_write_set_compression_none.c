@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_compression_none.c,v 1.12 2007/03/03 07:37:36 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_compression_none.c,v 1.14 2007/04/15 04:42:52 kientzle Exp $");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -58,7 +58,7 @@ archive_write_set_compression_none(struct archive *_a)
 	struct archive_write *a = (struct archive_write *)_a;
 	__archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
 	    ARCHIVE_STATE_NEW, "archive_write_set_compression_none");
-	a->compression_init = &archive_compressor_none_init;
+	a->compressor.init = &archive_compressor_none_init;
 	return (0);
 }
 
@@ -102,9 +102,9 @@ archive_compressor_none_init(struct archive_write *a)
 	state->next = state->buffer;
 	state->avail = state->buffer_size;
 
-	a->compression_data = state;
-	a->compression_write = archive_compressor_none_write;
-	a->compression_finish = archive_compressor_none_finish;
+	a->compressor.data = state;
+	a->compressor.write = archive_compressor_none_write;
+	a->compressor.finish = archive_compressor_none_finish;
 	return (ARCHIVE_OK);
 }
 
@@ -120,7 +120,7 @@ archive_compressor_none_write(struct archive_write *a, const void *vbuff,
 	ssize_t bytes_written;
 	struct archive_none *state;
 
-	state = (struct archive_none *)a->compression_data;
+	state = (struct archive_none *)a->compressor.data;
 	buff = (const char *)vbuff;
 	if (a->client_writer == NULL) {
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_PROGRAMMER,
@@ -143,6 +143,7 @@ archive_compressor_none_write(struct archive_write *a, const void *vbuff,
 			    a->client_data, buff, remaining);
 			if (bytes_written <= 0)
 				return (ARCHIVE_FATAL);
+			a->archive.raw_position += bytes_written;
 			remaining -= bytes_written;
 			buff += bytes_written;
 		}
@@ -193,7 +194,7 @@ archive_compressor_none_finish(struct archive_write *a)
 	int ret2;
 	struct archive_none *state;
 
-	state = (struct archive_none *)a->compression_data;
+	state = (struct archive_none *)a->compressor.data;
 	ret = ret2 = ARCHIVE_OK;
 	if (a->client_writer == NULL) {
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_PROGRAMMER,
@@ -232,14 +233,10 @@ archive_compressor_none_finish(struct archive_write *a)
 			ret = ARCHIVE_OK;
 		}
 	}
-
-	/* Close the output */
-	if (a->client_closer != NULL)
-		ret2 = (a->client_closer)(&a->archive, a->client_data);
-
-	free(state->buffer);
+	if (state->buffer)
+		free(state->buffer);
 	free(state);
-	a->compression_data = NULL;
+	a->compressor.data = NULL;
 
-	return (ret != ARCHIVE_OK ? ret : ret2);
+	return (ret);
 }

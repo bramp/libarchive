@@ -1,4 +1,77 @@
 
+May 26, 2007: libarchive 2.2.3 released
+May 26, 2007: Fix memory leaks in ZIP reader and shar writer, add some
+	missing system headers to archive_entry.h, dead code cleanup
+	from Colin Percival, more tests for gzip/bzip2, fix an
+	EOF anomaly in bzip2 decompression.
+
+May 12, 2007: libarchive 2.2.2 released
+May 12, 2007: Fix archive_write_disk permission restore by cloning
+	entry passed into write_header so that permission info is
+	still available at finish_entry time.  (archive_read_extract()
+	worked okay because it held onto the passed-in entry, but
+	direct consumers of archive_write_disk would break).  This
+	required fixing archive_entry_clone(), which now works and has
+	a reasonably complete test case.
+May 10, 2007: Skeletal cpio implementation.
+
+May 06, 2007: libarchive 2.2.1 released
+May 06, 2007: Flesh out a lot more of test_entry.c so as to catch
+	problems such as the device node breakage before releasing <sigh>.
+May 05, 2007: Fix a bad bug introduced in 2.1.9 that broke device
+	node entries in tar archives.
+May 03, 2007: Move 'struct stat' out of archive_entry core as well.
+	This removes some portability headaches and fixes a bunch
+	of corner cases that arise when manipulating archives on
+	dissimilar systems.
+
+Apr 30, 2007: libarchive 2.1.10 released
+Apr 31, 2007: Minor code cleanup.
+
+Apr 24, 2007: libarchive 2.1.9 released
+Apr 24, 2007: Fix some recently-introduced problems with libraries
+	(Just let automake handle it and it all works much better.)
+	Finish isolating major()/minor()/makedev() in archive_entry.c.
+
+Apr 23, 2007: libarchive 2.1.8 released
+Apr 23, 2007: Minor fixes found from building on MacOS X
+
+Apr 22, 2007: libarchive 2.1.7 released
+Apr 22, 2007: Eliminated all uses of 'struct stat' from the
+	format readers/writers.  This should improve portability;
+	'struct stat' is now only used in archive_entry and in
+	code that actually touches the disk.
+
+Apr 17, 2007: libarchive 2.1.6 released
+	Libarchive now compiles and passes all tests on Interix.
+
+Apr 16, 2007: libarchive 2.1.5 released
+
+Apr 15, 2007: libarchive 2.1b2 released
+Apr 15, 2007: New libarchive_internals.3 documentation of internal APIs.
+	Not complete, but should prove helpful.
+Apr 15, 2007: Experimental "read_compress_program" and "write_compress_program"
+	for using libarchive with external compression.  Not yet
+	well tested, and likely has portability issues.  Feedback
+	appreciated.
+
+Apr 14, 2007: libarchive 2.0.31 released
+Apr 14, 2007: More fixes for Interix, more 'ar' work
+
+Apr 14, 2007: libarchive 2.0.30 released
+Apr 13, 2007: libarchive now enforces trailing '/' on dirs
+	written to tar archives
+
+Apr 11, 2007: libarchive 2.0.29 released
+Apr 11, 2007: Make it easier to statically configure for different platforms.
+Apr 11, 2007: Updated config.guess, config.sub, libtool
+
+Apr 06, 2007: libarchive 2.0.28 released
+Apr 06, 2007: 'ar' format read/write support thanks to Kai Wang.
+
+Apr 01, 2007: libarchive 2.0.27 released
+Mar 31, 2007: Several minor fixes from Colin Percival and Joerg Sonnenberger.
+
 Mar 12, 2007: libarchive 2.0.25 released
 Mar 12, 2007: Fix broken --unlink flag.
 

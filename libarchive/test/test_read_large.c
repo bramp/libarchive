@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_large.c,v 1.1 2007/03/03 07:37:37 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_large.c,v 1.2 2007/04/15 04:30:02 kientzle Exp $");
 
 static unsigned char testdata[10 * 1024 * 1024];
 static unsigned char testdatacopy[10 * 1024 * 1024];
@@ -32,8 +32,8 @@ static unsigned char buff[11 * 1024 * 1024];
 /* Check correct behavior on large reads. */
 DEFINE_TEST(test_read_large)
 {
-	int i;
-	int tmpfile;
+	unsigned int i;
+	int tmpfilefd;
 	char tmpfilename[] = "/tmp/test-read_large.XXXXXX";
 	size_t used;
 	struct archive *a;
@@ -50,6 +50,7 @@ DEFINE_TEST(test_read_large)
 	archive_entry_set_mode(entry, S_IFREG | 0777);
 	archive_entry_set_pathname(entry, "test");
 	assertA(0 == archive_write_header(a, entry));
+	archive_entry_free(entry);
 	assertA(sizeof(testdata) == archive_write_data(a, testdata, sizeof(testdata)));
 #if ARCHIVE_API_VERSION > 1
 	assertA(0 == archive_write_finish(a));
@@ -76,17 +77,17 @@ DEFINE_TEST(test_read_large)
 	assertA(0 == archive_read_support_compression_all(a));
 	assertA(0 == archive_read_open_memory(a, buff, sizeof(buff)));
 	assertA(0 == archive_read_next_header(a, &entry));
-	assert(0 < (tmpfile = mkstemp(tmpfilename)));
-	assertA(0 == archive_read_data_into_fd(a, tmpfile));
-	close(tmpfile);
+	assert(0 < (tmpfilefd = mkstemp(tmpfilename)));
+	assertA(0 == archive_read_data_into_fd(a, tmpfilefd));
+	close(tmpfilefd);
 #if ARCHIVE_API_VERSION > 1
 	assertA(0 == archive_read_finish(a));
 #else
 	archive_read_finish(a);
 #endif
-	tmpfile = open(tmpfilename, O_RDONLY);
-	read(tmpfile, testdatacopy, sizeof(testdatacopy));
-	close(tmpfile);
+	tmpfilefd = open(tmpfilename, O_RDONLY);
+	read(tmpfilefd, testdatacopy, sizeof(testdatacopy));
+	close(tmpfilefd);
 	assert(0 == memcmp(testdata, testdatacopy, sizeof(testdata)));
 
 	unlink(tmpfilename);

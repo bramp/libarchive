@@ -34,6 +34,7 @@ ARCHIVE_LIBTOOL_VERSION=$ARCHIVE_LIBTOOL_MAJOR:$ARCHIVE_REVISION:$ARCHIVE_MINOR
 ])
 
 # Substitute the above version numbers into the various files below.
+AC_SUBST(ARCHIVE_VERSION)
 AC_SUBST(ARCHIVE_MAJOR)
 AC_SUBST(ARCHIVE_MINOR)
 AC_SUBST(ARCHIVE_REVISION)
@@ -68,9 +69,10 @@ AC_CHECK_HEADERS([inttypes.h langinfo.h limits.h linux/ext2_fs.h linux/fs.h])
 AC_CHECK_HEADER(inttypes.h,
 	 [AC_SUBST(ARCHIVE_H_INCLUDE_INTTYPES_H,['#include <inttypes.h> /* For int64_t */'])],
 	 [AC_SUBST(ARCHIVE_H_INCLUDE_INTTYPES_H,[''])])
-AC_CHECK_HEADERS([locale.h paths.h pwd.h stdarg.h])
+AC_CHECK_HEADERS([locale.h paths.h poll.h pwd.h stdarg.h])
 AC_CHECK_HEADERS([stdint.h stdlib.h string.h sys/acl.h sys/ioctl.h])
-AC_CHECK_HEADERS([sys/param.h sys/time.h time.h unistd.h wchar.h zlib.h])
+AC_CHECK_HEADERS([sys/param.h sys/select.h sys/time.h])
+AC_CHECK_HEADERS([time.h unistd.h utime.h wchar.h zlib.h])
 
 # Checks for libraries.
 AC_CHECK_LIB(acl,acl_set_file)
@@ -94,7 +96,9 @@ AC_TYPE_MODE_T
 AC_CHECK_TYPE(off_t, [int64_t])
 AC_TYPE_SIZE_T
 AC_CHECK_TYPE(id_t, [unsigned long])
+AC_CHECK_TYPE(uintptr_t, [unsigned int])
 AC_CHECK_MEMBERS([struct stat.st_rdev])
+AC_CHECK_MEMBERS([struct tm.tm_gmtoff])
 # Check for high-resolution timestamps in struct stat
 AC_CHECK_MEMBERS([struct stat.st_mtimespec.tv_nsec, struct stat.st_mtim.tv_nsec])
 
@@ -117,6 +121,7 @@ AC_CHECK_TYPE(uint64_t, [u_int64_t])
 # Likewise, consider defining "uintmax_t" in terms of uint64_t
 AC_CHECK_TYPE(uintmax_t, [uint64_t])
 
+AC_CHECK_DECLS([SIZE_MAX, INT64_MAX, INT64_MIN, UINT64_MAX, UINT32_MAX])
 
 AC_CHECK_DECL([EFTYPE],
 		[AC_DEFINE(HAVE_EFTYPE, 1, [A possible errno value for invalid file format errors])],
@@ -142,9 +147,10 @@ AC_CHECK_FUNCS([chflags fchdir fchflags fchmod fchown futimes])
 AC_CHECK_FUNCS([ftruncate getopt_long getxattr])
 AC_CHECK_FUNCS([lchflags lchmod lchown])
 AC_CHECK_FUNCS([lgetxattr listxattr llistxattr fsetxattr lsetxattr])
-AC_CHECK_FUNCS([lutimes memmove])
-AC_CHECK_FUNCS([memset mkdir mkfifo nl_langinfo reallocf setlocale])
-AC_CHECK_FUNCS([strchr strdup strerror strrchr timegm])
+AC_CHECK_FUNCS([lutimes memmove memset mkdir mkfifo])
+AC_CHECK_FUNCS([nl_langinfo poll reallocf select setlocale])
+AC_CHECK_FUNCS([strchr strdup strerror strrchr timegm utime utimes])
+AC_CHECK_FUNCS([wcscpy wcslen wmemcmp wmemcpy])
 
 # FreeBSD's nl_langinfo supports an option to specify whether the
 # current locale uses month/day or day/month ordering.  It makes the

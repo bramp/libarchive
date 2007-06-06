@@ -24,7 +24,7 @@
  */
 
 #include "bsdtar_platform.h"
-__FBSDID("$FreeBSD: src/usr.bin/tar/bsdtar.c,v 1.73 2007/03/11 10:36:42 kientzle Exp $");
+__FBSDID("$FreeBSD: src/usr.bin/tar/bsdtar.c,v 1.74 2007/03/24 03:25:49 kientzle Exp $");
 
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -145,6 +145,7 @@ enum {
 	OPTION_ONE_FILE_SYSTEM,
 	OPTION_STRIP_COMPONENTS,
 	OPTION_TOTALS,
+	OPTION_USE_COMPRESS_PROGRAM,
 	OPTION_VERSION
 };
 
@@ -202,6 +203,8 @@ static const struct option tar_longopts[] = {
 	{ "unlink",		no_argument,       NULL, 'U' },
 	{ "unlink-first",	no_argument,       NULL, 'U' },
 	{ "update",             no_argument,       NULL, 'u' },
+	{ "use-compress-program",
+				required_argument, NULL, OPTION_USE_COMPRESS_PROGRAM },
 	{ "verbose",            no_argument,       NULL, 'v' },
 	{ "version",            no_argument,       NULL, OPTION_VERSION },
 	{ NULL, 0, NULL, 0 }
@@ -558,6 +561,9 @@ main(int argc, char **argv)
 			usage(bsdtar);
 #endif
 			break;
+		case OPTION_USE_COMPRESS_PROGRAM:
+			bsdtar->compress_program = optarg;
+			break;
 		default:
 			usage(bsdtar);
 		}
@@ -657,6 +663,9 @@ main(int argc, char **argv)
 	}
 
 	cleanup_exclusions(bsdtar);
+	if (bsdtar->return_value != 0)
+		bsdtar_warnc(bsdtar, 0,
+		    "Error exit delayed from previous errors.");
 	return (bsdtar->return_value);
 }
 

@@ -22,7 +22,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# $FreeBSD: src/usr.bin/tar/test/test-basic.sh,v 1.2 2007/03/11 19:33:45 kientzle Exp $
+# $FreeBSD: src/usr.bin/tar/test/test-basic.sh,v 1.5 2007/04/18 04:35:17 kientzle Exp $
 
 # Generate a dir tree with various data and copy it using
 # a variety of tools and flags.  This mostly checks that
@@ -337,11 +337,32 @@ mkdir copy-bzip2-bunzip2
 (cd original && ${BSDTAR} -cyf - .) | (cd copy-bzip2-bunzip2; ${BSDTAR} -xf -)
 diff -r original copy-bzip2-bunzip2 || echo XXX FAILED XXX
 
+# Ensure that archive listing works
+echo "  bsdtar -c | bsdtar -t"
+(cd original && find .) | sort > list-original
+(cd original && ${BSDTAR} -cf - .) | ${BSDTAR} -tf - | sed 's|/$||' | sort > list-default
+diff list-original list-default || echo XXX FAILED XXX
+
+# Ensure that listing of deflated archives works
+echo "  bsdtar -cz | bsdtar -t"
+(cd original && ${BSDTAR} -czf - .) | ${BSDTAR} -tf - | sed 's|/$||' | sort > list-gzip
+diff list-original list-gzip || echo XXX FAILED XXX
+
+# Ensure that listing of bzip2ed archives works
+echo "  bsdtar -cy | bsdtar -t"
+(cd original && ${BSDTAR} -cyf - .) | ${BSDTAR} -tf - | sed 's|/$||' |  sort > list-bzip2
+diff list-original list-bzip2 || echo XXX FAILED XXX
+
 # Filtering exercises different areas of the library.
 echo "  Convert tar archive to a tar archive"
 mkdir filter-tar-tar
 (cd original && ${BSDTAR} -cf - .) | ${BSDTAR} -cf - @- | (cd filter-tar-tar; ${BSDTAR} -xf -)
 diff -r original filter-tar-tar || echo XXX FAILED XXX
+
+# Make sure that reading and writing a tar archive doesn't change it.
+echo "  bsdtar -cf- @- | cmp"
+(cd original && ${BSDTAR} -cf - .) > original.tar
+${BSDTAR} -cf - @- < original.tar | cmp - original.tar || echo XXX FAILED XXX
 
 # Filtering as format conversion
 echo "  Convert tar archive to cpio archive"

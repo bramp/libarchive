@@ -24,27 +24,36 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_data_into_buffer.c,v 1.6 2007/01/09 08:05:55 kientzle Exp $");
+__FBSDID("$FreeBSD$");
 
-#ifdef HAVE_STRING_H
-#include <string.h>
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
 #endif
 
-#include "archive.h"
+#include "archive_entry.h"
 
-int
-archive_read_data_into_buffer(struct archive *a, void *d, ssize_t len)
+void
+archive_entry_copy_stat(struct archive_entry *entry, const struct stat *st)
 {
-	char *dest;
-	ssize_t bytes_read, total_bytes;
-
-	dest = (char *)d;
-	total_bytes = 0;
-	bytes_read = archive_read_data(a, dest, len);
-	while (bytes_read > 0) {
-		total_bytes += bytes_read;
-		bytes_read = archive_read_data(a, dest + total_bytes,
-		    len - total_bytes);
-	}
-	return (ARCHIVE_OK);
+#if HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC
+	archive_entry_set_atime(entry, st->st_atime, st->st_atimespec.tv_nsec);
+	archive_entry_set_ctime(entry, st->st_ctime, st->st_ctimespec.tv_nsec);
+	archive_entry_set_mtime(entry, st->st_mtime, st->st_mtimespec.tv_nsec);
+#elif HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC
+	archive_entry_set_atime(entry, st->st_atime, st->st_atim.tv_nsec);
+	archive_entry_set_ctime(entry, st->st_ctime, st->st_ctim.tv_nsec);
+	archive_entry_set_mtime(entry, st->st_mtime, st->st_mtim.tv_nsec);
+#else
+	archive_entry_set_atime(entry, st->st_atime, 0);
+	archive_entry_set_ctime(entry, st->st_ctime, 0);
+	archive_entry_set_mtime(entry, st->st_mtime, 0);
+#endif
+	archive_entry_set_dev(entry, st->st_dev);
+	archive_entry_set_gid(entry, st->st_gid);
+	archive_entry_set_uid(entry, st->st_uid);
+	archive_entry_set_ino(entry, st->st_ino);
+	archive_entry_set_nlink(entry, st->st_nlink);
+	archive_entry_set_rdev(entry, st->st_rdev);
+	archive_entry_set_size(entry, st->st_size);
+	archive_entry_set_mode(entry, st->st_mode);
 }

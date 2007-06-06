@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_extract.c,v 1.54 2007/03/11 10:29:52 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_extract.c,v 1.58 2007/04/16 04:04:49 cperciva Exp $");
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -95,19 +95,20 @@ archive_read_extract(struct archive *_a, struct archive_entry *entry, int flags)
 	archive_write_disk_set_skip_file(a->extract->ad,
 	    a->skip_file_dev, a->skip_file_ino);
 	r = archive_write_header(a->extract->ad, entry);
-	if (r == ARCHIVE_OK)
-		/* If there's an FD, pour data into it. */
-		r = copy_data(_a, a->extract->ad);
+	if (r < ARCHIVE_WARN)
+		r = ARCHIVE_WARN;
 	if (r != ARCHIVE_OK)
-		archive_set_error(&a->archive,
-		    archive_errno(extract->ad),
-		    "%s", archive_error_string(extract->ad));
+		/* If _write_header failed, copy the error. */
+ 		archive_copy_error(&a->archive, extract->ad);
+	else
+		/* Otherwise, pour data into the entry. */
+		r = copy_data(_a, a->extract->ad);
 	r2 = archive_write_finish_entry(a->extract->ad);
+	if (r2 < ARCHIVE_WARN)
+		r2 = ARCHIVE_WARN;
 	/* Use the first message. */
 	if (r2 != ARCHIVE_OK && r == ARCHIVE_OK)
-		archive_set_error(&a->archive,
-		    archive_errno(extract->ad),
-		    "%s", archive_error_string(extract->ad));
+ 		archive_copy_error(&a->archive, extract->ad);
 	/* Use the worst error return. */
 	if (r2 < r)
 		r = r2;
@@ -141,8 +142,13 @@ copy_data(struct archive *ar, struct archive *aw)
 		if (r != ARCHIVE_OK)
 			return (r);
 		r = archive_write_data_block(aw, buff, size, offset);
-		if (r != ARCHIVE_OK)
+		if (r < ARCHIVE_WARN)
+			r = ARCHIVE_WARN;
+		if (r != ARCHIVE_OK) {
+			archive_set_error(ar, archive_errno(aw),
+			    "%s", archive_error_string(aw));
 			return (r);
+		}
 	}
 }
 

@@ -23,13 +23,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_disk_perms.c,v 1.1 2007/03/03 07:37:37 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_disk_perms.c,v 1.3 2007/04/15 04:30:02 kientzle Exp $");
 
 #define UMASK 022
 
-static gid_t _default_gid = 0;
-static gid_t _invalid_gid = 0;
-static gid_t _alt_gid = 0;
+static long _default_gid = -1;
+static long _invalid_gid = -1;
+static long _alt_gid = -1;
 
 /*
  * To fully test SGID restores, we need three distinct GIDs to work
@@ -42,13 +42,13 @@ static gid_t _alt_gid = 0;
  * The second fails if this user doesn't belong to at least two groups;
  * the third fails if the current user is root.
  */
-static int
+static void
 searchgid(void)
 {
 	static int   _searched = 0;
 	uid_t uid = getuid();
 	gid_t gid = 0;
-	int n;
+	unsigned int n;
 	struct stat st;
 	int fd;
 
@@ -57,7 +57,7 @@ searchgid(void)
 		return;
 	_searched = 1;
 
-	/* Create a file on disk. */
+	/* Create a file on disk in the current default dir. */
 	fd = open("test_gid", O_CREAT, 0664);
 	failure("Couldn't create a file for gid testing.");
 	assert(fd > 0);
@@ -67,7 +67,7 @@ searchgid(void)
 	_default_gid = st.st_gid;
 
 	/* Find a GID for which fchown() fails.  This is our "invalid" GID. */
-	_invalid_gid = 0;
+	_invalid_gid = -1;
 	/* This loop stops when we wrap the gid or examine 10,000 gids. */
 	for (gid = 1, n = 1; gid == n && n < 10000 ; n++, gid++) {
 		if (fchown(fd, uid, gid) != 0) {
@@ -80,10 +80,10 @@ searchgid(void)
 	 * Find a GID for which fchown() succeeds, but which isn't the
 	 * default.  This is the "alternate" gid.
 	 */
-	_alt_gid = 0;
-	for (gid = 1, n = 1; gid == n && n < 10000 ; n++, gid++) {
+	_alt_gid = -1;
+	for (gid = 0, n = 0; gid == n && n < 10000 ; n++, gid++) {
 		/* _alt_gid must be different than _default_gid */
-		if (gid == _default_gid)
+		if (gid == (gid_t)_default_gid)
 			continue;
 		if (fchown(fd, uid, gid) == 0) {
 			_alt_gid = gid;
@@ -126,6 +126,15 @@ DEFINE_TEST(test_write_disk_perms)
 	struct archive_entry *ae;
 	struct stat st;
 
+	/*
+	 * Set ownership of the current directory to the group of this
+	 * process.  Otherwise, the SGID tests below fail if the
+	 * /tmp directory is owned by a group to which we don't belong
+	 * and we're on a system where group ownership is inherited.
+	 * (Because we're not allowed to SGID files with defaultgid().)
+	 */
+	assertEqualInt(0, chown(".", getuid(), getgid()));
+
 	/* Create an archive_write_disk object. */
 	assert((a = archive_write_disk_new()) != NULL);
 
@@ -135,6 +144,54 @@ DEFINE_TEST(test_write_disk_perms)
 	archive_entry_set_mode(ae, S_IFREG | 0777);
 	assert(0 == archive_write_header(a, ae));
 	assert(0 == archive_write_finish_entry(a));
+	archive_entry_free(ae);
+
+	/* Write a regular file, then write over it. */
+	/* For files, the perms should get updated. */
+	assert((ae = archive_entry_new()) != NULL);
+	archive_entry_copy_pathname(ae, "file_overwrite_0144");
+	archive_entry_set_mode(ae, S_IFREG | 0777);
+	assert(0 == archive_write_header(a, ae));
+	archive_entry_free(ae);
+	assert(0 == archive_write_finish_entry(a));
+	/* Check that file was created with different perms. */
+	assert(0 == stat("file_overwrite_0144", &st));
+	failure("file_overwrite_0144: st.st_mode=%o", st.st_mode);
+	assert((st.st_mode & 07777) != 0144);
+	/* Overwrite, this should change the perms. */
+	assert((ae = archive_entry_new()) != NULL);
+	archive_entry_copy_pathname(ae, "file_overwrite_0144");
+	archive_entry_set_mode(ae, S_IFREG | 0144);
+	assert(0 == archive_write_header(a, ae));
+	archive_entry_free(ae);
+	assert(0 == archive_write_finish_entry(a));
+
+	/* Write a regular dir. */
+	assert((ae = archive_entry_new()) != NULL);
+	archive_entry_copy_pathname(ae, "dir_0514");
+	archive_entry_set_mode(ae, S_IFDIR | 0514);
+	assert(0 == archive_write_header(a, ae));
+	archive_entry_free(ae);
+	assert(0 == archive_write_finish_entry(a));
+
+	/* Overwrite an existing dir. */
+	/* For dir, the first perms should get left. */
+	assert(mkdir("dir_overwrite_0744", 0744) == 0);
+	/* Check original perms. */
+	assert(0 == stat("dir_overwrite_0744", &st));
+	failure("dir_overwrite_0744: st.st_mode=%o", st.st_mode);
+	assert((st.st_mode & 07777) == 0744);
+	/* Overwrite shouldn't edit perms. */
+	assert((ae = archive_entry_new()) != NULL);
+	archive_entry_copy_pathname(ae, "dir_overwrite_0744");
+	archive_entry_set_mode(ae, S_IFDIR | 0777);
+	assert(0 == archive_write_header(a, ae));
+	archive_entry_free(ae);
+	assert(0 == archive_write_finish_entry(a));
+	/* Make sure they're unchanged. */
+	assert(0 == stat("dir_overwrite_0744", &st));
+	failure("dir_overwrite_0744: st.st_mode=%o", st.st_mode);
+	assert((st.st_mode & 07777) == 0744);
 
 	/* Write a regular file with SUID bit, but don't use _EXTRACT_PERM. */
 	assert((ae = archive_entry_new()) != NULL);
@@ -184,7 +241,7 @@ DEFINE_TEST(test_write_disk_perms)
 	failure("Setting SGID bit should succeed here.");
 	assertEqualIntA(a, 0, archive_write_finish_entry(a));
 
-	if (altgid() == 0) {
+	if (altgid() == -1) {
 		/*
 		 * Current user must belong to at least two groups or
 		 * else we can't test setting the GID to another group.
@@ -230,7 +287,7 @@ DEFINE_TEST(test_write_disk_perms)
 	 * but wrong GID.  POSIX says you shouldn't restore SGID bit
 	 * unless the GID could be restored.
 	 */
-	if (invalidgid() == 0) {
+	if (invalidgid() == -1) {
 		/* This test always fails for root. */
 		printf("Running as root: Can't test SGID failures.\n");
 	} else {
@@ -262,11 +319,24 @@ DEFINE_TEST(test_write_disk_perms)
 #else
 	archive_write_finish(a);
 #endif
+	archive_entry_free(ae);
 
 	/* Test the entries on disk. */
 	assert(0 == stat("file_0755", &st));
 	failure("file_0755: st.st_mode=%o", st.st_mode);
 	assert((st.st_mode & 07777) == 0755);
+
+	assert(0 == stat("file_overwrite_0144", &st));
+	failure("file_overwrite_0144: st.st_mode=%o", st.st_mode);
+	assert((st.st_mode & 07777) == 0144);
+
+	assert(0 == stat("dir_0514", &st));
+	failure("dir_0514: st.st_mode=%o", st.st_mode);
+	assert((st.st_mode & 07777) == 0514);
+
+	assert(0 == stat("dir_overwrite_0744", &st));
+	failure("dir_overwrite_0744: st.st_mode=%o", st.st_mode);
+	assert((st.st_mode & 07777) == 0744);
 
 	assert(0 == stat("file_no_suid", &st));
 	failure("file_0755: st.st_mode=%o", st.st_mode);
@@ -291,7 +361,7 @@ DEFINE_TEST(test_write_disk_perms)
 	failure("file_perm_sgid: st.st_mode=%o", st.st_mode);
 	assert((st.st_mode & 07777) == (S_ISGID | 0742));
 
-	if (altgid() != 0) {
+	if (altgid() != -1) {
 		/* SGID should not be set here. */
 		assert(0 == stat("file_alt_sgid", &st));
 		failure("file_alt_sgid: st.st_mode=%o", st.st_mode);
@@ -303,7 +373,7 @@ DEFINE_TEST(test_write_disk_perms)
 		assert((st.st_mode & 07777) == (S_ISGID | 0742));
 	}
 
-	if (invalidgid() != 0) {
+	if (invalidgid() != -1) {
 		/* SGID should NOT be set here. */
 		assert(0 == stat("file_bad_sgid", &st));
 		failure("file_bad_sgid: st.st_mode=%o", st.st_mode);

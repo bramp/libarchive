@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libarchive/archive.h.in,v 1.40 2007/03/11 10:29:52 kientzle Exp $
+ * $FreeBSD: src/lib/libarchive/archive.h.in,v 1.43 2007/05/02 05:29:55 cperciva Exp $
  */
 
 #ifndef ARCHIVE_H_INCLUDED
@@ -30,7 +30,7 @@
 
 /*
  * This header file corresponds to:
- *   Library version @VERSION@
+ *   Library version @ARCHIVE_VERSION@
  *   Shared library version @SHLIB_MAJOR@
  */
 
@@ -73,7 +73,7 @@ int		archive_api_version(void);
 #define	ARCHIVE_API_FEATURE	@ARCHIVE_API_MINOR@
 int		archive_api_feature(void);
 /* Textual name/version of the library. */
-#define	ARCHIVE_LIBRARY_VERSION	"libarchive @VERSION@"
+#define	ARCHIVE_LIBRARY_VERSION	"libarchive @ARCHIVE_VERSION@"
 const char *	archive_version(void);
 
 #define	ARCHIVE_BYTES_PER_RECORD	  512
@@ -141,6 +141,7 @@ typedef int	archive_close_callback(struct archive *, void *_client_data);
 #define	ARCHIVE_COMPRESSION_GZIP	1
 #define	ARCHIVE_COMPRESSION_BZIP2	2
 #define	ARCHIVE_COMPRESSION_COMPRESS	3
+#define	ARCHIVE_COMPRESSION_PROGRAM	4
 
 /*
  * Codes returned by archive_format.
@@ -177,6 +178,9 @@ typedef int	archive_close_callback(struct archive *, void *_client_data);
 #define	ARCHIVE_FORMAT_ISO9660_ROCKRIDGE	(ARCHIVE_FORMAT_ISO9660 | 1)
 #define	ARCHIVE_FORMAT_ZIP			0x50000
 #define	ARCHIVE_FORMAT_EMPTY			0x60000
+#define	ARCHIVE_FORMAT_AR			0x70000
+#define	ARCHIVE_FORMAT_AR_GNU			(ARCHIVE_FORMAT_AR | 1)
+#define	ARCHIVE_FORMAT_AR_BSD			(ARCHIVE_FORMAT_AR | 2)
 
 /*-
  * Basic outline for reading an archive:
@@ -204,8 +208,11 @@ int		 archive_read_support_compression_bzip2(struct archive *);
 int		 archive_read_support_compression_compress(struct archive *);
 int		 archive_read_support_compression_gzip(struct archive *);
 int		 archive_read_support_compression_none(struct archive *);
+int		 archive_read_support_compression_program(struct archive *,
+		     const char *command);
 
 int		 archive_read_support_format_all(struct archive *);
+int		 archive_read_support_format_ar(struct archive *);
 int		 archive_read_support_format_cpio(struct archive *);
 int		 archive_read_support_format_empty(struct archive *);
 int		 archive_read_support_format_gnutar(struct archive *);
@@ -315,6 +322,10 @@ int		 archive_read_data_into_fd(struct archive *, int fd);
 #define	ARCHIVE_EXTRACT_SECURE_SYMLINKS (256)
 /* Default: Do not reject entries with '..' as path elements. */
 #define	ARCHIVE_EXTRACT_SECURE_NODOTDOT (512)
+/* Default: Create parent directories as needed. */
+#define	ARCHIVE_EXTRACT_NO_AUTODIR (1024)
+/* Default: Overwrite files, even if one on disk is newer. */
+#define	ARCHIVE_EXTRACT_NO_OVERWRITE_NEWER (2048)
 
 int		 archive_read_extract(struct archive *, struct archive_entry *,
 		     int flags);
@@ -369,11 +380,15 @@ int		 archive_write_set_skip_file(struct archive *, dev_t, ino_t);
 int		 archive_write_set_compression_bzip2(struct archive *);
 int		 archive_write_set_compression_gzip(struct archive *);
 int		 archive_write_set_compression_none(struct archive *);
+int		 archive_write_set_compression_program(struct archive *,
+		     const char *cmd);
 /* A convenience function to set the format based on the code or name. */
 int		 archive_write_set_format(struct archive *, int format_code);
 int		 archive_write_set_format_by_name(struct archive *,
 		     const char *name);
 /* To minimize link pollution, use one or more of the following. */
+int		 archive_write_set_format_ar_bsd(struct archive *);
+int		 archive_write_set_format_ar_svr4(struct archive *);
 int		 archive_write_set_format_cpio(struct archive *);
 /* TODO: int archive_write_set_format_old_tar(struct archive *); */
 int		 archive_write_set_format_pax(struct archive *);
@@ -488,6 +503,7 @@ const char	*archive_format_name(struct archive *);
 int		 archive_format(struct archive *);
 void		 archive_clear_error(struct archive *);
 void		 archive_set_error(struct archive *, int _err, const char *fmt, ...);
+void		 archive_copy_error(struct archive *dest, struct archive *src);
 
 #ifdef __cplusplus
 }

@@ -24,13 +24,15 @@
  */
 
 #include "bsdtar_platform.h"
-__FBSDID("$FreeBSD: src/usr.bin/tar/read.c,v 1.28 2007/03/11 10:36:42 kientzle Exp $");
+__FBSDID("$FreeBSD: src/usr.bin/tar/read.c,v 1.32 2007/05/08 15:22:21 kientzle Exp $");
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 #ifdef MAJOR_IN_MKDEV
 #include <sys/mkdev.h>
+#elif defined(MAJOR_IN_SYSMACROS)
+#include <sys/sysmacros.h>
 #endif
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -104,7 +106,10 @@ read_archive(struct bsdtar *bsdtar, char mode)
 		include_from_file(bsdtar, bsdtar->names_from_file);
 
 	a = archive_read_new();
-	archive_read_support_compression_all(a);
+	if (bsdtar->compress_program != NULL)
+		archive_read_support_compression_program(a, bsdtar->compress_program);
+	else
+		archive_read_support_compression_all(a);
 	archive_read_support_format_all(a);
 	if (archive_read_open_file(a, bsdtar->filename,
 	    bsdtar->bytes_per_block != 0 ? bsdtar->bytes_per_block :
@@ -122,18 +127,16 @@ read_archive(struct bsdtar *bsdtar, char mode)
 		r = archive_read_next_header(a, &entry);
 		if (r == ARCHIVE_EOF)
 			break;
-		if (r == ARCHIVE_WARN)
+		if (r < ARCHIVE_OK)
 			bsdtar_warnc(bsdtar, 0, "%s", archive_error_string(a));
-		if (r == ARCHIVE_FATAL) {
-			bsdtar->return_value = 1;
-			bsdtar_warnc(bsdtar, 0, "%s", archive_error_string(a));
-			break;
-		}
 		if (r == ARCHIVE_RETRY) {
 			/* Retryable error: try again */
-			bsdtar_warnc(bsdtar, 0, "%s", archive_error_string(a));
 			bsdtar_warnc(bsdtar, 0, "Retrying...");
 			continue;
+		}
+		if (r != ARCHIVE_OK) {
+			bsdtar->return_value = 1;
+			break;
 		}
 
 		/*
@@ -206,6 +209,7 @@ read_archive(struct bsdtar *bsdtar, char mode)
 				fprintf(out, "\n");
 				bsdtar_warnc(bsdtar, 0, "%s",
 				    archive_error_string(a));
+				bsdtar->return_value = 1;
 				break;
 			}
 			fprintf(out, "\n");
@@ -223,11 +227,12 @@ read_archive(struct bsdtar *bsdtar, char mode)
 				    archive_entry_pathname(entry));
 				fflush(stderr);
 			}
-			if (bsdtar->option_stdout) {
-				/* TODO: Catch/recover any errors here. */
-				archive_read_data_into_fd(a, 1);
-			} else if (archive_read_extract(a, entry,
-				       bsdtar->extract_flags)) {
+			if (bsdtar->option_stdout)
+				r = archive_read_data_into_fd(a, 1);
+			else
+				r = archive_read_extract(a, entry,
+				    bsdtar->extract_flags);
+			if (r != ARCHIVE_OK) {
 				if (!bsdtar->verbose)
 					safe_fprintf(stderr, "%s",
 					    archive_entry_pathname(entry));
@@ -235,14 +240,12 @@ read_archive(struct bsdtar *bsdtar, char mode)
 				    archive_error_string(a));
 				if (!bsdtar->verbose)
 					fprintf(stderr, "\n");
-				/*
-				 * TODO: Decide how to handle
-				 * extraction error... <sigh>
-				 */
 				bsdtar->return_value = 1;
 			}
 			if (bsdtar->verbose)
 				fprintf(stderr, "\n");
+			if (r == ARCHIVE_FATAL)
+				break;
 		}
 	}
 
@@ -294,7 +297,7 @@ list_item_verbose(struct bsdtar *bsdtar, FILE *out, struct archive_entry *entry)
 	/* Use uname if it's present, else uid. */
 	p = archive_entry_uname(entry);
 	if ((p == NULL) || (*p == '\0')) {
-		sprintf(tmp, "%d ", st->st_uid);
+		sprintf(tmp, "%lu ", (unsigned long)st->st_uid);
 		p = tmp;
 	}
 	w = strlen(p);
@@ -308,7 +311,7 @@ list_item_verbose(struct bsdtar *bsdtar, FILE *out, struct archive_entry *entry)
 		fprintf(out, "%s", p);
 		w = strlen(p);
 	} else {
-		sprintf(tmp, "%d", st->st_gid);
+		sprintf(tmp, "%lu", (unsigned long)st->st_gid);
 		w = strlen(tmp);
 		fprintf(out, "%s", tmp);
 	}
@@ -319,9 +322,9 @@ list_item_verbose(struct bsdtar *bsdtar, FILE *out, struct archive_entry *entry)
 	 * If gs_width is too small, grow it.
 	 */
 	if (S_ISCHR(st->st_mode) || S_ISBLK(st->st_mode)) {
-		sprintf(tmp, "%d,%u",
-		    major(st->st_rdev),
-		    (unsigned)minor(st->st_rdev)); /* ls(1) also casts here. */
+		sprintf(tmp, "%lu,%lu",
+		    (unsigned long)major(st->st_rdev),
+		    (unsigned long)minor(st->st_rdev)); /* ls(1) also casts here. */
 	} else {
 		/*
 		 * Note the use of platform-dependent macros to format

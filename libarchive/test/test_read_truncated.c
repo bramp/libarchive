@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_truncated.c,v 1.1 2007/03/03 07:37:37 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_truncated.c,v 1.2 2007/04/15 04:30:02 kientzle Exp $");
 
 char buff[1000000];
 char buff2[100000];
@@ -32,7 +32,7 @@ DEFINE_TEST(test_read_truncated)
 {
 	struct archive_entry *ae;
 	struct archive *a;
-	int i;
+	unsigned int i;
 	size_t used;
 
 	/* Create a new archive in memory. */
@@ -51,6 +51,7 @@ DEFINE_TEST(test_read_truncated)
 		buff2[i] = (unsigned char)rand();
 	archive_entry_set_size(ae, sizeof(buff2));
 	assertA(0 == archive_write_header(a, ae));
+	archive_entry_free(ae);
 	assertA(sizeof(buff2) == archive_write_data(a, buff2, sizeof(buff2)));
 
 	/* Close out the archive. */

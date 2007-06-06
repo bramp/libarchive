@@ -25,7 +25,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_disk.c,v 1.3 2007/03/13 06:04:24 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_disk.c,v 1.11 2007/05/21 04:22:38 cperciva Exp $");
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -80,6 +80,9 @@ __FBSDID("$FreeBSD: src/lib/libarchive/archive_write_disk.c,v 1.3 2007/03/13 06:
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef HAVE_UTIME_H
+#include <utime.h>
+#endif
 
 #include "archive.h"
 #include "archive_string.h"
@@ -111,6 +114,7 @@ struct fixup_entry {
  * that verification can occur explicitly through a stat() call or
  * implicitly because of a successful chown() call.
  */
+#define	TODO_MODE_FORCE		0x40000000
 #define	TODO_MODE_BASE		0x20000000
 #define	TODO_SUID		0x10000000
 #define	TODO_SUID_CHECK		0x08000000
@@ -200,6 +204,7 @@ static void	edit_deep_directories(struct archive_write_disk *ad);
 static int	cleanup_pathname(struct archive_write_disk *);
 static int	create_dir(struct archive_write_disk *, char *);
 static int	create_parent_dir(struct archive_write_disk *, char *);
+static int	older(struct stat *, struct archive_entry *);
 static int	restore_entry(struct archive_write_disk *);
 #ifdef HAVE_POSIX_ACL
 static int	set_acl(struct archive_write_disk *, int fd, struct archive_entry *,
@@ -288,7 +293,11 @@ _archive_write_header(struct archive *_a, struct archive_entry *entry)
 	a->pst = NULL;
 	a->current_fixup = NULL;
 	a->deferred = 0;
-	a->entry = entry;
+	if (a->entry) {
+		archive_entry_free(a->entry);
+		a->entry = NULL;
+	}
+	a->entry = archive_entry_clone(entry);
 	a->fd = -1;
 	a->offset = 0;
 	a->uid = a->user_uid;
@@ -320,6 +329,7 @@ _archive_write_header(struct archive *_a, struct archive_entry *entry)
 	/* Figure out what we need to do for this entry. */
 	a->todo = TODO_MODE_BASE;
 	if (a->flags & ARCHIVE_EXTRACT_PERM) {
+		a->todo |= TODO_MODE_FORCE; /* Be pushy about permissions. */
 		/*
 		 * SGID requires an extra "check" step because we
 		 * cannot easily predict the GID that the system will
@@ -539,6 +549,11 @@ _archive_write_finish_entry(struct archive *_a)
 		close(a->fd);
 		a->fd = -1;
 	}
+	/* If there's an entry, we can release it now. */
+	if (a->entry) {
+		archive_entry_free(a->entry);
+		a->entry = NULL;
+	}
 	a->archive.state = ARCHIVE_STATE_HEADER;
 	return (ret);
 }
@@ -677,21 +692,42 @@ restore_entry(struct archive_write_disk *a)
 	/* Try creating it first; if this fails, we'll try to recover. */
 	en = create_filesystem_object(a);
 
-	if (en == ENOTDIR || en == ENOENT) {
+	if ((en == ENOTDIR || en == ENOENT)
+	    && !(a->flags & ARCHIVE_EXTRACT_NO_AUTODIR)) {
 		/* If the parent dir doesn't exist, try creating it. */
 		create_parent_dir(a, a->name);
 		/* Now try to create the object again. */
 		en = create_filesystem_object(a);
 	}
 
-	if (en == EEXIST) {
+	if ((en == EISDIR || en == EEXIST)
+	    && (a->flags & ARCHIVE_EXTRACT_NO_OVERWRITE)) {
 		/* If we're not overwriting, we're done. */
-		if (a->flags & ARCHIVE_EXTRACT_NO_OVERWRITE) {
-			archive_set_error(&a->archive, en, "Already exists");
+		archive_set_error(&a->archive, en, "Already exists");
+		return (ARCHIVE_WARN);
+	}
+
+	/*
+	 * Some platforms return EISDIR if you call
+	 * open(O_WRONLY | O_EXCL | O_CREAT) on a directory, some
+	 * return EEXIST.  POSIX is ambiguous, requiring EISDIR
+	 * for open(O_WRONLY) on a dir and EEXIST for open(O_EXCL | O_CREAT)
+	 * on an existing item.
+	 */
+	if (en == EISDIR) {
+		/* A dir is in the way of a non-dir, rmdir it. */
+		if (rmdir(a->name) != 0) {
+			archive_set_error(&a->archive, errno,
+			    "Can't remove already-existing dir");
 			return (ARCHIVE_WARN);
 		}
-
-		/* Find out what's in the way before we go any further. */
+		/* Try again. */
+		en = create_filesystem_object(a);
+	} else if (en == EEXIST) {
+		/*
+		 * We know something is in the way, but we don't know what;
+		 * we need to find out before we go any further.
+		 */
 		if (lstat(a->name, &a->st) != 0) {
 			archive_set_error(&a->archive, errno,
 			    "Can't stat existing object");
@@ -699,6 +735,14 @@ restore_entry(struct archive_write_disk *a)
 		}
 
 		/* TODO: if it's a symlink... */
+
+		if (a->flags & ARCHIVE_EXTRACT_NO_OVERWRITE_NEWER) {
+			if (!older(&(a->st), a->entry)) {
+				archive_set_error(&a->archive, 0,
+				    "File on disk is not older; skipping.");
+				return (ARCHIVE_FAILED);
+			}
+		}
 
 		/* If it's our archive, we're done. */
 		if (a->skip_file_dev > 0 &&
@@ -732,9 +776,12 @@ restore_entry(struct archive_write_disk *a)
 			 * There's a dir in the way of a dir.  Don't
 			 * waste time with rmdir()/mkdir(), just fix
 			 * up the permissions on the existing dir.
+			 * Note that we don't change perms on existing
+			 * dirs unless _EXTRACT_PERM is specified.
 			 */
-			if (a->mode != a->st.st_mode)
-				a->deferred |= TODO_MODE;
+			if ((a->mode != a->st.st_mode)
+			    && (a->todo & TODO_MODE_FORCE))
+				a->deferred |= (a->todo & TODO_MODE);
 			/* Ownership doesn't need deferred fixup. */
 			en = 0; /* Forget the EEXIST. */
 		}
@@ -789,7 +836,8 @@ create_filesystem_object(struct archive_write_disk *a)
 
 	switch (a->mode & S_IFMT) {
 	default:
-		/* Fall through, as required by POSIX. */
+		/* POSIX requires that we fall through here. */
+		/* FALLTHROUGH */
 	case S_IFREG:
 		a->fd = open(a->name,
 		    O_WRONLY | O_CREAT | O_EXCL, mode);
@@ -806,13 +854,15 @@ create_filesystem_object(struct archive_write_disk *a)
 	case S_IFDIR:
 		mode = (mode | MINIMUM_DIR_MODE) & MAXIMUM_DIR_MODE;
 		r = mkdir(a->name, mode);
-		/* Defer setting dir times. */
-		a->deferred |= (a->todo & TODO_TIMES);
-		a->todo &= ~TODO_TIMES;
-		/* Never use an immediate chmod(). */
-		if (mode != final_mode)
-			a->deferred |= (a->todo & TODO_MODE);
-		a->todo &= ~TODO_MODE;
+		if (r == 0) {
+			/* Defer setting dir times. */
+			a->deferred |= (a->todo & TODO_TIMES);
+			a->todo &= ~TODO_TIMES;
+			/* Never use an immediate chmod(). */
+			if (mode != final_mode)
+				a->deferred |= (a->todo & TODO_MODE);
+			a->todo &= ~TODO_MODE;
+		}
 		break;
 	case S_IFIFO:
 		r = mkfifo(a->name, mode);
@@ -868,6 +918,8 @@ _archive_write_close(struct archive *_a)
 	while (p != NULL) {
 		a->pst = NULL; /* Mark stat cache as out-of-date. */
 		if (p->fixup & TODO_TIMES) {
+#ifdef HAVE_UTIMES
+			/* {f,l,}utimes() are preferred, when available. */
 			struct timeval times[2];
 			times[1].tv_sec = p->mtime;
 			times[1].tv_usec = p->mtime_nanos / 1000;
@@ -877,6 +929,14 @@ _archive_write_close(struct archive *_a)
 			lutimes(p->name, times);
 #else
 			utimes(p->name, times);
+#endif
+#else
+			/* utime() is more portable, but less precise. */
+			struct utimbuf times;
+			times.modtime = p->mtime;
+			times.actime = p->atime;
+
+			utime(p->name, &times);
 #endif
 		}
 		if (p->fixup & TODO_MODE_BASE)
@@ -901,6 +961,10 @@ _archive_write_finish(struct archive *_a)
 	struct archive_write_disk *a = (struct archive_write_disk *)_a;
 	int ret;
 	ret = _archive_write_close(&a->archive);
+	if (a->cleanup_gid != NULL && a->lookup_gid_data != NULL)
+		(a->cleanup_gid)(a->lookup_gid_data);
+	if (a->cleanup_uid != NULL && a->lookup_uid_data != NULL)
+		(a->cleanup_uid)(a->lookup_uid_data);
 	archive_string_free(&a->_name_data);
 	archive_string_free(&a->archive.error_string);
 	archive_string_free(&a->path_safe);
@@ -1242,7 +1306,6 @@ create_dir(struct archive_write_disk *a, char *path)
 
 	/* Check for special names and just skip them. */
 	slash = strrchr(path, '/');
-	base = strrchr(path, '/');
 	if (slash == NULL)
 		base = path;
 	else
@@ -1372,19 +1435,22 @@ success:
 	return (ARCHIVE_OK);
 }
 
+#ifdef HAVE_UTIMES
+/*
+ * The utimes()-family functions provide high resolution and
+ * a way to set time on an fd or a symlink.  We prefer them
+ * when they're available.
+ */
 static int
 set_time(struct archive_write_disk *a)
 {
-	const struct stat *st;
 	struct timeval times[2];
 
-	st = archive_entry_stat(a->entry);
+	times[1].tv_sec = archive_entry_mtime(a->entry);
+	times[1].tv_usec = archive_entry_mtime_nsec(a->entry) / 1000;
 
-	times[1].tv_sec = st->st_mtime;
-	times[1].tv_usec = ARCHIVE_STAT_MTIME_NANOS(st) / 1000;
-
-	times[0].tv_sec = st->st_atime;
-	times[0].tv_usec = ARCHIVE_STAT_ATIME_NANOS(st) / 1000;
+	times[0].tv_sec = archive_entry_atime(a->entry);
+	times[0].tv_usec = archive_entry_atime_nsec(a->entry) / 1000;
 
 #ifdef HAVE_FUTIMES
 	if (a->fd >= 0 && futimes(a->fd, times) == 0) {
@@ -1412,11 +1478,43 @@ set_time(struct archive_write_disk *a)
 	/* XXX TODO: Can FreeBSD restore ctime? XXX */
 	return (ARCHIVE_OK);
 }
+#elif defined(HAVE_UTIME)
+/*
+ * utime() is an older, more standard interface that we'll use
+ * if utimes() isn't available.
+ */
+static int
+set_time(struct archive_write_disk *a)
+{
+	struct utimbuf times;
+
+	times.modtime = archive_entry_mtime(a->entry);
+	times.actime = archive_entry_atime(a->entry);
+	if (!S_ISLNK(a->mode) && utime(a->name, &times) != 0) {
+		archive_set_error(&a->archive, errno,
+		    "Can't update time for %s", a->name);
+		return (ARCHIVE_WARN);
+	}
+	return (ARCHIVE_OK);
+}
+#else
+/* This platform doesn't give us a way to restore the time. */
+static int
+set_time(struct archive_write_disk *a)
+{
+	(void)a; /* UNUSED */
+	archive_set_error(&a->archive, errno,
+	    "Can't update time for %s", a->name);
+	return (ARCHIVE_WARN);
+}
+#endif
+
 
 static int
 set_mode(struct archive_write_disk *a, int mode)
 {
 	int r = ARCHIVE_OK;
+	mode &= 07777; /* Strip off file type bits. */
 
 	if (a->todo & TODO_SGID_CHECK) {
 		/*
@@ -1477,7 +1575,8 @@ set_mode(struct archive_write_disk *a, int mode)
 		 * impact.
 		 */
 		if (lchmod(a->name, mode) != 0) {
-			archive_set_error(&a->archive, errno, "Can't set permissions");
+			archive_set_error(&a->archive, errno,
+			    "Can't set permissions to 0%o", (int)mode);
 			r = ARCHIVE_WARN;
 		}
 #endif
@@ -1492,7 +1591,7 @@ set_mode(struct archive_write_disk *a, int mode)
 		if (a->fd >= 0) {
 			if (fchmod(a->fd, mode) != 0) {
 				archive_set_error(&a->archive, errno,
-				    "Can't set permissions");
+				    "Can't set permissions to 0%o", (int)mode);
 				r = ARCHIVE_WARN;
 			}
 		} else
@@ -1501,7 +1600,7 @@ set_mode(struct archive_write_disk *a, int mode)
 			 * we'll just use chmod(). */
 			if (chmod(a->name, mode) != 0) {
 				archive_set_error(&a->archive, errno,
-				    "Can't set permissions");
+				    "Can't set permissions to 0%o", (int)mode);
 				r = ARCHIVE_WARN;
 			}
 	}
@@ -1512,7 +1611,7 @@ static int
 set_fflags(struct archive_write_disk *a)
 {
 	struct fixup_entry *le;
-	long		set, clear;
+	unsigned long	set, clear;
 	int		r;
 	int		critical_flags;
 	mode_t		mode = archive_entry_mode(a->entry);
@@ -1714,7 +1813,7 @@ static int
 set_fflags_platform(struct archive_write_disk *a, int fd, const char *name,
     mode_t mode, unsigned long set, unsigned long clear)
 {
-	(void)ad; /* UNUSED */
+	(void)a; /* UNUSED */
 	(void)fd; /* UNUSED */
 	(void)name; /* UNUSED */
 	(void)mode; /* UNUSED */
@@ -1935,4 +2034,39 @@ trivial_lookup_uid(void *private_data, const char *uname, uid_t uid)
 	(void)private_data; /* UNUSED */
 	(void)uname; /* UNUSED */
 	return (uid);
+}
+
+/*
+ * Test if file on disk is older than entry.
+ */
+static int
+older(struct stat *st, struct archive_entry *entry)
+{
+	/* First, test the seconds and return if we have a definite answer. */
+	/* Definitely older. */
+	if (st->st_mtime < archive_entry_mtime(entry))
+		return (1);
+	/* Definitely younger. */
+	if (st->st_mtime > archive_entry_mtime(entry))
+		return (0);
+	/* If this platform supports fractional seconds, try those. */
+#if HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC
+	/* Definitely older. */
+	if (st->st_mtimespec.tv_nsec < archive_entry_mtime_nsec(entry))
+		return (1);
+	/* Definitely younger. */
+	if (st->st_mtimespec.tv_nsec > archive_entry_mtime_nsec(entry))
+		return (0);
+#elif HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC
+	/* Definitely older. */
+	if (st->st_mtim.tv_nsec < archive_entry_mtime_nsec(entry))
+		return (1);
+	/* Definitely older. */
+	if (st->st_mtim.tv_nsec > archive_entry_mtime_nsec(entry))
+		return (0);
+#else
+	/* This system doesn't have high-res timestamps. */
+#endif
+	/* Same age, so not older. */
+	return (0);
 }

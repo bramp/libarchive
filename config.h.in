@@ -36,9 +36,29 @@
 /* Define to 1 if you have the `chflags' function. */
 #undef HAVE_CHFLAGS
 
+/* Define to 1 if you have the declaration of `INT64_MAX', and to 0 if you
+   don't. */
+#undef HAVE_DECL_INT64_MAX
+
+/* Define to 1 if you have the declaration of `INT64_MIN', and to 0 if you
+   don't. */
+#undef HAVE_DECL_INT64_MIN
+
+/* Define to 1 if you have the declaration of `SIZE_MAX', and to 0 if you
+   don't. */
+#undef HAVE_DECL_SIZE_MAX
+
 /* Define to 1 if you have the declaration of `strerror_r', and to 0 if you
    don't. */
 #undef HAVE_DECL_STRERROR_R
+
+/* Define to 1 if you have the declaration of `UINT32_MAX', and to 0 if you
+   don't. */
+#undef HAVE_DECL_UINT32_MAX
+
+/* Define to 1 if you have the declaration of `UINT64_MAX', and to 0 if you
+   don't. */
+#undef HAVE_DECL_UINT64_MAX
 
 /* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
    */
@@ -189,11 +209,20 @@
 /* Define to 1 if you have the <paths.h> header file. */
 #undef HAVE_PATHS_H
 
+/* Define to 1 if you have the `poll' function. */
+#undef HAVE_POLL
+
+/* Define to 1 if you have the <poll.h> header file. */
+#undef HAVE_POLL_H
+
 /* Define to 1 if you have the <pwd.h> header file. */
 #undef HAVE_PWD_H
 
 /* Define to 1 if you have the `reallocf' function. */
 #undef HAVE_REALLOCF
+
+/* Define to 1 if you have the `select' function. */
+#undef HAVE_SELECT
 
 /* Define to 1 if you have the `setlocale' function. */
 #undef HAVE_SETLOCALE
@@ -244,6 +273,9 @@
 /* Define to 1 if `st_rdev' is member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_RDEV
 
+/* Define to 1 if `tm_gmtoff' is member of `struct tm'. */
+#undef HAVE_STRUCT_TM_TM_GMTOFF
+
 /* Define to 1 if you have the <sys/acl.h> header file. */
 #undef HAVE_SYS_ACL_H
 
@@ -260,6 +292,9 @@
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #undef HAVE_SYS_PARAM_H
+
+/* Define to 1 if you have the <sys/select.h> header file. */
+#undef HAVE_SYS_SELECT_H
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
@@ -282,11 +317,32 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* Define to 1 if you have the `utime' function. */
+#undef HAVE_UTIME
+
+/* Define to 1 if you have the `utimes' function. */
+#undef HAVE_UTIMES
+
+/* Define to 1 if you have the <utime.h> header file. */
+#undef HAVE_UTIME_H
+
 /* Define to 1 if you have the `vprintf' function. */
 #undef HAVE_VPRINTF
 
 /* Define to 1 if you have the <wchar.h> header file. */
 #undef HAVE_WCHAR_H
+
+/* Define to 1 if you have the `wcscpy' function. */
+#undef HAVE_WCSCPY
+
+/* Define to 1 if you have the `wcslen' function. */
+#undef HAVE_WCSLEN
+
+/* Define to 1 if you have the `wmemcmp' function. */
+#undef HAVE_WMEMCMP
+
+/* Define to 1 if you have the `wmemcpy' function. */
+#undef HAVE_WMEMCPY
 
 /* Define to 1 if you have the <zlib.h> header file. */
 #undef HAVE_ZLIB_H
@@ -378,7 +434,7 @@
 /* Define to `int64_t' if <sys/types.h> does not define. */
 #undef off_t
 
-/* Define to `unsigned' if <sys/types.h> does not define. */
+/* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t
 
 /* Define to `_uint64_t' if <sys/types.h> does not define. */
@@ -392,3 +448,6 @@
 
 /* Define to `uint64_t' if <sys/types.h> does not define. */
 #undef uintmax_t
+
+/* Define to `unsigned int' if <sys/types.h> does not define. */
+#undef uintptr_t

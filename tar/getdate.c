@@ -84,7 +84,7 @@
 
 
 /* Copy the first part of user declarations.  */
-#line 1 "tar/getdate.y"
+#line 1 "getdate.y"
 
 /*
  * March 2005: Further modified and simplified by Tim Kientzle:
@@ -195,7 +195,7 @@ static time_t	yyRelSeconds;
 #endif
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 92 "tar/getdate.y"
+#line 92 "getdate.y"
 typedef union YYSTYPE {
     time_t		Number;
 } YYSTYPE;
@@ -1240,32 +1240,32 @@ yyreduce:
   switch (yyn)
     {
         case 4:
-#line 108 "tar/getdate.y"
+#line 108 "getdate.y"
     { yyHaveTime++; }
     break;
 
   case 5:
-#line 109 "tar/getdate.y"
+#line 109 "getdate.y"
     { yyHaveZone++; }
     break;
 
   case 6:
-#line 110 "tar/getdate.y"
+#line 110 "getdate.y"
     { yyHaveDate++; }
     break;
 
   case 7:
-#line 111 "tar/getdate.y"
+#line 111 "getdate.y"
     { yyHaveDay++; }
     break;
 
   case 8:
-#line 112 "tar/getdate.y"
+#line 112 "getdate.y"
     { yyHaveRel++; }
     break;
 
   case 10:
-#line 116 "tar/getdate.y"
+#line 116 "getdate.y"
     {
 		/* "7am" */
 		yyHour = (yyvsp[-1].Number);
@@ -1279,14 +1279,14 @@ yyreduce:
     break;
 
   case 11:
-#line 126 "tar/getdate.y"
+#line 126 "getdate.y"
     {
 		/* "7:12:18" "19:17" */
 	}
     break;
 
   case 12:
-#line 129 "tar/getdate.y"
+#line 129 "getdate.y"
     {
 		/* "7:12pm", "12:20:13am" */
 		if (yyHour == 12)
@@ -1297,7 +1297,7 @@ yyreduce:
     break;
 
   case 13:
-#line 136 "tar/getdate.y"
+#line 136 "getdate.y"
     {
 		/* "7:14+0700" */
 		yyDSTmode = DSToff;
@@ -1306,7 +1306,7 @@ yyreduce:
     break;
 
   case 14:
-#line 141 "tar/getdate.y"
+#line 141 "getdate.y"
     {
 		/* "19:14:12-0530" */
 		yyDSTmode = DSToff;
@@ -1315,7 +1315,7 @@ yyreduce:
     break;
 
   case 15:
-#line 148 "tar/getdate.y"
+#line 148 "getdate.y"
     {
 		yyHour = (yyvsp[-2].Number);
 		yyMinutes = (yyvsp[0].Number);
@@ -1324,7 +1324,7 @@ yyreduce:
     break;
 
   case 16:
-#line 153 "tar/getdate.y"
+#line 153 "getdate.y"
     {
 		yyHour = (yyvsp[-4].Number);
 		yyMinutes = (yyvsp[-2].Number);
@@ -1333,7 +1333,7 @@ yyreduce:
     break;
 
   case 17:
-#line 160 "tar/getdate.y"
+#line 160 "getdate.y"
     {
 		yyTimezone = (yyvsp[0].Number);
 		yyDSTmode = DSToff;
@@ -1341,7 +1341,7 @@ yyreduce:
     break;
 
   case 18:
-#line 164 "tar/getdate.y"
+#line 164 "getdate.y"
     {
 		yyTimezone = (yyvsp[0].Number);
 		yyDSTmode = DSTon;
@@ -1349,7 +1349,7 @@ yyreduce:
     break;
 
   case 19:
-#line 168 "tar/getdate.y"
+#line 168 "getdate.y"
     {
 		yyTimezone = (yyvsp[-1].Number);
 		yyDSTmode = DSTon;
@@ -1357,7 +1357,7 @@ yyreduce:
     break;
 
   case 20:
-#line 174 "tar/getdate.y"
+#line 174 "getdate.y"
     {
 		yyDayOrdinal = 1;
 		yyDayNumber = (yyvsp[0].Number);
@@ -1365,7 +1365,7 @@ yyreduce:
     break;
 
   case 21:
-#line 178 "tar/getdate.y"
+#line 178 "getdate.y"
     {
 		/* "tue," "wednesday," */
 		yyDayOrdinal = 1;
@@ -1374,7 +1374,7 @@ yyreduce:
     break;
 
   case 22:
-#line 183 "tar/getdate.y"
+#line 183 "getdate.y"
     {
 		/* "second tues" "3 wed" */
 		yyDayOrdinal = (yyvsp[-1].Number);
@@ -1383,7 +1383,7 @@ yyreduce:
     break;
 
   case 23:
-#line 190 "tar/getdate.y"
+#line 190 "getdate.y"
     {
 		/* "1/15" */
 		yyMonth = (yyvsp[-2].Number);
@@ -1392,7 +1392,7 @@ yyreduce:
     break;
 
   case 24:
-#line 195 "tar/getdate.y"
+#line 195 "getdate.y"
     {
 		if ((yyvsp[-4].Number) >= 13) {
 			/* First number is big:  2004/01/29, 99/02/17 */
@@ -1415,7 +1415,7 @@ yyreduce:
     break;
 
   case 25:
-#line 214 "tar/getdate.y"
+#line 214 "getdate.y"
     {
 		/* ISO 8601 format.  yyyy-mm-dd.  */
 		yyYear = (yyvsp[-4].Number);
@@ -1425,7 +1425,7 @@ yyreduce:
     break;
 
   case 26:
-#line 220 "tar/getdate.y"
+#line 220 "getdate.y"
     {
 		if ((yyvsp[-4].Number) > 31) {
 			/* e.g. 1992-Jun-17 */
@@ -1442,7 +1442,7 @@ yyreduce:
     break;
 
   case 27:
-#line 233 "tar/getdate.y"
+#line 233 "getdate.y"
     {
 		/* "May 3" */
 		yyMonth = (yyvsp[-1].Number);
@@ -1451,7 +1451,7 @@ yyreduce:
     break;
 
   case 28:
-#line 238 "tar/getdate.y"
+#line 238 "getdate.y"
     {
 		/* "June 17, 2001" */
 		yyMonth = (yyvsp[-3].Number);
@@ -1461,7 +1461,7 @@ yyreduce:
     break;
 
   case 29:
-#line 244 "tar/getdate.y"
+#line 244 "getdate.y"
     {
 		/* "12 Sept" */
 		yyDay = (yyvsp[-1].Number);
@@ -1470,7 +1470,7 @@ yyreduce:
     break;
 
   case 30:
-#line 249 "tar/getdate.y"
+#line 249 "getdate.y"
     {
 		/* "12 Sept 1997" */
 		yyDay = (yyvsp[-2].Number);
@@ -1480,7 +1480,7 @@ yyreduce:
     break;
 
   case 31:
-#line 257 "tar/getdate.y"
+#line 257 "getdate.y"
     {
 		yyRelSeconds = -yyRelSeconds;
 		yyRelMonth = -yyRelMonth;
@@ -1488,7 +1488,7 @@ yyreduce:
     break;
 
   case 33:
-#line 264 "tar/getdate.y"
+#line 264 "getdate.y"
     {
 		/* "-3 hours" */
 		yyRelSeconds -= (yyvsp[-1].Number) * (yyvsp[0].Number);
@@ -1496,7 +1496,7 @@ yyreduce:
     break;
 
   case 34:
-#line 268 "tar/getdate.y"
+#line 268 "getdate.y"
     {
 		/* "+1 minute" */
 		yyRelSeconds += (yyvsp[-1].Number) * (yyvsp[0].Number);
@@ -1504,7 +1504,7 @@ yyreduce:
     break;
 
   case 35:
-#line 272 "tar/getdate.y"
+#line 272 "getdate.y"
     {
 		/* "1 day" */
 		yyRelSeconds += (yyvsp[-1].Number) * (yyvsp[0].Number);
@@ -1512,7 +1512,7 @@ yyreduce:
     break;
 
   case 36:
-#line 276 "tar/getdate.y"
+#line 276 "getdate.y"
     {
 		/* "hour" */
 		yyRelSeconds += (yyvsp[0].Number);
@@ -1520,7 +1520,7 @@ yyreduce:
     break;
 
   case 37:
-#line 280 "tar/getdate.y"
+#line 280 "getdate.y"
     {
 		/* "-3 months" */
 		yyRelMonth -= (yyvsp[-1].Number) * (yyvsp[0].Number);
@@ -1528,7 +1528,7 @@ yyreduce:
     break;
 
   case 38:
-#line 284 "tar/getdate.y"
+#line 284 "getdate.y"
     {
 		/* "+5 years" */
 		yyRelMonth += (yyvsp[-1].Number) * (yyvsp[0].Number);
@@ -1536,7 +1536,7 @@ yyreduce:
     break;
 
   case 39:
-#line 288 "tar/getdate.y"
+#line 288 "getdate.y"
     {
 		/* "2 years" */
 		yyRelMonth += (yyvsp[-1].Number) * (yyvsp[0].Number);
@@ -1544,7 +1544,7 @@ yyreduce:
     break;
 
   case 40:
-#line 292 "tar/getdate.y"
+#line 292 "getdate.y"
     {
 		/* "6 months" */
 		yyRelMonth += (yyvsp[0].Number);
@@ -1552,7 +1552,7 @@ yyreduce:
     break;
 
   case 41:
-#line 298 "tar/getdate.y"
+#line 298 "getdate.y"
     {
 		if (yyHaveTime && yyHaveDate && !yyHaveRel)
 			yyYear = (yyvsp[0].Number);
@@ -1854,7 +1854,7 @@ yyreturn:
 }
 
 
-#line 327 "tar/getdate.y"
+#line 327 "getdate.y"
 
 
 static struct TABLE {
@@ -2340,4 +2340,5 @@ main(int argc, char **argv)
     /* NOTREACHED */
 }
 #endif	/* defined(TEST) */
+
 

@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_acl_pax.c,v 1.1 2007/03/08 06:09:27 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_acl_pax.c,v 1.2 2007/04/15 04:30:02 kientzle Exp $");
 
 /*
  * Exercise the system-independent portion of the ACL support.
@@ -264,7 +264,7 @@ struct acl_t {
 	int permset; /* Permissions for this class of users. */
 	int tag; /* Owner, User, Owning group, group, other, etc. */
 	int qual; /* GID or UID of user/group, depending on tag. */
-	char *name; /* Name of user/group, depending on tag. */
+	const char *name; /* Name of user/group, depending on tag. */
 };
 
 static struct acl_t acls0[] = {
@@ -347,7 +347,7 @@ static void
 compare_acls(struct archive_entry *ae, struct acl_t *acls, int n, int mode)
 {
 	int *marker = malloc(sizeof(marker[0]) * n);
-	int marker_i, i;
+	int i;
 	int r;
 	int type, permset, tag, qual;
 	int matched;
@@ -397,11 +397,11 @@ compare_acls(struct archive_entry *ae, struct acl_t *acls, int n, int mode)
 	    acls[marker[0]].type, acls[marker[0]].permset,
 	    acls[marker[0]].tag, acls[marker[0]].qual, acls[marker[0]].name);
 	assert(n == 0); /* Number of ACLs not matched should == 0 */
+	free(marker);
 }
 
 DEFINE_TEST(test_acl_pax)
 {
-	int i;
 	struct archive *a;
 	struct archive_entry *ae;
 	size_t used;
@@ -441,6 +441,7 @@ DEFINE_TEST(test_acl_pax)
 	 */
 	set_acls(ae, acls0, sizeof(acls0)/sizeof(acls0[0]));
 	assertA(0 == archive_write_header(a, ae));
+	archive_entry_free(ae);
 
 	/* Close out the archive. */
 	assertA(0 == archive_write_close(a));
@@ -452,7 +453,7 @@ DEFINE_TEST(test_acl_pax)
 
 	/* Write out the data we generated to a file for manual inspection. */
 	assert(-1 < (fd = open("testout", O_WRONLY | O_CREAT | O_TRUNC, 0775)));
-	assert(used == write(fd, buff, used));
+	assert(used == (size_t)write(fd, buff, used));
 	close(fd);
 
 	/* Write out the reference data to a file for manual inspection. */

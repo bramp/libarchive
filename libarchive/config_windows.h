@@ -36,7 +36,12 @@
 #undef	HAVE_ACL_USER
 #undef	HAVE_BZLIB_H
 #undef	HAVE_CHFLAGS
+#define	HAVE_DECL_INT64_MAX 1
+#define	HAVE_DECL_INT64_MIN 1
+#define	HAVE_DECL_SIZE_MAX 1
 #define	HAVE_DECL_STRERROR_R 1
+#define	HAVE_DECL_UINT32_MAX 1
+#define	HAVE_DECL_UINT64_MAX 1
 #define	HAVE_EFTYPE 1
 #define	HAVE_EILSEQ 1
 #define	HAVE_ERRNO_H 1
@@ -61,7 +66,10 @@
 #define	HAVE_MKDIR 1
 #undef	HAVE_MKFIFO
 #undef	HAVE_PATHS_H
+#undef	HAVE_POLL
+#undef	HAVE_POLL_H
 #undef	HAVE_PWD_H
+#undef	HAVE_SELECT
 #undef	HAVE_STDINT_H
 #define	HAVE_STDLIB_H 1
 #define	HAVE_STRCHR 1
@@ -73,15 +81,24 @@
 #define	HAVE_STRRCHR 1
 #undef	HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC
 #undef	HAVE_STRUCT_STAT_ST_RDEV
+#undef	HAVE_STRUCT_TM_TM_GMTOFF
 #undef	HAVE_SYS_ACL_H
 #undef	HAVE_SYS_IOCTL_H
+#undef	HAVE_SYS_SELECT_H
 #define	HAVE_SYS_STAT_H 1
 #undef	HAVE_SYS_TIME_H
 #define	HAVE_SYS_TYPES_H 1
 #undef	HAVE_SYS_WAIT_H
 #undef	HAVE_TIMEGM
 #undef	HAVE_UNISTD_H
+#undef	HAVE_UTIME
+#undef	HAVE_UTIMES
+#undef	HAVE_UTIME_H
 #define	HAVE_WCHAR_H 1
+#define	HAVE_WCSCPY 1
+#define	HAVE_WCSLEN 1
+#define	HAVE_WMEMCMP 1
+#define	HAVE_WMEMCPY 1
 #undef	HAVE_ZLIB_H
 #define	STDC_HEADERS 1
 #define	TIME_WITH_SYS_TIME 1
@@ -128,7 +145,6 @@ typedef _int64 intmax_t;
 #define	major(x) ((int)(0x00ff & ((x) >> 8)))
 #define	minor(x) ((int)(0xffff00ff & (x)))
 #define	makedev(maj,min) ((0xff00 & ((maj)<<8))|(0xffff00ff & (min)))
-
 
 #define	EFTYPE 7
 #define	STDERR_FILENO 2

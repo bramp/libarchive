@@ -23,14 +23,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_open_memory.c,v 1.1 2007/03/03 07:37:37 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_open_memory.c,v 1.2 2007/04/15 04:30:02 kientzle Exp $");
 
 /* Try to force archive_write_open_memory.c to write past the end of an array. */
 static unsigned char buff[16384];
 
 DEFINE_TEST(test_write_open_memory)
 {
-	int i;
+	unsigned int i;
 	struct archive *a;
 	struct archive_entry *ae;
 	const char *name="/tmp/test";
@@ -39,7 +39,7 @@ DEFINE_TEST(test_write_open_memory)
 	assert((ae = archive_entry_new()) != NULL);
 	archive_entry_set_pathname(ae, name);
 	archive_entry_set_mode(ae, S_IFREG);
-	assert(0 == strcmp(archive_entry_pathname(ae), name));
+	assertEqualString(archive_entry_pathname(ae), name);
 
 	/* Try writing with different buffer sizes. */
 	/* Make sure that we get failure on too-small buffers, success on
@@ -72,4 +72,5 @@ DEFINE_TEST(test_write_open_memory)
 		assert(buff[i] == 0xAE);
 		assert(s <= i);
 	}
+	archive_entry_free(ae);
 }

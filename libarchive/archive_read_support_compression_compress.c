@@ -64,7 +64,7 @@
 
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_compression_compress.c,v 1.8 2007/03/03 07:37:36 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_compression_compress.c,v 1.9 2007/04/05 05:18:16 kientzle Exp $");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -145,7 +145,9 @@ int
 archive_read_support_compression_compress(struct archive *_a)
 {
 	struct archive_read *a = (struct archive_read *)_a;
-	return (__archive_read_register_compression(a, bid, init));
+	if (__archive_read_register_compression(a, bid, init) != NULL)
+		return (ARCHIVE_OK);
+	return (ARCHIVE_FATAL);
 }
 
 /*
@@ -197,10 +199,10 @@ init(struct archive_read *a, const void *buff, size_t n)
 	a->archive.compression_code = ARCHIVE_COMPRESSION_COMPRESS;
 	a->archive.compression_name = "compress (.Z)";
 
-	a->compression_read_ahead = read_ahead;
-	a->compression_read_consume = read_consume;
-	a->compression_skip = NULL; /* not supported */
-	a->compression_finish = finish;
+	a->decompressor->read_ahead = read_ahead;
+	a->decompressor->consume = read_consume;
+	a->decompressor->skip = NULL; /* not supported */
+	a->decompressor->finish = finish;
 
 	state = (struct private_data *)malloc(sizeof(*state));
 	if (state == NULL) {
@@ -210,7 +212,7 @@ init(struct archive_read *a, const void *buff, size_t n)
 		return (ARCHIVE_FATAL);
 	}
 	memset(state, 0, sizeof(*state));
-	a->compression_data = state;
+	a->decompressor->data = state;
 
 	state->uncompressed_buffer_size = 64 * 1024;
 	state->uncompressed_buffer = malloc(state->uncompressed_buffer_size);
@@ -275,10 +277,10 @@ static ssize_t
 read_ahead(struct archive_read *a, const void **p, size_t min)
 {
 	struct private_data *state;
-	int read_avail, was_avail, ret;
+	size_t read_avail;
+	int ret;
 
-	state = (struct private_data *)a->compression_data;
-	was_avail = -1;
+	state = (struct private_data *)a->decompressor->data;
 	if (!a->client_reader) {
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_PROGRAMMER,
 		    "No read callback is registered?  "
@@ -288,14 +290,14 @@ read_ahead(struct archive_read *a, const void **p, size_t min)
 
 	read_avail = state->next_out - state->read_next;
 
-	if (read_avail < (int)min  &&  state->end_of_stream) {
+	if (read_avail < min  &&  state->end_of_stream) {
 		if (state->end_of_stream == ARCHIVE_EOF)
 			return (0);
 		else
 			return (-1);
 	}
 
-	if (read_avail < (int)min) {
+	if (read_avail < min) {
 		memmove(state->uncompressed_buffer, state->read_next,
 		    read_avail);
 		state->read_next = (unsigned char *)state->uncompressed_buffer;
@@ -303,7 +305,7 @@ read_ahead(struct archive_read *a, const void **p, size_t min)
 		state->avail_out
 		    = state->uncompressed_buffer_size - read_avail;
 
-		while (read_avail < (int)state->uncompressed_buffer_size
+		while (read_avail < state->uncompressed_buffer_size
 			&& !state->end_of_stream) {
 			if (state->stackp > state->stack) {
 				*state->next_out++ = *--state->stackp;
@@ -331,7 +333,7 @@ read_consume(struct archive_read *a, size_t n)
 {
 	struct private_data *state;
 
-	state = (struct private_data *)a->compression_data;
+	state = (struct private_data *)a->decompressor->data;
 	a->archive.file_position += n;
 	state->read_next += n;
 	if (state->read_next > state->next_out)
@@ -349,7 +351,7 @@ finish(struct archive_read *a)
 	struct private_data *state;
 	int ret = ARCHIVE_OK;
 
-	state = (struct private_data *)a->compression_data;
+	state = (struct private_data *)a->decompressor->data;
 
 	if (state != NULL) {
 		if (state->uncompressed_buffer != NULL)
@@ -357,10 +359,7 @@ finish(struct archive_read *a)
 		free(state);
 	}
 
-	a->compression_data = NULL;
-	if (a->client_closer != NULL)
-		ret = (a->client_closer)(&a->archive, a->client_data);
-
+	a->decompressor->data = NULL;
 	return (ret);
 }
 
@@ -465,12 +464,14 @@ getbits(struct archive_read *a, struct private_data *state, int n)
 		0x00, 0x01, 0x03, 0x07, 0x0f, 0x1f, 0x3f, 0x7f, 0xff,
 		0x1ff, 0x3ff, 0x7ff, 0xfff, 0x1fff, 0x3fff, 0x7fff, 0xffff
 	};
-
+	const void *read_buf;
 
 	while (state->bits_avail < n) {
 		if (state->avail_in <= 0) {
+			read_buf = state->next_in;
 			ret = (a->client_reader)(&a->archive, a->client_data,
-			    (const void **)&state->next_in);
+			    &read_buf);
+			state->next_in = read_buf;
 			if (ret < 0)
 				return (ARCHIVE_FATAL);
 			if (ret == 0)

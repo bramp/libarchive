@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_acl_basic.c,v 1.1 2007/03/08 06:09:27 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_acl_basic.c,v 1.2 2007/04/15 04:30:02 kientzle Exp $");
 
 /*
  * Exercise the system-independent portion of the ACL support.
@@ -34,14 +34,12 @@ __FBSDID("$FreeBSD: src/lib/libarchive/test/test_acl_basic.c,v 1.1 2007/03/08 06
  * filesystems support ACLs or not.
  */
 
-static unsigned char buff[16384];
-
 struct acl_t {
 	int type;  /* Type of ACL: "access" or "default" */
 	int permset; /* Permissions for this class of users. */
 	int tag; /* Owner, User, Owning group, group, other, etc. */
 	int qual; /* GID or UID of user/group, depending on tag. */
-	char *name; /* Name of user/group, depending on tag. */
+	const char *name; /* Name of user/group, depending on tag. */
 };
 
 struct acl_t acls0[] = {
@@ -79,7 +77,7 @@ struct acl_t acls2[] = {
 	  ARCHIVE_ENTRY_ACL_OTHER, -1, "" },
 };
 
-void
+static void
 set_acls(struct archive_entry *ae, struct acl_t *acls, int n)
 {
 	int i;
@@ -92,7 +90,7 @@ set_acls(struct archive_entry *ae, struct acl_t *acls, int n)
 	}
 }
 
-int
+static int
 acl_match(struct acl_t *acl, int type, int permset, int tag, int qual, const char *name)
 {
 	if (type != acl->type)
@@ -120,11 +118,11 @@ acl_match(struct acl_t *acl, int type, int permset, int tag, int qual, const cha
 	return (0 == strcmp(name, acl->name));
 }
 
-void
+static void
 compare_acls(struct archive_entry *ae, struct acl_t *acls, int n, int mode)
 {
 	int *marker = malloc(sizeof(marker[0]) * n);
-	int marker_i, i;
+	int i;
 	int r;
 	int type, permset, tag, qual;
 	int matched;
@@ -174,12 +172,11 @@ compare_acls(struct archive_entry *ae, struct acl_t *acls, int n, int mode)
 	    acls[marker[0]].type, acls[marker[0]].permset,
 	    acls[marker[0]].tag, acls[marker[0]].qual, acls[marker[0]].name);
 	assert(n == 0); /* Number of ACLs not matched should == 0 */
+	free(marker);
 }
 
 DEFINE_TEST(test_acl_basic)
 {
-	int i;
-	struct archive *a;
 	struct archive_entry *ae;
 
 	/* Create a simple archive_entry. */
@@ -224,4 +221,5 @@ DEFINE_TEST(test_acl_basic)
 	failure("Basic ACLs should set mode to 0142, not %04o",
 	    archive_entry_mode(ae)&0777);
 	assert((archive_entry_mode(ae) & 0777) == 0142);
+	archive_entry_free(ae);
 }

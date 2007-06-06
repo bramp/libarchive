@@ -25,7 +25,7 @@
 
 #include "archive_platform.h"
 
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_compression_gzip.c,v 1.13 2007/03/03 07:37:36 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_compression_gzip.c,v 1.14 2007/04/05 05:18:16 kientzle Exp $");
 
 
 #ifdef HAVE_ERRNO_H
@@ -57,6 +57,7 @@ struct private_data {
 	int64_t		 total_out;
 	unsigned long	 crc;
 	char		 header_done;
+	char		 eof; /* True = found end of compressed data. */
 };
 
 static int	finish(struct archive_read *);
@@ -65,7 +66,7 @@ static ssize_t	read_consume(struct archive_read *, size_t);
 static int	drive_decompressor(struct archive_read *a, struct private_data *);
 #endif
 
-/* These two functions are defined even if we lack zlib.  See below. */
+/* These two functions are defined even if we lack the library.  See below. */
 static int	bid(const void *, size_t);
 static int	init(struct archive_read *, const void *, size_t);
 
@@ -73,7 +74,9 @@ int
 archive_read_support_compression_gzip(struct archive *_a)
 {
 	struct archive_read *a = (struct archive_read *)_a;
-	return (__archive_read_register_compression(a, bid, init));
+	if (__archive_read_register_compression(a, bid, init) != NULL)
+		return (ARCHIVE_OK);
+	return (ARCHIVE_FATAL);
 }
 
 /*
@@ -132,9 +135,9 @@ bid(const void *buff, size_t len)
 #ifndef HAVE_ZLIB_H
 
 /*
- * If we don't have zlib on this system, we can't actually do the
- * decompression.  We can, however, still detect gzip-compressed
- * archives and emit a useful message.
+ * If we don't have the library on this system, we can't actually do the
+ * decompression.  We can, however, still detect compressed archives
+ * and emit a useful message.
  */
 static int
 init(struct archive_read *a, const void *buff, size_t n)
@@ -198,10 +201,10 @@ init(struct archive_read *a, const void *buff, size_t n)
 	state->stream.next_in = (Bytef *)(uintptr_t)(const void *)buff;
 	state->stream.avail_in = n;
 
-	a->compression_read_ahead = read_ahead;
-	a->compression_read_consume = read_consume;
-	a->compression_skip = NULL; /* not supported */
-	a->compression_finish = finish;
+	a->decompressor->read_ahead = read_ahead;
+	a->decompressor->consume = read_consume;
+	a->decompressor->skip = NULL; /* not supported */
+	a->decompressor->finish = finish;
 
 	/*
 	 * TODO: Do I need to parse the gzip header before calling
@@ -217,7 +220,7 @@ init(struct archive_read *a, const void *buff, size_t n)
 	ret = inflateInit2(&(state->stream),
 	    -15 /* Don't check for zlib header */);
 	if (ret == Z_OK) {
-		a->compression_data = state;
+		a->decompressor->data = state;
 		return (ARCHIVE_OK);
 	}
 
@@ -258,10 +261,10 @@ static ssize_t
 read_ahead(struct archive_read *a, const void **p, size_t min)
 {
 	struct private_data *state;
-	int read_avail, was_avail, ret;
+	size_t read_avail, was_avail;
+	int ret;
 
-	state = (struct private_data *)a->compression_data;
-	was_avail = -1;
+	state = (struct private_data *)a->decompressor->data;
 	if (!a->client_reader) {
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_PROGRAMMER,
 		    "No read callback is registered?  "
@@ -280,13 +283,16 @@ read_ahead(struct archive_read *a, const void **p, size_t min)
 		    = state->uncompressed_buffer_size - read_avail;
 	}
 
-	while (was_avail < read_avail &&	/* Made some progress. */
-	    read_avail < (int)min &&		/* Haven't satisfied min. */
-	    read_avail < (int)state->uncompressed_buffer_size) { /* !full */
-		if ((ret = drive_decompressor(a, state)) != ARCHIVE_OK)
-			return (ret);
+	while (read_avail < min &&		/* Haven't satisfied min. */
+	    read_avail < state->uncompressed_buffer_size) { /* !full */
 		was_avail = read_avail;
+		if ((ret = drive_decompressor(a, state)) < ARCHIVE_OK)
+			return (ret);
+		if (ret == ARCHIVE_EOF)
+			break; /* Break on EOF even if we haven't met min. */
 		read_avail = state->stream.next_out - state->read_next;
+		if (was_avail == read_avail) /* No progress? */
+			break;
 	}
 
 	*p = state->read_next;
@@ -301,7 +307,7 @@ read_consume(struct archive_read *a, size_t n)
 {
 	struct private_data *state;
 
-	state = (struct private_data *)a->compression_data;
+	state = (struct private_data *)a->decompressor->data;
 	a->archive.file_position += n;
 	state->read_next += n;
 	if (state->read_next > state->stream.next_out)
@@ -319,7 +325,7 @@ finish(struct archive_read *a)
 	struct private_data *state;
 	int ret;
 
-	state = (struct private_data *)a->compression_data;
+	state = (struct private_data *)a->decompressor->data;
 	ret = ARCHIVE_OK;
 	switch (inflateEnd(&(state->stream))) {
 	case Z_OK:
@@ -334,10 +340,7 @@ finish(struct archive_read *a)
 	free(state->uncompressed_buffer);
 	free(state);
 
-	a->compression_data = NULL;
-	if (a->client_closer != NULL)
-		(a->client_closer)(&a->archive, a->client_data);
-
+	a->decompressor->data = NULL;
 	return (ret);
 }
 
@@ -349,19 +352,24 @@ static int
 drive_decompressor(struct archive_read *a, struct private_data *state)
 {
 	ssize_t ret;
-	int decompressed, total_decompressed;
+	size_t decompressed, total_decompressed;
 	int count, flags, header_state;
 	unsigned char *output;
 	unsigned char b;
+	const void *read_buf;
 
+	if (state->eof)
+		return (ARCHIVE_EOF);
 	flags = 0;
 	count = 0;
 	header_state = 0;
 	total_decompressed = 0;
 	for (;;) {
 		if (state->stream.avail_in == 0) {
+			read_buf = state->stream.next_in;
 			ret = (a->client_reader)(&a->archive, a->client_data,
-			    (const void **)&state->stream.next_in);
+			    &read_buf);
+			state->stream.next_in = (unsigned char *)(uintptr_t)read_buf;
 			if (ret < 0) {
 				/*
 				 * TODO: Find a better way to handle
@@ -521,12 +529,10 @@ drive_decompressor(struct archive_read *a, struct private_data *state)
 				 * TODO: Verify gzip trailer
 				 * (uncompressed length and CRC).
 				 */
+				state->eof = 1;
 				return (ARCHIVE_OK);
 			default:
 				/* Any other return value is an error. */
-				archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-				    "gzip decompression failed (%s)",
-				    state->stream.msg);
 				goto fatal;
 			}
 		}

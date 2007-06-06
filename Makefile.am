@@ -4,10 +4,13 @@ AUTOMAKE_OPTIONS = foreign subdir-objects
 
 BUILT_SOURCES = libarchive/test/list.h libarchive/archive.h
 
-EXTRA_DIST= version config.h.in			\
-	minitar					\
+EXTRA_DIST= version				\
+	config.h.in				\
+	examples				\
 	libarchive/test/list.h			\
-	tar/test tar/getdate.c
+	tar/test				\
+	tar/getdate.c				\
+	cpio
 
 # Clean out some unneeded files and directories
 # that get picked up as part of the directories in EXTRA_DIST above.
@@ -45,10 +48,12 @@ libarchive_la_SOURCES=						\
 	libarchive/archive_check_magic.c			\
 	libarchive/archive_entry.c				\
 	libarchive/archive_entry.h				\
+	libarchive/archive_entry_copy_stat.c			\
+	libarchive/archive_entry_private.h			\
+	libarchive/archive_entry_stat.c				\
 	libarchive/archive_platform.h				\
 	libarchive/archive_private.h				\
 	libarchive/archive_read.c				\
-	libarchive/archive_read_data_into_buffer.c		\
 	libarchive/archive_read_data_into_fd.c			\
 	libarchive/archive_read_extract.c			\
 	libarchive/archive_read_open_fd.c			\
@@ -61,7 +66,9 @@ libarchive_la_SOURCES=						\
 	libarchive/archive_read_support_compression_compress.c	\
 	libarchive/archive_read_support_compression_gzip.c	\
 	libarchive/archive_read_support_compression_none.c	\
+	libarchive/archive_read_support_compression_program.c	\
 	libarchive/archive_read_support_format_all.c		\
+	libarchive/archive_read_support_format_ar.c		\
 	libarchive/archive_read_support_format_cpio.c		\
 	libarchive/archive_read_support_format_empty.c		\
 	libarchive/archive_read_support_format_iso9660.c	\
@@ -84,16 +91,19 @@ libarchive_la_SOURCES=						\
 	libarchive/archive_write_set_compression_bzip2.c	\
 	libarchive/archive_write_set_compression_gzip.c		\
 	libarchive/archive_write_set_compression_none.c		\
+	libarchive/archive_write_set_compression_program.c	\
 	libarchive/archive_write_set_format.c			\
+	libarchive/archive_write_set_format_ar.c		\
 	libarchive/archive_write_set_format_by_name.c		\
 	libarchive/archive_write_set_format_cpio.c		\
 	libarchive/archive_write_set_format_pax.c		\
 	libarchive/archive_write_set_format_shar.c		\
 	libarchive/archive_write_set_format_ustar.c		\
 	libarchive/config_freebsd.h				\
-	libarchive/config_windows.h
+	libarchive/config_windows.h				\
+	libarchive/filter_fork.c				\
+	libarchive/filter_fork.h
 
-libarchive_la_LIBADD=-lz -lbz2
 # archive.h ends up in the build directory, so make sure we can find it.
 libarchive_la_CPPFLAGS=-I$(top_builddir)/libarchive
 libarchive_la_LDFLAGS= -version-info $(ARCHIVE_LIBTOOL_VERSION)
@@ -103,7 +113,9 @@ libarchive_dist_man_MANS=					\
 	libarchive/archive_read.3				\
 	libarchive/archive_util.3				\
 	libarchive/archive_write.3				\
+	libarchive/archive_write_disk.3				\
 	libarchive/libarchive.3					\
+	libarchive/libarchive_internals.3			\
 	libarchive/libarchive-formats.5				\
 	libarchive/tar.5
 
@@ -120,8 +132,11 @@ libarchive_test_SOURCES=					\
 	libarchive/test/test_acl_pax.c				\
 	libarchive/test/test_archive_api_feature.c		\
 	libarchive/test/test_bad_fd.c				\
+	libarchive/test/test_entry.c				\
+	libarchive/test/test_read_compress_program.c		\
 	libarchive/test/test_read_data_large.c			\
 	libarchive/test/test_read_extract.c			\
+	libarchive/test/test_read_format_ar.c			\
 	libarchive/test/test_read_format_cpio_bin.c		\
 	libarchive/test/test_read_format_cpio_bin_Z.c		\
 	libarchive/test/test_read_format_cpio_bin_bz2.c		\
@@ -142,9 +157,12 @@ libarchive_test_SOURCES=					\
 	libarchive/test/test_read_large.c			\
 	libarchive/test/test_read_position.c			\
 	libarchive/test/test_read_truncated.c			\
+	libarchive/test/test_tar_filenames.c			\
+	libarchive/test/test_write_compress_program.c		\
 	libarchive/test/test_write_disk.c			\
 	libarchive/test/test_write_disk_perms.c			\
 	libarchive/test/test_write_disk_secure.c		\
+	libarchive/test/test_write_format_ar.c			\
 	libarchive/test/test_write_format_cpio_empty.c		\
 	libarchive/test/test_write_format_shar_empty.c		\
 	libarchive/test/test_write_format_tar.c			\
@@ -152,7 +170,6 @@ libarchive_test_SOURCES=					\
 	libarchive/test/test_write_open_memory.c
 
 libarchive_test_CPPFLAGS=-I$(top_builddir)/libarchive -I$(top_builddir)/libarchive/test
-libarchive_test_LDADD=-lz -lbz2
 
 # The "list.h" file just lists all of the tests defined in all of the sources.
 # Building it automatically provides a sanity-check on libarchive_test_SOURCES
@@ -182,7 +199,7 @@ bsdtar_DEPENDENCIES = libarchive.la		\
 		libarchive/archive_entry.h	\
 		libarchive/archive.h
 
-bsdtar_LDADD= -larchive -lbz2 -lz
+bsdtar_LDADD= -larchive
 bsdtar_CPPFLAGS=-I$(top_builddir)/libarchive
 # Link libarchive statically...
 bsdtar_LDFLAGS= -static -I$(destdir)/libarchive
