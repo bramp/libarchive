@@ -1,3 +1,9 @@
+libarchive (2.2.3) unstable; urgency=low
+
+  * New upstream version.
+
+ -- John Goerzen <jgoerzen@complete.org>  Wed, 06 Jun 2007 03:36:35 -0500
+
 libarchive (2.0.25-3) unstable; urgency=low
 
   * SONAME should not be tied to the tarball version string 
