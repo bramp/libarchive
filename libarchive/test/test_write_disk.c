@@ -23,7 +23,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_disk.c,v 1.1 2007/03/03 07:37:37 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_disk.c,v 1.3 2007/07/06 15:43:11 kientzle Exp $");
+
+#if ARCHIVE_VERSION_STAMP >= 1009000
 
 #define UMASK 022
 
@@ -48,9 +50,13 @@ static void create(struct archive_entry *ae, const char *msg)
 	    st.st_mode, archive_entry_mode(ae));
 	assert(st.st_mode == (archive_entry_mode(ae) & ~UMASK));
 }
+#endif
 
 DEFINE_TEST(test_write_disk)
 {
+#if ARCHIVE_VERSION_STAMP < 1009000
+	skipping("archive_write_disk interface");
+#else
 	struct archive_entry *ae;
 
 	/* Force the umask to something predictable. */
@@ -90,4 +96,5 @@ DEFINE_TEST(test_write_disk)
 	archive_entry_set_mode(ae, S_IFREG | 0744);
 	create(ae, "Test creating a file over an existing dir.");
 	archive_entry_free(ae);
+#endif
 }

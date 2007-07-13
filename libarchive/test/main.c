@@ -32,7 +32,16 @@
 #include <time.h>
 
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/main.c,v 1.2 2007/04/14 05:17:06 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/main.c,v 1.5 2007/07/06 15:43:11 kientzle Exp $");
+
+/* Default is to crash and try to force a core dump on failure. */
+static int dump_on_failure = 1;
+/* Default is to print some basic information about each test. */
+static int quiet_flag = 0;
+/* Cumulative count of component failures. */
+static int failures = 0;
+/* Cumulative count of skipped component tests. */
+static int skips = 0;
 
 /*
  * My own implementation of the standard assert() macro emits the
@@ -51,10 +60,26 @@ __FBSDID("$FreeBSD: src/lib/libarchive/test/main.c,v 1.2 2007/04/14 05:17:06 kie
  */
 static char msg[4096];
 
+
+/* Inform user that we're skipping a test. */
+void
+skipping(const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	fprintf(stderr, " *** SKIPPING: ");
+	vfprintf(stderr, fmt, ap);
+	fprintf(stderr, "\n");
+	va_end(ap);
+	++skips;
+}
+
 /* Common handling of failed tests. */
 static void
 test_failed(struct archive *a)
 {
+	failures ++;
+
 	if (msg[0] != '\0') {
 		fprintf(stderr, "   Description: %s\n", msg);
 		msg[0] = '\0';
@@ -63,9 +88,11 @@ test_failed(struct archive *a)
 		fprintf(stderr, "   archive error: %s\n", archive_error_string(a));
 	}
 
-	fprintf(stderr, " *** forcing core dump so failure can be debugged ***\n");
-	*(char *)(NULL) = 0;
-	exit(1);
+	if (dump_on_failure) {
+		fprintf(stderr, " *** forcing core dump so failure can be debugged ***\n");
+		*(char *)(NULL) = 0;
+		exit(1);
+	}
 }
 
 /* Set up a message to display only after a test fails. */
@@ -160,9 +187,12 @@ struct { void (*func)(void); const char *name; } tests[] = {
 	#include "list.h"
 };
 
-static void test_run(int i, const char *tmpdir)
+static int test_run(int i, const char *tmpdir)
 {
-	printf("%d: %s\n", i, tests[i].name);
+	int failures_before = failures;
+
+	if (!quiet_flag)
+		printf("%d: %s\n", i, tests[i].name);
 	/*
 	 * Always explicitly chdir() in case the last test moved us to
 	 * a strange place.
@@ -187,6 +217,7 @@ static void test_run(int i, const char *tmpdir)
 		exit(1);
 	}
 	(*tests[i].func)();
+	return (failures == failures_before ? 0 : 1);
 }
 
 static void usage(void)
@@ -194,9 +225,13 @@ static void usage(void)
 	static const int limit = sizeof(tests) / sizeof(tests[0]);
 	int i;
 
-	printf("Usage: libarchive_test <test> <test> ...\n");
+	printf("Usage: libarchive_test [options] <test> <test> ...\n");
 	printf("Default is to run all tests.\n");
 	printf("Otherwise, specify the numbers of the tests you wish to run.\n");
+	printf("Options:\n");
+	printf("  -k  Keep running after failures.\n");
+	printf("      Default: Core dump after any failure.\n");
+	printf("  -q  Quiet.\n");
 	printf("Available tests:\n");
 	for (i = 0; i < limit; i++)
 		printf("  %d: %s\n", i, tests[i].name);
@@ -206,9 +241,25 @@ static void usage(void)
 int main(int argc, char **argv)
 {
 	static const int limit = sizeof(tests) / sizeof(tests[0]);
-	int i, tests_run = 0;
+	int i, tests_run = 0, tests_failed = 0, opt;
 	time_t now;
 	char tmpdir[256];
+
+	while ((opt = getopt(argc, argv, "kq")) != -1) {
+		switch (opt) {
+		case 'k':
+			dump_on_failure = 0;
+			break;
+		case 'q':
+			quiet_flag = 1;
+			break;
+		case '?':
+		default:
+			usage();
+		}
+	}
+	argc -= optind;
+	argv += optind;
 
 	/*
 	 * Create a temp directory for the following tests.
@@ -230,12 +281,16 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	printf("Running libarchive tests in: %s\n", tmpdir);
+	if (!quiet_flag) {
+		printf("Running libarchive tests in: %s\n", tmpdir);
+		printf("Exercising %s\n", archive_version());
+	}
 
-	if (argc == 1) {
+	if (argc == 0) {
 		/* Default: Run all tests. */
 		for (i = 0; i < limit; i++) {
-			test_run(i, tmpdir);
+			if (test_run(i, tmpdir))
+				tests_failed++;
 			tests_run++;
 		}
 	} else {
@@ -245,12 +300,16 @@ int main(int argc, char **argv)
 				printf("*** INVALID Test %s\n", *argv);
 				usage();
 			} else {
-				test_run(i, tmpdir);
+				if (test_run(i, tmpdir))
+					tests_failed++;
 				tests_run++;
 			}
 		}
 	}
-
-	printf("%d tests succeeded.\n", tests_run);
-	return (0);
+	printf("\n");
+	printf("%d of %d test groups reported failures\n",
+	    tests_failed, tests_run);
+	printf(" Total of %d individual tests failed.\n", failures);
+	printf(" Total of %d individual tests were skipped.\n", skips);
+	return (tests_failed);
 }

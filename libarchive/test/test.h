@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libarchive/test/test.h,v 1.2 2007/03/11 10:29:52 kientzle Exp $
+ * $FreeBSD: src/lib/libarchive/test/test.h,v 1.4 2007/07/06 15:43:11 kientzle Exp $
  */
 
 /* Every test program should #include "test.h" as the first thing. */
@@ -69,6 +69,18 @@
 #endif
 
 /*
+ * ARCHIVE_VERSION_STAMP first appeared in 1.9 and libarchive 2.2.4.
+ * We can approximate it for earlier versions, though.
+ * This is used to disable tests of features not present in the current
+ * version.
+ */
+#ifndef ARCHIVE_VERSION_STAMP
+#define ARCHIVE_VERSION_STAMP	\
+		(ARCHIVE_API_VERSION * 1000000 + ARCHIVE_API_FEATURE * 1000)
+#endif
+
+
+/*
  * "list.h" is simply created by "grep DEFINE_TEST"; it has
  * a line like
  *      DEFINE_TEST(test_function)
@@ -106,8 +118,10 @@
 
 /* Function declarations.  These are defined in test_utility.c. */
 void failure(const char *fmt, ...);
+void skipping(const char *fmt, ...);
 void test_assert(const char *, int, int, const char *, struct archive *);
 void test_assert_equal_int(const char *, int, int, const char *, int, const char *, struct archive *);
 void test_assert_equal_string(const char *, int, const char *v1, const char *, const char *v2, const char *, struct archive *);
 void test_assert_equal_wstring(const char *, int, const wchar_t *v1, const char *, const wchar_t *v2, const char *, struct archive *);
 
+int	read_open_memory(struct archive *, void *, size_t, size_t);

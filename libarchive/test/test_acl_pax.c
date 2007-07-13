@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_acl_pax.c,v 1.2 2007/04/15 04:30:02 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_acl_pax.c,v 1.4 2007/07/06 15:43:11 kientzle Exp $");
 
 /*
  * Exercise the system-independent portion of the ACL support.
@@ -390,7 +390,12 @@ compare_acls(struct archive_entry *ae, struct acl_t *acls, int n, int mode)
 			assert(matched == 1);
 		}
 	}
+#if ARCHIVE_VERSION_STAMP < 1009000
+	/* Known broken before 1.9.0. */
+	skipping("archive_entry_acl_next() exits with ARCHIVE_EOF");
+#else
 	assertEqualInt(ARCHIVE_EOF, r);
+#endif
 	assert((mode & 0777) == (archive_entry_mode(ae) & 0777));
 	failure("Could not find match for ACL "
 	    "(type=%d,permset=%d,tag=%d,qual=%d,name=``%s'')",

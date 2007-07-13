@@ -23,7 +23,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_disk_perms.c,v 1.3 2007/04/15 04:30:02 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_disk_perms.c,v 1.5 2007/07/06 15:43:11 kientzle Exp $");
+
+#if ARCHIVE_VERSION_STAMP >= 1009000
 
 #define UMASK 022
 
@@ -113,6 +115,7 @@ defaultgid(void)
 	searchgid();
 	return (_default_gid);
 }
+#endif
 
 /*
  * Exercise permission and ownership restores.
@@ -122,6 +125,9 @@ defaultgid(void)
 
 DEFINE_TEST(test_write_disk_perms)
 {
+#if ARCHIVE_VERSION_STAMP < 1009000
+	skipping("archive_write_disk interface");
+#else
 	struct archive *a;
 	struct archive_entry *ae;
 	struct stat st;
@@ -390,5 +396,5 @@ DEFINE_TEST(test_write_disk_perms)
 		 * not root, we should not have been able to set that. */
 		assert(st.st_uid == getuid());
 	}
-
+#endif
 }

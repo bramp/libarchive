@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_disk_secure.c,v 1.2 2007/04/15 04:30:02 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_disk_secure.c,v 1.3 2007/07/06 15:43:11 kientzle Exp $");
 
 #define UMASK 022
 
@@ -34,6 +34,9 @@ __FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_disk_secure.c,v 1.2 2007/
 
 DEFINE_TEST(test_write_disk_secure)
 {
+#if ARCHIVE_VERSION_STAMP < 1009000
+	skipping("archive_write_disk interface");
+#else
 	struct archive *a;
 	struct archive_entry *ae;
 	struct stat st;
@@ -140,4 +143,5 @@ DEFINE_TEST(test_write_disk_secure)
 	assert(S_ISREG(st.st_mode));
 	failure("link_to_dir2/filec: st.st_mode=%o", st.st_mode);
 	assert((st.st_mode & 07777) == 0755);
+#endif
 }

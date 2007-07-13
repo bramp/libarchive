@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_tar_filenames.c,v 1.2 2007/04/15 04:30:02 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_tar_filenames.c,v 1.6 2007/07/06 15:43:11 kientzle Exp $");
 
 /*
  * Exercise various lengths of filenames in tar archives,
@@ -32,7 +32,7 @@ __FBSDID("$FreeBSD: src/lib/libarchive/test/test_tar_filenames.c,v 1.2 2007/04/1
  */
 
 static void
-test_filename(int dlen, int flen)
+test_filename(const char *prefix, int dlen, int flen)
 {
 	char buff[8192];
 	char filename[400];
@@ -40,12 +40,20 @@ test_filename(int dlen, int flen)
 	struct archive_entry *ae;
 	struct archive *a;
 	size_t used;
-	int i;
+	size_t prefix_length = 0;
+	int i = 0;
+#if ARCHIVE_VERSION_STAMP < 1009000
+	static int bug_reported_1 = 0, bug_reported_2 = 0, bug_reported_3 = 0;
+#endif
 
-	for (i = 0; i < dlen; i++)
+	if (prefix) {
+		strcpy(filename, prefix);
+		i = prefix_length = strlen(prefix);
+	}
+	for (; i < prefix_length + dlen; i++)
 		filename[i] = 'a';
 	filename[i++] = '/';
-	for (; i < dlen + flen + 1; i++)
+	for (; i < prefix_length + dlen + flen + 1; i++)
 		filename[i] = 'b';
 	filename[i++] = '\0';
 
@@ -109,25 +117,44 @@ test_filename(int dlen, int flen)
 
 	/* Read the file and check the filename. */
 	assertA(0 == archive_read_next_header(a, &ae));
-	failure("Pathname %d/%d: %s", dlen, flen, archive_entry_pathname(ae));
+#if ARCHIVE_VERSION_STAMP < 1009000
+	if (!bug_reported_3) {
+		skipping("Leading '/' preserved on long filenames");
+		++bug_reported_3;
+	}
+#else
 	assertEqualString(filename, archive_entry_pathname(ae));
-	assert((S_IFREG | 0755) == archive_entry_mode(ae));
+#endif
+	assertEqualInt((S_IFREG | 0755), archive_entry_mode(ae));
 
 	/*
 	 * Read the two dirs and check the names.
 	 *
 	 * Both dirs should read back with the same name, since
 	 * tar should add a trailing '/' to any dir that doesn't
-	 * already have one.
+	 * already have one.  We only report the first such failure
+	 * here.
 	 */
 	assertA(0 == archive_read_next_header(a, &ae));
-	failure("Pathname %d/%d: %s", dlen, flen, archive_entry_pathname(ae));
+#if ARCHIVE_VERSION_STAMP < 1009000
+	if (!bug_reported_2) {
+		skipping("Trailing '/' preserved on dirnames");
+		++bug_reported_2;
+	}
+#else
 	assertEqualString(dirname, archive_entry_pathname(ae));
+#endif
 	assert((S_IFDIR | 0755) == archive_entry_mode(ae));
 
 	assertA(0 == archive_read_next_header(a, &ae));
-	failure("Pathname %d/%d: %s", dlen, flen, archive_entry_pathname(ae));
+#if ARCHIVE_VERSION_STAMP < 1009000
+	if (!bug_reported_1) {
+		skipping("Trailing '/' added to dir names");
+		++bug_reported_1;
+	}
+#else
 	assertEqualString(dirname, archive_entry_pathname(ae));
+#endif
 	assert((S_IFDIR | 0755) == archive_entry_mode(ae));
 
 	/* Verify the end of the archive. */
@@ -147,13 +174,15 @@ DEFINE_TEST(test_tar_filenames)
 	/* Repeat the following for a variety of dir/file lengths. */
 	for (dlen = 40; dlen < 60; dlen++) {
 		for (flen = 40; flen < 60; flen++) {
-			test_filename(dlen, flen);
+			test_filename(NULL, dlen, flen);
+			test_filename("/", dlen, flen);
 		}
 	}
 
 	for (dlen = 140; dlen < 160; dlen++) {
 		for (flen = 90; flen < 110; flen++) {
-			test_filename(dlen, flen);
+			test_filename(NULL, dlen, flen);
+			test_filename("/", dlen, flen);
 		}
 	}
 }

@@ -1,4 +1,6 @@
 
+Jul 12, 2007: libarchive 2.2.4 released
+
 May 26, 2007: libarchive 2.2.3 released
 May 26, 2007: Fix memory leaks in ZIP reader and shar writer, add some
 	missing system headers to archive_entry.h, dead code cleanup

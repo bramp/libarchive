@@ -25,6 +25,7 @@ ARCHIVE_REVISION=`echo $ARCHIVE_VERSION | sed -e 's/[[^0-9]]/./g' -e 's/^[[0-9]]
 # Major/minor indicate the API version
 ARCHIVE_API_MAJOR=$ARCHIVE_MAJOR
 ARCHIVE_API_MINOR=$ARCHIVE_MINOR
+ARCHIVE_VERSION_STAMP=`printf "%d%03d%03d" ${ARCHIVE_MAJOR} ${ARCHIVE_MINOR} ${ARCHIVE_REVISION}`
 # Libtool versioning uses different conventions on different platforms.
 # FreeBSD libtool still uses this old (and very dumb) convention,
 # which doesn't match FreeBSD system conventions, nor anything else
@@ -40,6 +41,7 @@ AC_SUBST(ARCHIVE_MINOR)
 AC_SUBST(ARCHIVE_REVISION)
 AC_SUBST(ARCHIVE_API_MAJOR)
 AC_SUBST(ARCHIVE_API_MINOR)
+AC_SUBST(ARCHIVE_VERSION_STAMP)
 AC_SUBST(ARCHIVE_LIBTOOL_VERSION)
 
 AC_CONFIG_HEADERS([config.h])
@@ -103,24 +105,67 @@ AC_CHECK_MEMBERS([struct tm.tm_gmtoff])
 AC_CHECK_MEMBERS([struct stat.st_mtimespec.tv_nsec, struct stat.st_mtim.tv_nsec])
 
 #
-# If any of the common 64-bit types is defined, set "int64_t"
+# We need int64_t
 #
-AC_CHECK_TYPE(__int64_t, [long long])
-AC_CHECK_TYPE(_int64_t, [__int64_t])
-AC_CHECK_TYPE(int64_t, [_int64_t])
-# Likewise, consider defining "intmax_t" in terms of int64_t
+AC_CHECK_TYPE(int64_t)
+#
+# If int64_t isn't defined, define it in terms of some other 64-bit type.
+#
+if test "$ac_cv_type_int64_t" != yes; then
+  AC_CHECK_TYPE(_int64_t,
+	[AC_DEFINE([int64_t], [_int64_t],
+              [Define int64_t to a valid signed 64-bit type, if necessary.])])
+  if test "$ac_cv_type__int64_t" != yes; then
+    AC_CHECK_TYPE(__int64_t,
+        [AC_DEFINE([int64_t], [__int64_t],
+	      [Define int64_t to a valid signed 64-bit type, if necessary.])])
+    if test "$ac_cv_type___int64_t" != yes; then
+      AC_CHECK_TYPE(long long,
+	  [AC_DEFINE([int64_t], [long long],
+	      [Define int64_t to a valid signed 64-bit type, if necessary.])])
+    fi
+  fi
+fi
+
+#
+# We need uint64_t
+#
+AC_CHECK_TYPE(uint64_t)
+#
+# If uint64_t isn't defined, define it in terms of some other 64-bit type.
+#
+if test "$ac_cv_type_uint64_t" != yes; then
+  AC_CHECK_TYPE(u_int64_t,
+     [AC_DEFINE([uint64_t], [u_int64_t],
+                [Define uint64_t to an unsigned 64-bit type, if necessary.])])
+  if test "$ac_cv_type_u_int64_t" != yes; then
+    AC_CHECK_TYPE(_uint64_t,
+       [AC_DEFINE([uint64_t], [_uint64_t],
+                 [Define uint64_t to an unsigned 64-bit type, if necessary.])])
+    if test "$ac_cv_type__uint64_t" != yes; then
+      AC_CHECK_TYPE(__uint64_t,
+         [AC_DEFINE([uint64_t], [__uint64_t],
+                 [Define uint64_t to an unsigned 64-bit type, if necessary.])])
+      if test "$ac_cv_type___uint64_t" != yes; then
+        AC_CHECK_TYPE(unsigned long long,
+	   [AC_DEFINE([uint64_t], [unsigned long long],
+                 [Define uint64_t to an unsigned 64-bit type, if necessary.])])
+      fi
+    fi
+  fi
+fi
+
+# We need uintmax_t and intmax_t
+# Define them in terms of uint64_t and int64_t if appropriate.
+AC_CHECK_TYPE(uintmax_t, [uint64_t])
 AC_CHECK_TYPE(intmax_t, [int64_t])
 
-#
-# If any of the common 64-bit unsigned types is defined, set "uint64_t"
-#
-AC_CHECK_TYPE(__uint64_t, [unsigned long long])
-AC_CHECK_TYPE(_uint64_t, [__uint64_t])
-AC_CHECK_TYPE(u_int64_t, [_uint64_t])
-AC_CHECK_TYPE(uint64_t, [u_int64_t])
-# Likewise, consider defining "uintmax_t" in terms of uint64_t
-AC_CHECK_TYPE(uintmax_t, [uint64_t])
 
+# If you have uintmax_t, we assume printf supports %ju
+# If you have unsigned long long, we assume printf supports %llu
+AC_CHECK_TYPES([uintmax_t, unsigned long long])
+
+# TODO: If any of these are missing, define them right here.
 AC_CHECK_DECLS([SIZE_MAX, INT64_MAX, INT64_MIN, UINT64_MAX, UINT32_MAX])
 
 AC_CHECK_DECL([EFTYPE],

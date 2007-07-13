@@ -23,27 +23,27 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_open_memory.c,v 1.6 2007/07/06 15:51:59 kientzle Exp $");
+#include "test.h"
+__FBSDID("$FreeBSD$");
 
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "archive.h"
-
 /*
- * Glue to read an archive from a block of memory.
+ * Read an archive from a block of memory.
  *
- * This is mostly a huge help in building test harnesses;
- * test programs can build archives in memory and read them
- * back again without having to mess with files on disk.
+ * This is identical to archive_read_open_memory(), except
+ * that it goes out of its way to be a little bit unpleasant,
+ * in order to better test the libarchive internals.
  */
 
 struct read_memory_data {
 	unsigned char	*buffer;
 	unsigned char	*end;
-	ssize_t	 read_size;
+	size_t	 read_size;
+	size_t copy_buff_size;
+	char *copy_buff;
 };
 
 static int	memory_read_close(struct archive *, void *);
@@ -56,19 +56,7 @@ static off_t	memory_read_skip(struct archive *, void *, off_t request);
 static ssize_t	memory_read(struct archive *, void *, const void **buff);
 
 int
-archive_read_open_memory(struct archive *a, void *buff, size_t size)
-{
-	return archive_read_open_memory2(a, buff, size, size);
-}
-
-/*
- * Don't use _open_memory2() in production code; the archive_read_open_memory()
- * version is the one you really want.  This is just here so that
- * test harnesses can exercise block operations inside the library.
- */
-int
-archive_read_open_memory2(struct archive *a, void *buff,
-    size_t size, size_t read_size)
+read_open_memory(struct archive *a, void *buff, size_t size, size_t read_size)
 {
 	struct read_memory_data *mine;
 
@@ -81,6 +69,8 @@ archive_read_open_memory2(struct archive *a, void *buff,
 	mine->buffer = (unsigned char *)buff;
 	mine->end = mine->buffer + size;
 	mine->read_size = read_size;
+	mine->copy_buff_size = read_size + 64;
+	mine->copy_buff = malloc(mine->copy_buff_size);
 	return (archive_read_open2(a, mine, memory_read_open,
 		    memory_read, memory_read_skip, memory_read_close));
 }
@@ -97,11 +87,10 @@ memory_read_open(struct archive *a, void *client_data)
 }
 
 /*
- * This is scary simple:  Just advance a pointer.  Limiting
- * to read_size is not technically necessary, but it exercises
- * more of the internal logic when used with a small block size
- * in a test harness.  Production use should not specify a block
- * size; then this is much faster.
+ * In order to exercise libarchive's internal read-combining logic,
+ * we deliberately copy data for each read to a separate buffer.
+ * That way, code that runs off the end of the provided data
+ * will screw up.
  */
 static ssize_t
 memory_read(struct archive *a, void *client_data, const void **buff)
@@ -110,18 +99,19 @@ memory_read(struct archive *a, void *client_data, const void **buff)
 	ssize_t size;
 
 	(void)a; /* UNUSED */
-	*buff = mine->buffer;
 	size = mine->end - mine->buffer;
 	if (size > mine->read_size)
 		size = mine->read_size;
+	memset(mine->copy_buff, 0xA5, mine->copy_buff_size);
+	memcpy(mine->copy_buff, mine->buffer, size);
+	*buff = mine->copy_buff;
+
         mine->buffer += size;
 	return (size);
 }
 
 /*
- * Advancing is just as simple.  Again, this is doing more than
- * necessary in order to better exercise internal code when used
- * as a test harness.
+ * How mean can a skip() routine be?  Let's try to find out.
  */
 #if ARCHIVE_API_VERSION < 2
 static ssize_t
@@ -134,11 +124,12 @@ memory_read_skip(struct archive *a, void *client_data, off_t skip)
 	struct read_memory_data *mine = (struct read_memory_data *)client_data;
 
 	(void)a; /* UNUSED */
+	/* We can't skip by more than is available. */
 	if ((off_t)skip > (off_t)(mine->end - mine->buffer))
 		skip = mine->end - mine->buffer;
-	/* Round down to block size. */
-	skip /= mine->read_size;
-	skip *= mine->read_size;
+	/* Always do small skips by prime amounts. */
+	if (skip > 71)
+		skip = 71;
 	mine->buffer += skip;
 	return (skip);
 }
@@ -151,6 +142,7 @@ memory_read_close(struct archive *a, void *client_data)
 {
 	struct read_memory_data *mine = (struct read_memory_data *)client_data;
 	(void)a; /* UNUSED */
+	free(mine->copy_buff);
 	free(mine);
 	return (ARCHIVE_OK);
 }

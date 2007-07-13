@@ -96,6 +96,7 @@ libarchive_la_SOURCES=						\
 	libarchive/archive_write_set_format_ar.c		\
 	libarchive/archive_write_set_format_by_name.c		\
 	libarchive/archive_write_set_format_cpio.c		\
+	libarchive/archive_write_set_format_cpio_newc.c		\
 	libarchive/archive_write_set_format_pax.c		\
 	libarchive/archive_write_set_format_shar.c		\
 	libarchive/archive_write_set_format_ustar.c		\
@@ -127,6 +128,7 @@ libarchive_dist_man_MANS=					\
 libarchive_test_SOURCES=					\
 	$(libarchive_la_SOURCES)				\
 	libarchive/test/main.c					\
+	libarchive/test/read_open_memory.c			\
 	libarchive/test/test.h					\
 	libarchive/test/test_acl_basic.c			\
 	libarchive/test/test_acl_pax.c				\
@@ -146,6 +148,7 @@ libarchive_test_SOURCES=					\
 	libarchive/test/test_read_format_cpio_svr4c_Z.c		\
 	libarchive/test/test_read_format_empty.c		\
 	libarchive/test/test_read_format_gtar_gz.c		\
+	libarchive/test/test_read_format_gtar_sparse.c		\
 	libarchive/test/test_read_format_iso_gz.c		\
 	libarchive/test/test_read_format_isorr_bz2.c		\
 	libarchive/test/test_read_format_pax_bz2.c		\
@@ -155,6 +158,7 @@ libarchive_test_SOURCES=					\
 	libarchive/test/test_read_format_tz.c			\
 	libarchive/test/test_read_format_zip.c			\
 	libarchive/test/test_read_large.c			\
+	libarchive/test/test_read_pax_truncated.c		\
 	libarchive/test/test_read_position.c			\
 	libarchive/test/test_read_truncated.c			\
 	libarchive/test/test_tar_filenames.c			\
@@ -163,6 +167,7 @@ libarchive_test_SOURCES=					\
 	libarchive/test/test_write_disk_perms.c			\
 	libarchive/test/test_write_disk_secure.c		\
 	libarchive/test/test_write_format_ar.c			\
+	libarchive/test/test_write_format_cpio.c		\
 	libarchive/test/test_write_format_cpio_empty.c		\
 	libarchive/test/test_write_format_shar_empty.c		\
 	libarchive/test/test_write_format_tar.c			\

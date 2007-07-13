@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_format_tar_empty.c,v 1.1 2007/03/03 07:37:37 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_format_tar_empty.c,v 1.3 2007/07/06 15:43:11 kientzle Exp $");
 
 /*
  * Check that an "empty" tar archive is correctly created.
@@ -52,8 +52,12 @@ DEFINE_TEST(test_write_format_tar_empty)
 	archive_write_finish(a);
 #endif
 
-	failure("Empty tar archive should be exactly 1024 bytes, was %d.", used);
+#if ARCHIVE_VERSION_STAMP < 1009000
+	/* Earlier versions wrote 0-length files for empty tar archives. */
+	skipping("empty tar archive size");
+#else
 	assert(used == 1024);
+#endif
 	for (i = 0; i < used; i++) {
 		failure("Empty tar archive should be all nulls.");
 		assert(buff[i] == 0);
@@ -75,8 +79,12 @@ DEFINE_TEST(test_write_format_tar_empty)
 	archive_write_finish(a);
 #endif
 
-	failure("Empty tar archive should be exactly 1024 bytes, was %d.", used);
-	assert(used == 1024);
+#if ARCHIVE_VERSION_STAMP < 1009000
+	/* Earlier versions wrote 0-length files for empty tar archives. */
+	skipping("empty tar archive size");
+#else
+	assertEqualInt(used, 1024);
+#endif
 	for (i = 0; i < used; i++) {
 		failure("Empty tar archive should be all nulls.");
 		assert(buff[i] == 0);

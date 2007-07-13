@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD$");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_compress_program.c,v 1.2 2007/07/06 15:43:11 kientzle Exp $");
 
 static unsigned char archive[] = {
 31,139,8,0,222,'C','p','C',0,3,211,'c',160,'=','0','0','0','0','7','5','U',
@@ -34,6 +34,9 @@ static unsigned char archive[] = {
 
 DEFINE_TEST(test_read_compress_program)
 {
+#if ARCHIVE_VERSION_STAMP < 1009000
+	skipping("archive_read_support_compression_program()");
+#else
 	struct archive_entry *ae;
 	struct archive *a;
 	assert((a = archive_read_new()) != NULL);
@@ -49,6 +52,7 @@ DEFINE_TEST(test_read_compress_program)
 	assert(0 == archive_read_finish(a));
 #else
 	archive_read_finish(a);
+#endif
 #endif
 }
 

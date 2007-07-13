@@ -26,7 +26,7 @@
  */
 
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_format_ar.c,v 1.2 2007/04/14 22:34:10 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_format_ar.c,v 1.5 2007/07/06 15:43:11 kientzle Exp $");
 
 char buff[4096];
 char buff2[64];
@@ -34,6 +34,9 @@ static unsigned char strtab[] = "abcdefghijklmn.o/\nggghhhjjjrrrttt.o/\niiijjjdd
 
 DEFINE_TEST(test_write_format_ar)
 {
+#if ARCHIVE_VERSION_STAMP < 1009000
+	skipping("ar write support");
+#else
 	struct archive_entry *ae;
 	struct archive* a;
 	size_t used;
@@ -68,7 +71,7 @@ DEFINE_TEST(test_write_format_ar)
 
 	assert((ae = archive_entry_new()) != NULL);
 	archive_entry_copy_pathname(ae, "ggghhhjjjrrrttt.o");
-	archive_entry_set_mode(ae, S_IFREG | 0755);
+	archive_entry_set_filetype(ae, AE_IFREG);
 	archive_entry_set_size(ae, 7);
 	assertA(0 == archive_write_header(a, ae));
 	assertA(7 == archive_write_data(a, "7777777", 7));
@@ -101,7 +104,7 @@ DEFINE_TEST(test_write_format_ar)
 	archive_write_close(a);
 #if ARCHIVE_API_VERSION > 1
 	assert(0 == archive_write_finish(a));
-#elif
+#else
 	archive_write_finish(a);
 #endif
 
@@ -158,7 +161,7 @@ DEFINE_TEST(test_write_format_ar)
 	/* write a entry need long name extension */
 	assert((ae = archive_entry_new()) != NULL);
 	archive_entry_copy_pathname(ae, "ttttyyyyuuuuiiii.o");
-	archive_entry_set_mode(ae, S_IFREG | 0755);
+	archive_entry_set_filetype(ae, AE_IFREG);
 	archive_entry_set_size(ae, 5);
 	assertA(0 == archive_write_header(a, ae));
 	assertA(5 == archive_write_data(a, "12345", 7));
@@ -167,7 +170,7 @@ DEFINE_TEST(test_write_format_ar)
 	/* write a entry with a short name */
 	assert((ae = archive_entry_new()) != NULL);
 	archive_entry_copy_pathname(ae, "ttyy.o");
-	archive_entry_set_mode(ae, S_IFREG | 0755);
+	archive_entry_set_filetype(ae, AE_IFREG);
 	archive_entry_set_size(ae, 6);
 	assertA(0 == archive_write_header(a, ae));
 	assertA(6 == archive_write_data(a, "555555", 7));
@@ -175,7 +178,7 @@ DEFINE_TEST(test_write_format_ar)
 	archive_write_close(a);
 #if ARCHIVE_API_VERSION > 1
 	assert(0 == archive_write_finish(a));
-#elif
+#else
 	archive_write_finish(a);
 #endif
 
@@ -204,5 +207,6 @@ DEFINE_TEST(test_write_format_ar)
 	assert(0 == archive_read_finish(a));
 #else
 	archive_read_finish(a);
+#endif
 #endif
 }
