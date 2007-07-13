@@ -1,3 +1,10 @@
+libarchive (2.2.4-1) unstable; urgency=high
+
+  * New upstream version with security fixes.  Closes: #432924.
+    Fixes: CVE-2007-3641, CVE-2007-3644, CVE-2007-3645
+
+ -- John Goerzen <jgoerzen@complete.org>  Fri, 13 Jul 2007 08:14:00 -0500
+
 libarchive (2.2.3-1) unstable; urgency=low
 
   * New upstream version.
