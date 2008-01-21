@@ -1,0 +1,91 @@
+libarchive (2.2.4-1) unstable; urgency=high
+
+  * New upstream version with security fixes.  Closes: #432924.
+    Fixes: CVE-2007-3641, CVE-2007-3644, CVE-2007-3645
+
+ -- John Goerzen <jgoerzen@complete.org>  Fri, 13 Jul 2007 08:14:00 -0500
+
+libarchive (2.2.3-1) unstable; urgency=low
+
+  * New upstream version.
+
+ -- John Goerzen <jgoerzen@complete.org>  Wed, 06 Jun 2007 03:36:35 -0500
+
+libarchive (2.0.25-3) unstable; urgency=low
+
+  * SONAME should not be tied to the tarball version string 
+  (Closes: #418637) Provide libarchive.so.1 as a backwards-compatible 
+  symlink to libarchive.so.2, reverting the package name to libarchive1.
+  Patch from Neil Williams.
+
+ -- John Goerzen <jgoerzen@complete.org>  Mon, 16 Apr 2007 13:50:29 +0100
+
+libarchive (2.0.25-2) unstable; urgency=low
+
+  * Remove build-dep on linux-kernel-headers for compatibility with BSD
+    ports.  Closes: #377480.
+
+ -- John Goerzen <jgoerzen@complete.org>  Tue, 13 Mar 2007 20:03:37 -0500
+
+libarchive (2.0.25-1) unstable; urgency=low
+
+  * New upstream version
+  * Remove unnecessary dep on libarchive1.  Closes: #396756.
+  * Bump standards-version
+  * Rename libarchive1 to libarchive2 to match new soname.
+
+ -- John Goerzen <jgoerzen@complete.org>  Tue, 13 Mar 2007 07:03:53 -0500
+
+libarchive (1.3.1-1) unstable; urgency=high
+
+  * New upstream release.
+  * Applied FreeBSD patch for potential DoS.
+    This is CVS-2006-5680, FreeBSD SA-06:24.
+
+ -- John Goerzen <jgoerzen@complete.org>  Mon, 18 Dec 2006 05:51:08 -0600
+
+libarchive (1.2.53-2) unstable; urgency=low
+
+  * Added build-dep on bison.  Closes: #374200.
+
+ -- John Goerzen <jgoerzen@complete.org>  Sat, 17 Jun 2006 17:24:44 -0500
+
+libarchive (1.2.53-1) unstable; urgency=low
+
+  * New upstream version.
+  * The bsdtar program has been integrated into the libarchive source
+    package upstream.  This package, therefore, now generates the
+    bsdtar binary package.
+
+ -- John Goerzen <jgoerzen@complete.org>  Sat, 17 Jun 2006 10:44:05 -0500
+
+libarchive (1.02.036-2) unstable; urgency=low
+
+  * Added conflict on old libarchive-doc package.
+    This package never existed in testing or stable, so this conflict
+    can be removed before long.
+
+ -- John Goerzen <jgoerzen@complete.org>  Tue, 18 Oct 2005 11:02:06 -0500
+
+libarchive (1.02.036-1) unstable; urgency=low
+
+  * New upstream version, now with support for building as a .so.
+  * Added build-dep on libattr1-dev.
+  * No more libarchive-doc; its files now live in libarchive1.
+  * Thanks to Bernhard R. Link for ideas for this package.
+
+ -- John Goerzen <jgoerzen@complete.org>  Mon, 17 Oct 2005 10:27:30 -0500
+
+libarchive (1.02.034-2) unstable; urgency=low
+
+  * Split off manpages into separate package libarchive-doc.
+    The bsdtar manpages point readers to these.
+
+ -- John Goerzen <jgoerzen@complete.org>  Tue, 11 Oct 2005 05:36:28 -0500
+
+libarchive (1.02.034-1) unstable; urgency=low
+
+  * Initial release Closes: #333222.
+
+ -- John Goerzen <jgoerzen@complete.org>  Mon, 10 Oct 2005 19:24:56 -0500
+
