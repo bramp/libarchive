@@ -62,6 +62,7 @@ Description: Single library to read/write tar, cpio, pax, zip, iso9660, etc.
 Package: bsdtar
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
+Section: utils
 Description: tar(1) from FreeBSD, using libarchive
  The bsdtar program has a number of advantages over previous tar
  implementations:
