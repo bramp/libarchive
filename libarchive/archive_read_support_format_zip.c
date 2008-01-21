@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_format_zip.c,v 1.13 2007/05/29 01:00:19 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_format_zip.c,v 1.16 2007/12/04 06:32:12 kientzle Exp $");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -179,18 +179,19 @@ archive_read_format_zip_bid(struct archive_read *a)
 	    return (-1);
 	p = (const char *)h;
 
+	/*
+	 * Bid of 30 here is: 16 bits for "PK",
+	 * next 16-bit field has four options (-2 bits).
+	 * 16 + 16-2 = 30.
+	 */
 	if (p[0] == 'P' && p[1] == 'K') {
-		bid += 16;
-		if (p[2] == '\001' && p[3] == '\002')
-			bid += 16;
-		else if (p[2] == '\003' && p[3] == '\004')
-			bid += 16;
-		else if (p[2] == '\005' && p[3] == '\006')
-			bid += 16;
-		else if (p[2] == '\007' && p[3] == '\010')
-			bid += 16;
+		if ((p[2] == '\001' && p[3] == '\002')
+		    || (p[2] == '\003' && p[3] == '\004')
+		    || (p[2] == '\005' && p[3] == '\006')
+		    || (p[2] == '\007' && p[3] == '\010'))
+			return (30);
 	}
-	return (bid);
+	return (0);
 }
 
 static int
@@ -302,7 +303,8 @@ zip_read_file_header(struct archive_read *a, struct archive_entry *entry,
 		    "Truncated ZIP file header");
 		return (ARCHIVE_FATAL);
 	}
-	archive_string_ensure(&zip->pathname, zip->filename_length);
+	if (archive_string_ensure(&zip->pathname, zip->filename_length) == NULL)
+		__archive_errx(1, "Out of memory");
 	archive_strncpy(&zip->pathname, (const char *)h, zip->filename_length);
 	(a->decompressor->consume)(a, zip->filename_length);
 	archive_entry_set_pathname(entry, zip->pathname.s);
@@ -333,6 +335,11 @@ zip_read_file_header(struct archive_read *a, struct archive_entry *entry,
 
 	zip->entry_bytes_remaining = zip->compressed_size;
 	zip->entry_offset = 0;
+
+	/* If there's no body, force read_data() to return EOF immediately. */
+	if (0 == (zip->flags & ZIP_LENGTH_AT_END)
+	    && zip->entry_bytes_remaining < 1)
+		zip->end_of_entry = 1;
 
 	/* Set up a more descriptive format name. */
 	sprintf(zip->format_name, "ZIP %d.%d (%s)",
@@ -421,6 +428,9 @@ archive_read_format_zip_read_data(struct archive_read *a,
 			/* End-of-entry cleanup done. */
 			zip->end_of_entry_cleanup = 1;
 		}
+		*offset = zip->entry_uncompressed_bytes_read;
+		*size = 0;
+		*buff = NULL;
 		return (ARCHIVE_EOF);
 	}
 
@@ -756,8 +766,8 @@ process_extra(const void* extra, struct zip* zip)
 			if (flags & 0x01)
 			{
 #ifdef DEBUG
-				fprintf(stderr, "mtime: %d -> %d\n",
-				    zip->mtime, i4(p + offset));
+				fprintf(stderr, "mtime: %lld -> %d\n",
+				    (long long)zip->mtime, i4(p + offset));
 #endif
 				if (datasize < 4)
 					break;
