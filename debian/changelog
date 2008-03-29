@@ -2,7 +2,6 @@ libarchive (2.4.14-1) unstable; urgency=high
 
   * New upstream release.  Closes: #465061, #448292.  #465061 is grave bug,
     so setting urgency high.
-  * Run test suite after build.  Closes: #419793.
   * Added Vcs-* and Homepage lines to debian/control
 
  -- John Goerzen <jgoerzen@complete.org>  Sat, 29 Mar 2008 10:14:21 -0500

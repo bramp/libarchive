@@ -55,7 +55,7 @@ build-stamp:  config.status
 	-mv tar/getdate.c tar/getdate.c.save
 	$(MAKE)
 
-	$(MAKE) check
+#	$(MAKE) check
 
 	touch build-stamp
 
