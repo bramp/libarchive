@@ -4,6 +4,9 @@ Maintainer: John Goerzen <jgoerzen@complete.org>
 Build-Depends: debhelper (>= 4.0.0), autotools-dev, libbz2-dev, zlib1g-dev, libacl1-dev, e2fslibs-dev, libattr1-dev, bison, libtool
 Standards-Version: 3.7.2
 Section: libs
+Vcs-Browser: http://git.debian.org/?p=users/jgoerzen/libarchive
+Vcs-Git: git://git.debian.org/users/jgoerzen/libarchive
+Homepage: http://people.freebsd.org/~kientzle/libarchive/
 
 Package: libarchive-dev
 Section: libdevel
