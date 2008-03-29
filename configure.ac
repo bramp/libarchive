@@ -171,7 +171,7 @@ AC_CHECK_HEADER(inttypes.h,
 	 [AC_SUBST(ARCHIVE_H_INCLUDE_INTTYPES_H,[''])])
 AC_CHECK_HEADERS([locale.h paths.h poll.h pwd.h stdarg.h])
 AC_CHECK_HEADERS([stdint.h stdlib.h string.h sys/acl.h sys/ioctl.h])
-AC_CHECK_HEADERS([sys/param.h sys/poll.h sys/select.h sys/time.h])
+AC_CHECK_HEADERS([sys/param.h sys/poll.h sys/select.h sys/time.h sys/utime.h])
 AC_CHECK_HEADERS([time.h unistd.h utime.h wchar.h zlib.h])
 
 # Checks for libraries.
@@ -235,12 +235,13 @@ AC_FUNC_STAT
 AC_FUNC_STRERROR_R
 AC_FUNC_STRFTIME
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS([chflags fchdir fchflags fchmod fchown futimes])
-AC_CHECK_FUNCS([ftruncate getopt_long])
+AC_CHECK_FUNCS([chflags chown fchdir fchflags fchmod fchown futimes])
+AC_CHECK_FUNCS([ftruncate geteuid getopt_long])
 AC_CHECK_FUNCS([lchflags lchmod lchown])
-AC_CHECK_FUNCS([lutimes memmove memset mkdir mkfifo])
-AC_CHECK_FUNCS([nl_langinfo poll select setlocale])
-AC_CHECK_FUNCS([strchr strdup strerror strrchr timegm utime utimes])
+AC_CHECK_FUNCS([lutimes memmove memset mkdir mkfifo mknod])
+AC_CHECK_FUNCS([nl_langinfo poll select setenv setlocale])
+AC_CHECK_FUNCS([strchr strdup strerror strrchr timegm])
+AC_CHECK_FUNCS([tzset unsetenv utime utimes])
 AC_CHECK_FUNCS([wcscpy wcslen wmemcmp wmemcpy])
 
 # FreeBSD's nl_langinfo supports an option to specify whether the

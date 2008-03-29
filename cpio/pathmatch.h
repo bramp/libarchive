@@ -26,6 +26,12 @@
  * $FreeBSD$
  */
 
-#define PATHMATCH_XXXXX 0
+#ifndef PATHMATCH_H
+#define PATHMATCH_H
+
+#define PATHMATCH_NO_ANCHOR_START	1
+#define PATHMATCH_NO_ANCHOR_END	2
 
 int pathmatch(const char *p, const char *s, int flags);
+
+#endif

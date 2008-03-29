@@ -26,6 +26,9 @@
  * $FreeBSD$
  */
 
+#ifndef MATCHING_H
+#define MATCHING_H
+
 #include "cpio.h"
 
 int	exclude(struct cpio *, const char *pattern);
@@ -33,3 +36,5 @@ int	include(struct cpio *, const char *pattern);
 int	excluded(struct cpio *cpio, const char *pathname);
 void	cleanup_exclusions(struct cpio *cpio);
 int	unmatched_inclusions(struct cpio *cpio);
+
+#endif

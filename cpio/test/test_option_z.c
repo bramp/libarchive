@@ -41,10 +41,12 @@ DEFINE_TEST(test_option_z)
 	/* Archive it with gzip compression. */
 	r = systemf("echo f | %s -oz >archive.out 2>archive.err",
 	    testprog);
+	failure("-z option seems to be broken");
 	assertEqualInt(r, 0);
-
-	/* Check that the archive file has a gzip signature. */
-	p = slurpfile(&s, "archive.out");
-	assert(s > 2);
-	assertEqualMem(p, "\x1f\x8b\x08\x00", 4);
+	if (r == 0) {
+		/* Check that the archive file has a gzip signature. */
+		p = slurpfile(&s, "archive.out");
+		assert(s > 2);
+		assertEqualMem(p, "\x1f\x8b\x08\x00", 4);
+	}
 }

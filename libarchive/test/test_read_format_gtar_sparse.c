@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_format_gtar_sparse.c,v 1.6 2007/08/18 21:53:25 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_format_gtar_sparse.c,v 1.7 2008/01/01 22:28:04 kientzle Exp $");
 
 
 struct contents {

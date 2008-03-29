@@ -29,21 +29,17 @@ __FBSDID("$FreeBSD$");
  * Test that --version option works and generates reasonable output.
  */
 
-DEFINE_TEST(test_option_version)
+static void
+verify(const char *q, size_t s)
 {
-	int r;
-	char *p, *q;
-	size_t s;
-
-
-	r = systemf("%s --version >version.stdout 2>version.stderr", testprog);
-	/* --version should generate nothing to stdout. */
-	assertEmptyFile("version.stdout");
-	/* Verify format of version message. */
-	q = p = slurpfile(&s, "version.stderr");
 	/* Version message should start with name of program, then space. */
-	assert(s > 6);
-	assertEqualMem(q, "bsdcpio ", 8);
+	failure("version message too short");
+	if (!assert(s > 6))
+		return;
+	failure("Version message should begin with 'bsdcpio'");
+	if (!assertEqualMem(q, "bsdcpio ", 8))
+		/* If we're not testing bsdcpio, don't keep going. */
+		return;
 	q += 8; s -= 8;
 	/* Version number is a series of digits and periods. */
 	while (s > 0 && (*q == '.' || (*q >= '0' && *q <= '9'))) {
@@ -69,5 +65,20 @@ DEFINE_TEST(test_option_version)
 	/* All terminated by a newline. */
 	assert(s >= 1);
 	assertEqualMem(q, "\n", 1);
+}
+
+
+DEFINE_TEST(test_option_version)
+{
+	int r;
+	char *p;
+	size_t s;
+
+	r = systemf("%s --version >version.stdout 2>version.stderr", testprog);
+	/* --version should generate nothing to stderr. */
+	assertEmptyFile("version.stderr");
+	/* Verify format of version message. */
+	p = slurpfile(&s, "version.stdout");
+	verify(p, s);
 	free(p);
 }

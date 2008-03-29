@@ -37,6 +37,7 @@ __FBSDID("$FreeBSD$");
 #endif
 
 #include "matching.h"
+#include "pathmatch.h"
 
 struct match {
 	struct match	 *next;
@@ -53,7 +54,6 @@ struct matching {
 };
 
 static void	add_pattern(struct match **list, const char *pattern);
-static int	cpio_fnmatch(const char *p, const char *s);
 static void	initialize_matching(struct cpio *);
 static int	match_exclusion(struct match *, const char *pathname);
 static int	match_inclusion(struct match *, const char *pathname);
@@ -194,18 +194,9 @@ excluded(struct cpio *cpio, const char *pathname)
 int
 match_exclusion(struct match *match, const char *pathname)
 {
-	const char *p;
-
-	if (*match->pattern == '*' || *match->pattern == '/')
-		return (cpio_fnmatch(match->pattern, pathname) == 0);
-
-	for (p = pathname; p != NULL; p = strchr(p, '/')) {
-		if (*p == '/')
-			p++;
-		if (cpio_fnmatch(match->pattern, p) == 0)
-			return (1);
-	}
-	return (0);
+	return (pathmatch(match->pattern,
+		    pathname,
+		    PATHMATCH_NO_ANCHOR_START | PATHMATCH_NO_ANCHOR_END));
 }
 
 /*
@@ -215,7 +206,7 @@ match_exclusion(struct match *match, const char *pathname)
 int
 match_inclusion(struct match *match, const char *pathname)
 {
-	return (cpio_fnmatch(match->pattern, pathname) == 0);
+	return (pathmatch(match->pattern, pathname, 0));
 }
 
 void
@@ -259,17 +250,3 @@ unmatched_inclusions(struct cpio *cpio)
 		return (0);
 	return (matching->inclusions_unmatched_count);
 }
-
-
-
-#if defined(HAVE_FNMATCH)
-
-/* Use system fnmatch() if it suits our needs. */
-#include <fnmatch.h>
-static int
-cpio_fnmatch(const char *pattern, const char *string)
-{
-	return (fnmatch(pattern, string, 0));
-}
-
-#endif
