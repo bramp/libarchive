@@ -27,11 +27,14 @@
 #include "cpio_platform.h"
 __FBSDID("$FreeBSD$");
 
-#include "match.h"
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+
+#include "pathmatch.h"
 
 /*
- * Check whether a character 'c' is matched by a character class
- * specification [...]:
+ * Check whether a character 'c' is matched by a list specification [...]:
  *    * Leading '!' negates the class.
  *    * <char>-<char> is a range of characters
  *    * \<char> removes any special meaning for <char>
@@ -47,7 +50,7 @@ __FBSDID("$FreeBSD$");
  *   [!] always succeeds
  */
 static int
-pm_class(const char *start, const char *end, const char c, int flags)
+pm_list(const char *start, const char *end, const char c, int flags)
 {
 	const char *p = start;
 	char rangeStart = '\0', nextRangeStart;
@@ -106,8 +109,8 @@ pm_slashskip(const char *s) {
 	return (s);
 }
 
-int
-pathmatch(const char *p, const char *s, int flags)
+static int
+pm(const char *p, const char *s, int flags)
 {
 	const char *end;
 
@@ -123,6 +126,8 @@ pathmatch(const char *p, const char *s, int flags)
 		switch (*p) {
 		case '\0':
 			if (s[0] == '/') {
+				if (flags & PATHMATCH_NO_ANCHOR_END)
+					return (1);
 				/* "dir" == "dir/" == "dir/." */
 				s = pm_slashskip(s);
 				if (s[0] == '.' && s[1] == '\0')
@@ -162,7 +167,7 @@ pathmatch(const char *p, const char *s, int flags)
 			}
 			if (*end == ']') {
 				/* We found [...], try to match it. */
-				if (!pm_class(p + 1, end, *s, flags))
+				if (!pm_list(p + 1, end, *s, flags))
 					return (0);
 				p = end; /* Jump to trailing ']' char. */
 				break;
@@ -209,4 +214,37 @@ pathmatch(const char *p, const char *s, int flags)
 		else
 			++s;
 	}
+}
+
+/* Main entry point. */
+int
+pathmatch(const char *p, const char *s, int flags)
+{
+	/* Empty pattern only matches the empty string. */
+	if (p == NULL || *p == '\0')
+		return (s == NULL || *s == '\0');
+
+	/* Leading '^' anchors the start of the pattern. */
+	if (*p == '^') {
+		++p;
+		flags &= ~PATHMATCH_NO_ANCHOR_START;
+	}
+
+	/* Certain patterns anchor implicitly. */
+	if (*p == '*' || *p == '/')
+		return (pm(p, s, flags));
+
+	/* If start is unanchored, try to match start of each path element. */
+	if (flags & PATHMATCH_NO_ANCHOR_START) {
+		for ( ; p != NULL; p = strchr(p, '/')) {
+			if (*p == '/')
+				p++;
+			if (pm(p, s, flags))
+				return (1);
+		}
+		return (0);
+	}
+
+	/* Default: Match from beginning. */
+	return (pm(p, s, flags));
 }

@@ -41,10 +41,12 @@ DEFINE_TEST(test_option_y)
 	/* Archive it with bzip2 compression. */
 	r = systemf("echo f | %s -oy >archive.out 2>archive.err",
 	    testprog);
-	assertEqualInt(r, 0);
-
-	/* Check that the archive file has a bzip2 signature. */
-	p = slurpfile(&s, "archive.out");
-	assert(s > 2);
-	assertEqualMem(p, "BZh9", 4);
+	assertFileContents("1 block\n", 8, "archive.err");
+	failure("-y (bzip) option seems to be broken");
+	if (assertEqualInt(r, 0)) {
+		/* Check that the archive file has a bzip2 signature. */
+		p = slurpfile(&s, "archive.out");
+		assert(s > 2);
+		assertEqualMem(p, "BZh9", 4);
+	}
 }

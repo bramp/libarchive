@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD$");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_tar_large.c,v 1.1 2008/01/01 22:28:04 kientzle Exp $");
 
 #include <errno.h>
 #include <stdlib.h>

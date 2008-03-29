@@ -80,7 +80,7 @@ main(int argc, char *argv[])
 	struct cpio _cpio; /* Allocated on stack. */
 	struct cpio *cpio;
 	int uid, gid;
-	char opt;
+	int opt;
 
 	cpio = &_cpio;
 	memset(cpio, 0, sizeof(*cpio));
@@ -177,7 +177,7 @@ main(int argc, char *argv[])
 			cpio->verbose++;
 			break;
 		case OPTION_VERSION: /* GNU convention */
-			version(stderr);
+			version(stdout);
 			break;
 #if 0
 	        /*
@@ -311,6 +311,7 @@ version(FILE *out)
 static void
 mode_out(struct cpio *cpio)
 {
+	unsigned long blocks;
 	int r;
 
 	cpio->archive = archive_write_new();
@@ -342,9 +343,12 @@ mode_out(struct cpio *cpio)
 	if (r != ARCHIVE_OK)
 		cpio_errc(1, 0, archive_error_string(cpio->archive));
 
-	if (!cpio->quiet)
-		fprintf(stderr, "%u blocks\n",
-		    (unsigned int)((archive_position_uncompressed(cpio->archive) + 511) / 512));
+	if (!cpio->quiet) {
+		blocks = (archive_position_uncompressed(cpio->archive) + 511)
+			      / 512;
+		fprintf(stderr, "%lu %s\n", blocks,
+		    blocks == 1 ? "block" : "blocks");
+	}
 	archive_write_finish(cpio->archive);
 }
 
@@ -544,6 +548,7 @@ mode_in(struct cpio *cpio)
 	struct archive_entry *entry;
 	struct archive *ext;
 	const char *destpath;
+	unsigned long blocks;
 	int r;
 
 	ext = archive_write_disk_new();
@@ -596,10 +601,16 @@ mode_in(struct cpio *cpio)
 	r = archive_read_close(a);
 	if (r != ARCHIVE_OK)
 		cpio_errc(1, 0, archive_error_string(a));
-	archive_read_finish(a);
 	r = archive_write_close(ext);
 	if (r != ARCHIVE_OK)
 		cpio_errc(1, 0, archive_error_string(ext));
+	if (!cpio->quiet) {
+		blocks = (archive_position_uncompressed(a) + 511)
+			      / 512;
+		fprintf(stderr, "%lu %s\n", blocks,
+		    blocks == 1 ? "block" : "blocks");
+	}
+	archive_read_finish(a);
 	archive_write_finish(ext);
 	exit(0);
 }
@@ -635,6 +646,7 @@ mode_list(struct cpio *cpio)
 {
 	struct archive *a;
 	struct archive_entry *entry;
+	unsigned long blocks;
 	int r;
 
 	a = archive_read_new();
@@ -673,6 +685,12 @@ mode_list(struct cpio *cpio)
 	r = archive_read_close(a);
 	if (r != ARCHIVE_OK)
 		cpio_errc(1, 0, archive_error_string(a));
+	if (!cpio->quiet) {
+		blocks = (archive_position_uncompressed(a) + 511)
+			      / 512;
+		fprintf(stderr, "%lu %s\n", blocks,
+		    blocks == 1 ? "block" : "blocks");
+	}
 	archive_read_finish(a);
 	exit(0);
 }

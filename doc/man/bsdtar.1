@@ -230,16 +230,9 @@ Normally, symbolic links are archived as such.
 With this option, the target of the link will be archived instead.
 .TP
 \fB\-l\fP
-If
-.IR POSIXLY_CORRECT
-is specified in the environment, this is a synonym for the
+This is a synonym for the
 \fB\--check-links\fP
 option.
-Otherwise, an error will be displayed.
-Users who desire behavior compatible with GNU tar should use
-the
-\fB\--one-file-system\fP
-option instead.
 .TP
 \fB\-m\fP
 (x mode only)
@@ -442,12 +435,6 @@ The locale to use.
 See
 \fBenviron\fP(7)
 for more information.
-.TP
-.B POSIXLY_CORRECT
-If this environment variable is defined, the
-\fB\-l\fP
-option will be interpreted in accordance with
-ISO/IEC 9945-1:1996 (``POSIX.1'').
 .TP
 .B TAPE
 The default tape device.
@@ -707,13 +694,16 @@ This is a complete re-implementation based on the
 \fBlibarchive\fP(3)
 library.
 .SH BUGS
-POSIX and GNU violently disagree about the meaning of the
+This program follows
+ISO/IEC 9945-1:1996 (``POSIX.1'')
+for the definition of the
 \fB\-l\fP
 option.
-Because of the potential for disaster if someone expects
-one behavior and gets the other, the
+Note that GNU tar prior to version 1.15 treated
 \fB\-l\fP
-option is deliberately broken in this implementation.
+as a synonym for the
+\fB\--one-file-system\fP
+option.
 The
 \fB\-C\fP \fIdir\fP
 option may differ from historic implementations.

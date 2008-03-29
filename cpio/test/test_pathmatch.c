@@ -25,7 +25,7 @@
 #include "test.h"
 __FBSDID("$FreeBSD$");
 
-#include "../match.h"
+#include "../pathmatch.h"
 
 /*
  * Verify that the pattern matcher implements the wildcard logic specified

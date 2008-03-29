@@ -116,6 +116,8 @@ DEFINE_TEST(test_option_c)
 	assert(is_octal(e + 30, 6)); /* gid */
 	gid = from_octal(e + 30, 6);
 	assertEqualMem(e + 36, "000001", 6); /* nlink */
+	failure("file entries should not have rdev set (dev field was 0%o)",
+	    dev);
 	assertEqualMem(e + 42, "000000", 6); /* rdev */
 	t = from_octal(e + 48, 11); /* mtime */
 	assert(t <= now); /* File wasn't created in future. */
@@ -135,6 +137,8 @@ DEFINE_TEST(test_option_c)
 	assertEqualInt(from_octal(e + 24, 6), getuid()); /* uid */
 	assertEqualInt(gid, from_octal(e + 30, 6)); /* gid */
 	assertEqualMem(e + 36, "000001", 6); /* nlink */
+	failure("file entries should have rdev == 0 (dev was 0%o)",
+	    from_octal(e + 6, 6));
 	assertEqualMem(e + 42, "000000", 6); /* rdev */
 	t = from_octal(e + 48, 11); /* mtime */
 	assert(t <= now); /* File wasn't created in future. */

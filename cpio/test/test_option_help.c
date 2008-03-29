@@ -57,7 +57,7 @@ DEFINE_TEST(test_option_help)
 	p = slurpfile(&plen, "help.stdout");
 	failure("Help output should be long enough.");
 	assert(plen >= 7);
-	failure("First line of help output should contain string 'bsdcpio': %s", p);
+	failure("First line of help output should contain string 'bsdcpio'");
 	assert(in_first_line(p, "bsdcpio"));
 	/*
 	 * TODO: Extend this check to further verify that --help output
