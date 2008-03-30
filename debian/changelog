@@ -1,3 +1,11 @@
+libarchive (2.4.15-1) unstable; urgency=low
+
+  * New Upstream Version
+  * This upstream version corrected several problems with the testsuite.
+    Therefore, we can now run test suite after build.  Closes: #419793.
+
+ -- John Goerzen <jgoerzen@complete.org>  Sun, 30 Mar 2008 08:02:46 -0500
+
 libarchive (2.4.14-1) unstable; urgency=high
 
   * New upstream release.  Closes: #465061, #448292.  #465061 is grave bug,
