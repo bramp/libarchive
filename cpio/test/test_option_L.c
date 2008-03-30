@@ -59,23 +59,23 @@ DEFINE_TEST(test_option_L)
 	assert(!S_ISLNK(st.st_mode));
 
 	r = systemf("cat filelist | %s -o --quiet >archive.out 2>archive.err", testprog);
-	failure("Error invoking %s -o --quiet %s", testprog);
+	failure("Error invoking %s -o --quiet", testprog);
 	assertEqualInt(r, 0);
 
 	assertEqualInt(0, mkdir("unpack", 0755));
 	r = systemf("cat archive.out | (cd unpack ; %s -i >unpack.out 2>unpack.err)", testprog);
-	failure("Error invoking %s -i %s", testprog);
+	failure("Error invoking %s -i", testprog);
 	assertEqualInt(r, 0);
 	assertEqualInt(0, lstat("unpack/symlink", &st));
 	assert(S_ISLNK(st.st_mode));
 
 	r = systemf("cat filelist | %s -oL --quiet >archive-L.out 2>archive-L.err", testprog);
-	failure("Error invoking %s -oL --quiet %s", testprog);
+	failure("Error invoking %s -oL --quiet", testprog);
 	assertEqualInt(r, 0);
 
 	assertEqualInt(0, mkdir("unpack-L", 0755));
 	r = systemf("cat archive-L.out | (cd unpack-L ; %s -i >unpack-L.out 2>unpack-L.err)", testprog);
-	failure("Error invoking %s -i %s < archive-L.out", testprog);
+	failure("Error invoking %s -i < archive-L.out", testprog);
 	assertEqualInt(r, 0);
 	assertEqualInt(0, lstat("unpack-L/symlink", &st));
 	assert(!S_ISLNK(st.st_mode));
