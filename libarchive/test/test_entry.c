@@ -675,8 +675,10 @@ DEFINE_TEST(test_entry)
 	/*
 	 * Exercise the character-conversion logic, if we can.
 	 */
-	failure("Can't exercise charset-conversion logic.");
-	if (assert(NULL != setlocale(LC_ALL, "de_DE.UTF-8"))) {
+	if (NULL == setlocale(LC_ALL, "de_DE.UTF-8")) {
+		skipping("Can't exercise charset-conversion logic without"
+			" a suitable locale.");
+	} else {
 		/* A filename that cannot be converted to wide characters. */
 		archive_entry_copy_pathname(e, "abc\314\214mno\374xyz");
 		failure("Converting invalid chars to Unicode should fail.");

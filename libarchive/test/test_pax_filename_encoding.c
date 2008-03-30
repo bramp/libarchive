@@ -59,9 +59,11 @@ DEFINE_TEST(test_pax_filename_encoding)
 	 * de_DE.UTF-8 seems to be commonly supported.
 	 */
 	/* If it doesn't exist, just warn and return. */
-	failure("We need a suitable locale for the encoding tests.");
-	if (!assert(NULL != setlocale(LC_ALL, "de_DE.UTF-8")))
+	if (NULL == setlocale(LC_ALL, "de_DE.UTF-8")) {
+		skipping("invalid encoding tests require a suitable locale;"
+		    " de_DE.UTF-8 not available on this system");
 		return;
+	}
 
 	assert((a = archive_write_new()) != NULL);
 	assertEqualIntA(a, 0, archive_write_set_format_pax(a));
