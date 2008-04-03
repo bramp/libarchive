@@ -1,9 +1,11 @@
-libarchive (2.4.17-1) unstable; urgency=low
+libarchive (2.4.17-1) unstable; urgency=high
 
   * New Upstream Version
   * This upstream version corrected several problems with the testsuite.
-    Therefore, we can now run test suite after build.  Closes: #419793.
-
+    Therefore, we can now run test suite after build.  Closes: #473221.
+  * uudecode is now used as part of the build.  Added build-dep on sharutils.
+    Fixes FTBFS.  Closes: #473266.
+  
  -- John Goerzen <jgoerzen@complete.org>  Thu, 03 Apr 2008 09:25:04 -0500
 
 libarchive (2.4.14-1) unstable; urgency=high

@@ -1,7 +1,7 @@
 Source: libarchive
 Priority: optional
 Maintainer: John Goerzen <jgoerzen@complete.org>
-Build-Depends: debhelper (>= 4.0.0), autotools-dev, libbz2-dev, zlib1g-dev, libacl1-dev, e2fslibs-dev, libattr1-dev, bison, libtool
+Build-Depends: debhelper (>= 4.0.0), autotools-dev, libbz2-dev, zlib1g-dev, libacl1-dev, e2fslibs-dev, libattr1-dev, bison, libtool, sharutils
 Standards-Version: 3.7.2
 Section: libs
 Vcs-Browser: http://git.debian.org/?p=users/jgoerzen/libarchive
