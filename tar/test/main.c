@@ -288,6 +288,27 @@ test_assert_equal_string(const char *file, int line,
 	report_failure(extra);
 }
 
+static void wcsdump(const wchar_t *w)
+{
+	if (w == NULL) {
+		fprintf(stderr, "(null)");
+		return;
+	}
+	fprintf(stderr, "\"");
+	while (*w != L'\0') {
+		unsigned int c = *w++;
+		if (c >= 32 && c < 127)
+			fprintf(stderr, "%c", c);
+		else if (c < 256)
+			fprintf(stderr, "\\x%02X", c);
+		else if (c < 0x10000)
+			fprintf(stderr, "\\u%04X", c);
+		else
+			fprintf(stderr, "\\U%08X", c);
+	}
+	fprintf(stderr, "\"");
+}
+
 /* assertEqualWString() displays the values of the two strings. */
 void
 test_assert_equal_wstring(const char *file, int line,
@@ -296,7 +317,17 @@ test_assert_equal_wstring(const char *file, int line,
     void *extra)
 {
 	++assertions;
-	if (wcscmp(v1, v2) == 0) {
+	if (v1 == NULL) {
+		if (v2 == NULL) {
+			msg[0] = '\0';
+			return (1);
+		}
+	} else if (v2 == NULL) {
+		if (v1 == NULL) {
+			msg[0] = '\0';
+			return (1);
+		}
+	} else if (wcscmp(v1, v2) == 0) {
 		msg[0] = '\0';
 		return;
 	}
@@ -305,8 +336,12 @@ test_assert_equal_wstring(const char *file, int line,
 		return;
 	fprintf(stderr, "%s:%d: Assertion failed: Unicode strings not equal\n",
 	    file, line);
-	fwprintf(stderr, L"      %s = \"%ls\"\n", e1, v1);
-	fwprintf(stderr, L"      %s = \"%ls\"\n", e2, v2);
+	fprintf(stderr, "      %s = ", e1);
+	wcsdump(v1);
+	fprintf(stderr, "\n");
+	fprintf(stderr, "      %s = ", e2);
+	wcsdump(v2);
+	fprintf(stderr, "\n");
 	report_failure(extra);
 }
 
