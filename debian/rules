@@ -71,7 +71,6 @@ clean:
 	-mv config.aux/config.guess.save config.aux/config.guess
 	-mv config.aux/config.sub.save config.aux/config.sub
 	-mv tar/getdate.c.save tar/getdate.c
-	rm -f config.aux/config.guess config.aux/config.sub tar/getdate.c
 
 	dh_clean 
 
