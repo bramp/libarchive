@@ -35,9 +35,11 @@ major=`ls src/.libs/lib*.so.* | \
 
 config.status: configure
 	dh_testdir
+	-cp config.aux/config.sub config.aux/config.sub.save
 ifneq "$(wildcard /usr/share/misc/config.sub)" ""
 	cp -f /usr/share/misc/config.sub config.aux/config.sub
 endif
+	-cp config.aux/config.guess config.aux/config.guess.save
 ifneq "$(wildcard /usr/share/misc/config.guess)" ""
 	cp -f /usr/share/misc/config.guess config.aux/config.guess
 endif
@@ -51,6 +53,7 @@ build-stamp:  config.status
 	dh_testdir
 
 	# Add here commands to compile the package.
+	-mv tar/getdate.c tar/getdate.c.save
 	$(MAKE)
 
 	$(MAKE) check
@@ -65,6 +68,9 @@ clean:
 	# Add here commands to clean up after the build process.
 	if test -f config.status ; then $(MAKE) distclean ; fi
 
+	-mv config.aux/config.guess.save config.aux/config.guess
+	-mv config.aux/config.sub.save config.aux/config.sub
+	-mv tar/getdate.c.save tar/getdate.c
 	rm -f config.aux/config.guess config.aux/config.sub tar/getdate.c
 
 	dh_clean 
