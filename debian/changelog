@@ -1,3 +1,18 @@
+libarchive (2.4.17-2) unstable; urgency=high
+
+  [ John Goerzen ]
+  * Ignore failures in test suite due to bugs in the testsuite that were
+    turning into FTBFS bugs.  Closes: #474400.
+
+  * Added README.Debian documenting need for largefile suport in
+    sources. Mostly used suggested text found in #479728.  Closes:
+    #479728.
+
+  [ Bernhard R. Link ]
+  * Added symbols file for libarchive.  Closes: #476516.
+
+ -- John Goerzen <jgoerzen@complete.org>  Thu, 05 Jun 2008 15:42:57 -0500
+
 libarchive (2.4.17-1) unstable; urgency=high
 
   * New Upstream Version
