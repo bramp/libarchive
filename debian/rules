@@ -44,10 +44,11 @@ ifneq "$(wildcard /usr/share/misc/config.guess)" ""
 	cp -f /usr/share/misc/config.guess config.aux/config.guess
 endif
 	# Add here commands to configure the package.
-	$(SHELL) ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info CFLAGS="$(CFLAGS)" LDFLAGS=" -Wl,-z,defs" --enable-bsdcpio
+	$(SHELL) ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info CFLAGS="$(CFLAGS)" LDFLAGS=" -Wl,-z,defs" --enable-bsdcpio=shared --enable-bsdtar=shared
 
 
-build: build-stamp
+build-indep:
+build-arch: build-stamp
 build-stamp:  config.status
 	dh_testdir
 
@@ -65,7 +66,7 @@ clean:
 	rm -f build-stamp 
 
 	# Add here commands to clean up after the build process.
-	-$(MAKE) distclean
+	if test -f config.status ; then $(MAKE) distclean ; fi
 
 	-mv config.aux/config.guess.save config.aux/config.guess
 	-mv config.aux/config.sub.save config.aux/config.sub
@@ -73,7 +74,7 @@ clean:
 
 	dh_clean 
 
-install: build
+install: build-arch
 	dh_testdir
 	dh_testroot
 	dh_clean -k 
@@ -84,12 +85,11 @@ install: build
 	ln -s -T libarchive.so.2 debian/tmp/usr/lib/libarchive.so.1
 	install -d debian/tmp/usr/share/lintian/overrides/
 	install -m 0644 debian/lintian-override debian/tmp/usr/share/lintian/overrides/libarchive1
-	${RM} -r debian/libarchive2/usr/share/
 
 binary-indep: 
 
 # Build architecture-dependent files here.
-binary-arch: build install
+binary-arch: install
 	dh_testdir
 	dh_testroot
 	dh_installchangelogs  -a NEWS
@@ -123,4 +123,5 @@ binary-arch: build install
 	dh_builddeb -a
 
 binary: binary-indep binary-arch
-.PHONY: build clean binary-indep binary-arch binary install 
+build: build-indep build-arch
+.PHONY: build build-arch build-indep clean binary-indep binary-arch binary install
