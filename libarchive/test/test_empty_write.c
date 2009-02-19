@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_empty_write.c,v 1.1 2008/01/01 22:28:04 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_empty_write.c,v 1.3 2008/09/01 05:38:33 kientzle Exp $");
 
 DEFINE_TEST(test_empty_write)
 {
@@ -47,6 +47,7 @@ DEFINE_TEST(test_empty_write)
 	archive_entry_set_mode(ae, S_IFREG | 0755);
 	archive_entry_set_size(ae, 0);
 	assertA(0 == archive_write_header(a, ae));
+	archive_entry_free(ae);
 
 	/* THE TEST: write zero bytes to this entry. */
 	/* This used to crash. */
@@ -54,12 +55,11 @@ DEFINE_TEST(test_empty_write)
 
 	/* Close out the archive. */
 	assertA(0 == archive_write_close(a));
-#if ARCHIVE_API_VERSION > 1
-	assertA(0 == archive_write_finish(a));
-#else
+#if ARCHIVE_VERSION_NUMBER < 2000000
 	archive_write_finish(a);
+#else
+	assertA(0 == archive_write_finish(a));
 #endif
-
 
 	/*
 	 * Again, with bzip2 compression.
@@ -76,16 +76,17 @@ DEFINE_TEST(test_empty_write)
 	archive_entry_set_mode(ae, S_IFREG | 0755);
 	archive_entry_set_size(ae, 0);
 	assertA(0 == archive_write_header(a, ae));
+	archive_entry_free(ae);
 
 	/* THE TEST: write zero bytes to this entry. */
 	assertEqualIntA(a, 0, archive_write_data(a, "", 0));
 
 	/* Close out the archive. */
 	assertA(0 == archive_write_close(a));
-#if ARCHIVE_API_VERSION > 1
-	assertA(0 == archive_write_finish(a));
-#else
+#if ARCHIVE_VERSION_NUMBER < 2000000
 	archive_write_finish(a);
+#else
+	assertA(0 == archive_write_finish(a));
 #endif
 
 
@@ -104,15 +105,16 @@ DEFINE_TEST(test_empty_write)
 	archive_entry_set_mode(ae, S_IFREG | 0755);
 	archive_entry_set_size(ae, 0);
 	assertA(0 == archive_write_header(a, ae));
+	archive_entry_free(ae);
 
 	/* THE TEST: write zero bytes to this entry. */
 	assertEqualIntA(a, 0, archive_write_data(a, "", 0));
 
 	/* Close out the archive. */
 	assertA(0 == archive_write_close(a));
-#if ARCHIVE_API_VERSION > 1
-	assertA(0 == archive_write_finish(a));
-#else
+#if ARCHIVE_VERSION_NUMBER < 2000000
 	archive_write_finish(a);
+#else
+	assertA(0 == archive_write_finish(a));
 #endif
 }

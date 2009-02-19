@@ -1,10 +1,22 @@
-#Process this file with autoconf to produce a configure script.
+dnl Process this file with autoconf to produce a configure script.
 
-# M4 magic to pull in the version from a separate file
-# so we don't have to edit this file for routine version updates
-m4_define([ARCHIVE_VERS],m4_include([version]))
+dnl First, define all of the version numbers up front.
+dnl In particular, this allows the version macro to be used in AC_INIT
 
-AC_INIT([libarchive],ARCHIVE_VERS(),[kientzle@freebsd.org])
+dnl These first two version numbers are updated automatically on each release.
+m4_define([LIBARCHIVE_VERSION_S],[2.6.1])
+m4_define([LIBARCHIVE_VERSION_N],[2006001])
+
+dnl bsdtar versioning tracks libarchive
+m4_define([BSDTAR_VERSION_S],LIBARCHIVE_VERSION_S())
+dnl bsdcpio is still versioning separately, as it's less mature.
+m4_define([BSDCPIO_VERSION_S],[1.1.0])
+
+#
+# Now starts the "real" configure script.
+#
+
+AC_INIT([libarchive],LIBARCHIVE_VERSION_S(),[kientzle@freebsd.org])
 # Make sure the srcdir contains "libarchive" directory
 AC_CONFIG_SRCDIR([libarchive])
 # Use auxiliary subscripts from this subdirectory (cleans up root)
@@ -12,53 +24,45 @@ AC_CONFIG_AUX_DIR([config.aux])
 # Must follow AC_CONFIG macros above...
 AM_INIT_AUTOMAKE()
 
-# Shell magic to compute Major/minor/etc from full version stamp.
-# This gets a little hairy...
-AC_CONFIG_COMMANDS_PRE([
-# Autoconf assigns the version above to PACKAGE_VERSION
-LIBARCHIVE_VERSION_STRING=$PACKAGE_VERSION
-BSDTAR_VERSION_STRING=$PACKAGE_VERSION
-# For a little while longer, cpio is considered immature
-BSDCPIO_VERSION_STRING=0.9.0
-
-# Peel off first three numbers major.minor.revision
-ARCHIVE_MAJOR=`echo $LIBARCHIVE_VERSION_STRING | sed -e 's/[[^0-9]]/./g' -e 's/\..*//'`
-ARCHIVE_MINOR=`echo $LIBARCHIVE_VERSION_STRING | sed -e 's/[[^0-9]]/./g' -e 's/^[[0-9]]*\.//' -e 's/\..*//'`
-ARCHIVE_REVISION=`echo $LIBARCHIVE_VERSION_STRING | sed -e 's/[[^0-9]]/./g' -e 's/^[[0-9]]*\.[[0-9]]*\.//' -e 's/\..*//'`
-# Major/minor indicate the API version
-LIBARCHIVE_VERSION=`printf "%d%03d%03d" ${ARCHIVE_MAJOR} ${ARCHIVE_MINOR} ${ARCHIVE_REVISION}`
-# Libtool versioning uses different conventions on different platforms.
-# FreeBSD libtool still uses this old (and very dumb) convention,
-# which doesn't match FreeBSD system conventions, nor anything else
-# I'm familiar with.
+# Libtool versioning uses different conventions on different
+# platforms.  At least on FreeBSD, libtool uses an overly complex
+# convention that attempts to solve problems that most people just
+# don't have and which just causes confusion for most end users.
+ARCHIVE_MAJOR=$(( LIBARCHIVE_VERSION_N() / 1000000 ))
+ARCHIVE_MINOR=$(( (LIBARCHIVE_VERSION_N() / 1000) % 1000 ))
+ARCHIVE_REVISION=$(( LIBARCHIVE_VERSION_N() % 1000 ))
 ARCHIVE_LIBTOOL_MAJOR=`echo $((${ARCHIVE_MAJOR} + ${ARCHIVE_MINOR}))`
 ARCHIVE_LIBTOOL_VERSION=$ARCHIVE_LIBTOOL_MAJOR:$ARCHIVE_REVISION:$ARCHIVE_MINOR
 
-# Make sure the following get defined in config.h properly
-AC_DEFINE_UNQUOTED([LIBARCHIVE_VERSION_STRING],
-	"$LIBARCHIVE_VERSION_STRING",
+# Stick the version numbers into config.h
+AC_DEFINE([LIBARCHIVE_VERSION_STRING],"LIBARCHIVE_VERSION_S()",
 	[Version number of libarchive])
-AC_DEFINE_UNQUOTED([LIBARCHIVE_VERSION],
-	"$LIBARCHIVE_VERSION",
+AC_DEFINE_UNQUOTED([LIBARCHIVE_VERSION_NUMBER],"LIBARCHIVE_VERSION_N()",
 	[Version number of libarchive as a single integer])
-AC_DEFINE_UNQUOTED([BSDCPIO_VERSION_STRING],
-	"$BSDCPIO_VERSION_STRING",
+AC_DEFINE([BSDCPIO_VERSION_STRING],"BSDCPIO_VERSION_S()",
 	[Version number of bsdcpio])
-AC_DEFINE_UNQUOTED([BSDTAR_VERSION_STRING],
-	"$BSDTAR_VERSION_STRING",
+AC_DEFINE([BSDTAR_VERSION_STRING],"BSDTAR_VERSION_S()",
 	[Version number of bsdtar])
-])
+
+# The shell variables here must be the same as the AC_SUBST() variables
+# below, but the shell variable names apparently cannot be the same as
+# the m4 macro names above.  Why?  Ask autoconf.
+BSDCPIO_VERSION_STRING=BSDCPIO_VERSION_S()
+BSDTAR_VERSION_STRING=BSDTAR_VERSION_S()
+LIBARCHIVE_VERSION_STRING=LIBARCHIVE_VERSION_S()
+LIBARCHIVE_VERSION_NUMBER=LIBARCHIVE_VERSION_N()
 
 # Substitute the above version numbers into the various files below.
+# Yes, I believe this is the fourth time we define what are essentially
+# the same symbols.  Why? Ask autoconf.
 AC_SUBST(ARCHIVE_LIBTOOL_VERSION)
 AC_SUBST(BSDCPIO_VERSION_STRING)
 AC_SUBST(BSDTAR_VERSION_STRING)
 AC_SUBST(LIBARCHIVE_VERSION_STRING)
-AC_SUBST(LIBARCHIVE_VERSION)
+AC_SUBST(LIBARCHIVE_VERSION_NUMBER)
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile])
-AC_CONFIG_FILES([libarchive/archive.h])
 
 # Checks for programs.
 AC_PROG_CC
@@ -158,25 +162,37 @@ AM_CONDITIONAL([STATIC_BSDCPIO], [ test "$static_bsdcpio" = yes ])
 AC_HEADER_STDC
 AC_HEADER_DIRENT
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([bzlib.h errno.h ext2fs/ext2_fs.h fcntl.h  grp.h])
-AC_CHECK_HEADERS([inttypes.h langinfo.h limits.h linux/ext2_fs.h linux/fs.h])
-# Include inttypes.h into archive.h only if appropriate.
-# We can't use the HAVE_INTTYPES_H macro here because archive.h
-# gets installed as a system header and then included into client code
-# that doesn't define such macros.  (And we should certainly not
-# define such macros in system headers!)
-# Hence the following:
-AC_CHECK_HEADER(inttypes.h,
-	 [AC_SUBST(ARCHIVE_H_INCLUDE_INTTYPES_H,['#include <inttypes.h> /* For int64_t */'])],
-	 [AC_SUBST(ARCHIVE_H_INCLUDE_INTTYPES_H,[''])])
-AC_CHECK_HEADERS([locale.h paths.h poll.h pwd.h stdarg.h])
+AC_CHECK_HEADERS([errno.h ext2fs/ext2_fs.h fcntl.h  grp.h])
+AC_CHECK_HEADERS([inttypes.h langinfo.h limits.h linux/fs.h])
+AC_CHECK_HEADERS([locale.h paths.h poll.h pwd.h regex.h stdarg.h])
 AC_CHECK_HEADERS([stdint.h stdlib.h string.h sys/acl.h sys/ioctl.h])
 AC_CHECK_HEADERS([sys/param.h sys/poll.h sys/select.h sys/time.h sys/utime.h])
-AC_CHECK_HEADERS([time.h unistd.h utime.h wchar.h zlib.h])
+AC_CHECK_HEADERS([time.h unistd.h utime.h wchar.h wctype.h])
 
 # Checks for libraries.
-AC_CHECK_LIB(bz2,BZ2_bzDecompressInit)
-AC_CHECK_LIB(z,inflate)
+AC_ARG_WITH([zlib],
+  AS_HELP_STRING([--without-zlib], [Don't build support for gzip through zlib]))
+
+if test "x$with_zlib" != "xno"; then
+  AC_CHECK_HEADERS([zlib.h])
+  AC_CHECK_LIB(z,inflate)
+fi
+
+AC_ARG_WITH([bz2lib],
+  AS_HELP_STRING([--without-bz2lib], [Don't build support for bzip2 through bz2lib]))
+
+if test "x$with_bz2lib" != "xno"; then
+  AC_CHECK_HEADERS([bzlib.h])
+  AC_CHECK_LIB(bz2,BZ2_bzDecompressInit)
+fi
+
+AC_ARG_WITH([lzmadec],
+  AS_HELP_STRING([--without-lzmadec], [Don't build support for lzma through lzmadec]))
+
+if test "x$with_lzmadec" != "xno"; then
+  AC_CHECK_HEADERS([lzmadec.h])
+  AC_CHECK_LIB(lzmadec,lzmadec_decode)
+fi
 
 # TODO: Give the user the option of using a pre-existing system
 # libarchive.  This will define HAVE_LIBARCHIVE which will cause
@@ -195,11 +211,18 @@ AC_CHECK_TYPE(off_t, [long long])
 AC_TYPE_SIZE_T
 AC_CHECK_TYPE(id_t, [unsigned long])
 AC_CHECK_TYPE(uintptr_t, [unsigned int])
-AC_CHECK_MEMBERS([struct stat.st_rdev])
-AC_CHECK_MEMBERS([struct tm.tm_gmtoff])
+
+# Check for birthtime in struct stat
+AC_CHECK_MEMBERS([struct stat.st_birthtime])
+
 # Check for high-resolution timestamps in struct stat
+AC_CHECK_MEMBERS([struct stat.st_birthtimespec.tv_nsec])
 AC_CHECK_MEMBERS([struct stat.st_mtimespec.tv_nsec])
 AC_CHECK_MEMBERS([struct stat.st_mtim.tv_nsec])
+# Check for block size support in struct stat
+AC_CHECK_MEMBERS([struct stat.st_blksize])
+# Check for st_flags in struct stat (BSD fflags)
+AC_CHECK_MEMBERS([struct stat.st_flags])
 
 # If you have uintmax_t, we assume printf supports %ju
 # If you have unsigned long long, we assume printf supports %llu
@@ -213,7 +236,7 @@ AC_TYPE_UINTMAX_T
 AC_TYPE_UINT64_T
 
 # TODO: If any of these are missing, define them right here.
-AC_CHECK_DECLS([SIZE_MAX, INT64_MAX, INT64_MIN, UINT64_MAX, UINT32_MAX])
+AC_CHECK_DECLS([SIZE_MAX, SSIZE_MAX, INT64_MAX, INT64_MIN, UINT64_MAX, UINT32_MAX])
 
 AC_CHECK_DECL([EFTYPE],
 		[AC_DEFINE(HAVE_EFTYPE, 1, [A possible errno value for invalid file format errors])],
@@ -235,14 +258,14 @@ AC_FUNC_STAT
 AC_FUNC_STRERROR_R
 AC_FUNC_STRFTIME
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS([chflags chown fchdir fchflags fchmod fchown futimes])
-AC_CHECK_FUNCS([ftruncate geteuid getopt_long])
+AC_CHECK_FUNCS([chflags chown chroot fchdir fchflags fchmod fchown fcntl fork])
+AC_CHECK_FUNCS([fstat ftruncate futimes geteuid getpid])
 AC_CHECK_FUNCS([lchflags lchmod lchown])
 AC_CHECK_FUNCS([lutimes memmove memset mkdir mkfifo mknod])
-AC_CHECK_FUNCS([nl_langinfo poll select setenv setlocale])
+AC_CHECK_FUNCS([nl_langinfo pipe poll select setenv setlocale])
 AC_CHECK_FUNCS([strchr strdup strerror strrchr timegm])
-AC_CHECK_FUNCS([tzset unsetenv utime utimes])
-AC_CHECK_FUNCS([wcscpy wcslen wmemcmp wmemcpy])
+AC_CHECK_FUNCS([tzset unsetenv utime utimes vfork])
+AC_CHECK_FUNCS([wcscpy wcslen wctomb wmemcmp wmemcpy])
 
 # FreeBSD's nl_langinfo supports an option to specify whether the
 # current locale uses month/day or day/month ordering.  It makes the

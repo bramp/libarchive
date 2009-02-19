@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_tar_large.c,v 1.1 2008/01/01 22:28:04 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_tar_large.c,v 1.4 2008/09/01 05:38:33 kientzle Exp $");
 
 #include <errno.h>
 #include <stdlib.h>
@@ -73,7 +73,7 @@ struct memdata {
 #define GB ((off_t)1024 * MB)
 #define TB ((off_t)1024 * GB)
 
-#if ARCHIVE_API_VERSION < 2
+#if ARCHIVE_VERSION_NUMBER < 2000000
 static ssize_t	memory_read_skip(struct archive *, void *, size_t request);
 #else
 static off_t	memory_read_skip(struct archive *, void *, off_t request);
@@ -167,7 +167,7 @@ memory_read(struct archive *a, void *_private, const void **buff)
 }
 
 
-#if ARCHIVE_API_VERSION < 2
+#if ARCHIVE_VERSION_NUMBER < 2000000
 static ssize_t
 memory_read_skip(struct archive *a, void *private, size_t skip)
 {
@@ -179,7 +179,6 @@ memory_read_skip(struct archive *a, void *private, size_t skip)
 #else
 static off_t
 memory_read_skip(struct archive *a, void *_private, off_t skip)
-#endif
 {
 	struct memdata *private = _private;
 
@@ -198,6 +197,7 @@ memory_read_skip(struct archive *a, void *_private, off_t skip)
 	}
 	return (skip);
 }
+#endif
 
 DEFINE_TEST(test_tar_large)
 {
@@ -242,6 +242,11 @@ DEFINE_TEST(test_tar_large)
 		archive_entry_copy_pathname(ae, namebuff);
 		archive_entry_set_mode(ae, S_IFREG | 0755);
 		filesize = tests[i];
+
+		if (filesize < 0) {
+			skipping("32-bit off_t doesn't permit testing of very large files.");
+			return;
+		}
 		archive_entry_set_size(ae, filesize);
 
 		assertA(0 == archive_write_header(a, ae));
@@ -268,10 +273,10 @@ DEFINE_TEST(test_tar_large)
 
 	/* Close out the archive. */
 	assertA(0 == archive_write_close(a));
-#if ARCHIVE_API_VERSION > 1
-	assertA(0 == archive_write_finish(a));
-#else
+#if ARCHIVE_VERSION_NUMBER < 2000000
 	archive_write_finish(a);
+#else
+	assertA(0 == archive_write_finish(a));
 #endif
 
 	/*
@@ -298,10 +303,10 @@ DEFINE_TEST(test_tar_large)
 
 	/* Close out the archive. */
 	assertA(0 == archive_read_close(a));
-#if ARCHIVE_API_VERSION > 1
-	assertA(0 == archive_read_finish(a));
-#else
+#if ARCHIVE_VERSION_NUMBER < 2000000
 	archive_read_finish(a);
+#else
+	assertA(0 == archive_read_finish(a));
 #endif
 
 	free(memdata.buff);

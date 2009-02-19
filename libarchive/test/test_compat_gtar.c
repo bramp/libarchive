@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_compat_gtar.c,v 1.1 2008/01/01 22:28:04 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_compat_gtar.c,v 1.4 2008/12/17 19:05:00 kientzle Exp $");
 
 /*
  * Verify our ability to read sample files created by GNU tar.
@@ -40,18 +40,23 @@ __FBSDID("$FreeBSD: src/lib/libarchive/test/test_compat_gtar.c,v 1.1 2008/01/01 
 static void
 test_compat_gtar_1(void)
 {
-	char name[1024];
+	char name[] = "test_compat_gtar_1.tgz";
 	struct archive_entry *ae;
 	struct archive *a;
+	int r;
 
 	assert((a = archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_compression_all(a));
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
-	sprintf(name, "%s/test_compat_gtar_1.tgz", refdir);
+	extract_reference_file(name);
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a, name, 10240));
 
 	/* Read first entry. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, r = archive_read_next_header(a, &ae));
+	if (r != ARCHIVE_OK) {
+		archive_read_finish(a);
+		return;
+	}
 	assertEqualString(
 		"12345678901234567890123456789012345678901234567890"
 		"12345678901234567890123456789012345678901234567890"
@@ -66,7 +71,11 @@ test_compat_gtar_1(void)
 	assertEqualInt(0100644, archive_entry_mode(ae));
 
 	/* Read second entry. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, r = archive_read_next_header(a, &ae));
+	if (r != ARCHIVE_OK) {
+		archive_read_finish(a);
+		return;
+	}
 	assertEqualString(
 		"abcdefghijabcdefghijabcdefghijabcdefghijabcdefghij"
 		"abcdefghijabcdefghijabcdefghijabcdefghijabcdefghij"
@@ -94,10 +103,10 @@ test_compat_gtar_1(void)
 	assertEqualInt(archive_format(a), ARCHIVE_FORMAT_TAR_GNUTAR);
 
 	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
-#if ARCHIVE_API_VERSION > 1
-	assertEqualInt(ARCHIVE_OK, archive_read_finish(a));
-#else
+#if ARCHIVE_VERSION_NUMBER < 2000000
 	archive_read_finish(a);
+#else
+	assertEqualInt(ARCHIVE_OK, archive_read_finish(a));
 #endif
 }
 

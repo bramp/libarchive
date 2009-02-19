@@ -8,7 +8,7 @@ AUTOMAKE_OPTIONS= foreign subdir-objects
 lib_LTLIBRARIES=	libarchive.la
 bin_PROGRAMS=	$(bsdtar_programs) $(bsdcpio_programs)
 man_MANS= $(libarchive_man_MANS) $(bsdtar_man_MANS) $(bsdcpio_man_MANS)
-BUILT_SOURCES= libarchive/test/list.h tar/test/list.h cpio/test/list.h $(libarchive_test_REFFILES) $(bsdcpio_test_REFFILES)
+BUILT_SOURCES= libarchive/test/list.h tar/test/list.h cpio/test/list.h
 
 #
 # What to test: We always test libarchive, test bsdtar and bsdcpio only
@@ -25,8 +25,9 @@ DISTCHECK_CONFIGURE_FLAGS = --enable-bsdtar --enable-bsdcpio
 #
 EXTRA_DIST= version			\
 	contrib				\
+	doc				\
 	examples			\
-        doc				\
+	windows				\
 	$(libarchive_EXTRA_DIST)	\
 	$(libarchive_test_EXTRA_DIST)	\
 	$(bsdtar_EXTRA_DIST)		\
@@ -43,31 +44,33 @@ dist-hook:
 	rm -f `find $(distdir) -name '*.out'`
 	rm -f `find $(distdir) -name '*.core'`
 	-rm -f $(distdir)/*/Makefile $(distdir)/*/*/Makefile
-	cd $(distdir)/doc && ./update.sh
+	cd $(distdir)/doc && /bin/sh update.sh
 
 #
 # Extra rules for cleanup
 #
-CLEANFILES=$(libarchive_test_REFFILES) $(bsdcpio_test_REFFILES)
-
 DISTCLEANFILES= tar/getdate.c tar/getdate.h	\
 	libarchive/test/list.h			\
 	tar/test/list.h				\
 	cpio/test/list.h
 
 distclean-local:
+	-rm -rf .ref
 	-rm -rf autom4te.cache/
 	-rm -f *~
+	-[ -f libarchive/Makefile ] && cd libarchive && make clean
+	-[ -f libarchive/test/Makefile ] && cd libarchive/test && make clean
+	-[ -f tar/Makefile ] && cd tar && make clean
+	-[ -f tar/test/Makefile ] && cd tar/test && make clean
+	-[ -f cpio/Makefile ] && cd cpio && make clean
+	-[ -f cpio/test/Makefile ] && cd cpio/test && make clean
 
 #
 # Libarchive headers, source, etc.
 #
 #
 
-include_HEADERS= libarchive/archive_entry.h
-# Note: archive.h is built from archive.h.in, so don't
-# include archive.h in the distfile, but do install it.
-nodist_include_HEADERS= libarchive/archive.h
+include_HEADERS= libarchive/archive.h libarchive/archive_entry.h
 
 libarchive_la_SOURCES=						\
 	libarchive/archive_check_magic.c			\
@@ -95,6 +98,7 @@ libarchive_la_SOURCES=						\
 	libarchive/archive_read_support_compression_gzip.c	\
 	libarchive/archive_read_support_compression_none.c	\
 	libarchive/archive_read_support_compression_program.c	\
+	libarchive/archive_read_support_compression_lzma.c	\
 	libarchive/archive_read_support_format_all.c		\
 	libarchive/archive_read_support_format_ar.c		\
 	libarchive/archive_read_support_format_cpio.c		\
@@ -118,6 +122,7 @@ libarchive_la_SOURCES=						\
 	libarchive/archive_write_open_memory.c			\
 	libarchive/archive_write_private.h			\
 	libarchive/archive_write_set_compression_bzip2.c	\
+	libarchive/archive_write_set_compression_compress.c	\
 	libarchive/archive_write_set_compression_gzip.c		\
 	libarchive/archive_write_set_compression_none.c		\
 	libarchive/archive_write_set_compression_program.c	\
@@ -126,6 +131,7 @@ libarchive_la_SOURCES=						\
 	libarchive/archive_write_set_format_by_name.c		\
 	libarchive/archive_write_set_format_cpio.c		\
 	libarchive/archive_write_set_format_cpio_newc.c		\
+	libarchive/archive_write_set_format_mtree.c		\
 	libarchive/archive_write_set_format_pax.c		\
 	libarchive/archive_write_set_format_shar.c		\
 	libarchive/archive_write_set_format_ustar.c		\
@@ -134,9 +140,10 @@ libarchive_la_SOURCES=						\
 	libarchive/filter_fork.c				\
 	libarchive/filter_fork.h
 
-# archive.h ends up in the build directory, so make sure we can find it.
-libarchive_la_CPPFLAGS= -I$(top_builddir)/libarchive
-libarchive_la_LDFLAGS= -version-info $(ARCHIVE_LIBTOOL_VERSION)
+libarchive_la_CPPFLAGS=-I $(top_builddir)/libarchive
+# -no-undefined marks that libarchive doesn't rely on symbols
+# defined in the application.  This is mandatory for cygwin.
+libarchive_la_LDFLAGS= -no-undefined -version-info $(ARCHIVE_LIBTOOL_VERSION)
 
 # Manpages to install
 libarchive_man_MANS=						\
@@ -153,8 +160,10 @@ libarchive_man_MANS=						\
 	libarchive/tar.5
 
 # Additional libarchive files to include in the distribution
-libarchive_EXTRA_DIST=		\
-	libarchive/test/list.h	\
+libarchive_EXTRA_DIST=			\
+	libarchive/test/list.h		\
+	libarchive/archive_windows.c	\
+	libarchive/archive_windows.h	\
 	$(libarchive_man_MANS)
 
 #
@@ -168,14 +177,18 @@ libarchive_test_SOURCES=					\
 	libarchive/test/read_open_memory.c			\
 	libarchive/test/test.h					\
 	libarchive/test/test_acl_basic.c			\
+	libarchive/test/test_acl_freebsd.c			\
 	libarchive/test/test_acl_pax.c				\
 	libarchive/test/test_archive_api_feature.c		\
 	libarchive/test/test_bad_fd.c				\
+	libarchive/test/test_compat_bzip2.c			\
 	libarchive/test/test_compat_gtar.c			\
+	libarchive/test/test_compat_gzip.c			\
 	libarchive/test/test_compat_tar_hardlink.c		\
 	libarchive/test/test_compat_zip.c			\
 	libarchive/test/test_empty_write.c			\
 	libarchive/test/test_entry.c				\
+	libarchive/test/test_fuzz.c				\
 	libarchive/test/test_entry_strmode.c			\
 	libarchive/test/test_link_resolver.c			\
 	libarchive/test/test_pax_filename_encoding.c		\
@@ -192,12 +205,14 @@ libarchive_test_SOURCES=					\
 	libarchive/test/test_read_format_cpio_svr4c_Z.c		\
 	libarchive/test/test_read_format_empty.c		\
 	libarchive/test/test_read_format_gtar_gz.c		\
+	libarchive/test/test_read_format_gtar_lzma.c		\
 	libarchive/test/test_read_format_gtar_sparse.c		\
 	libarchive/test/test_read_format_iso_gz.c		\
 	libarchive/test/test_read_format_isorr_bz2.c		\
 	libarchive/test/test_read_format_mtree.c		\
 	libarchive/test/test_read_format_pax_bz2.c		\
 	libarchive/test/test_read_format_tar.c			\
+	libarchive/test/test_read_format_tar_empty_filename.c	\
 	libarchive/test/test_read_format_tbz.c			\
 	libarchive/test/test_read_format_tgz.c			\
 	libarchive/test/test_read_format_tz.c			\
@@ -208,22 +223,27 @@ libarchive_test_SOURCES=					\
 	libarchive/test/test_read_truncated.c			\
 	libarchive/test/test_tar_filenames.c			\
 	libarchive/test/test_tar_large.c			\
+	libarchive/test/test_ustar_filenames.c			\
+	libarchive/test/test_write_compress.c			\
 	libarchive/test/test_write_compress_program.c		\
 	libarchive/test/test_write_disk.c			\
 	libarchive/test/test_write_disk_hardlink.c		\
 	libarchive/test/test_write_disk_perms.c			\
 	libarchive/test/test_write_disk_secure.c		\
+	libarchive/test/test_write_disk_times.c			\
 	libarchive/test/test_write_format_ar.c			\
 	libarchive/test/test_write_format_cpio.c		\
 	libarchive/test/test_write_format_cpio_empty.c		\
 	libarchive/test/test_write_format_cpio_odc.c		\
 	libarchive/test/test_write_format_cpio_newc.c		\
+	libarchive/test/test_write_format_pax.c			\
 	libarchive/test/test_write_format_shar_empty.c		\
 	libarchive/test/test_write_format_tar.c			\
 	libarchive/test/test_write_format_tar_empty.c		\
+	libarchive/test/test_write_format_tar_ustar.c		\
 	libarchive/test/test_write_open_memory.c
 
-libarchive_test_CPPFLAGS= -I$(top_srcdir)/libarchive -I$(top_builddir)/libarchive/test
+libarchive_test_CPPFLAGS= -I$(top_builddir)/libarchive -I$(top_srcdir)/libarchive -I$(top_builddir)/libarchive/test
 
 # The "list.h" file just lists all of the tests defined in all of the sources.
 # Building it automatically provides a sanity-check on libarchive_test_SOURCES
@@ -231,57 +251,28 @@ libarchive_test_CPPFLAGS= -I$(top_srcdir)/libarchive -I$(top_builddir)/libarchiv
 libarchive/test/list.h: Makefile
 	cat $(top_srcdir)/libarchive/test/test_*.c | grep DEFINE_TEST > libarchive/test/list.h
 
-libarchive_TESTS_ENVIRONMENT= LIBARCHIVE_TEST_FILES=`cd $(top_builddir);/bin/pwd`
+libarchive_TESTS_ENVIRONMENT= LIBARCHIVE_TEST_FILES=`cd $(top_srcdir);/bin/pwd`/libarchive/test
 
 libarchive_test_EXTRA_DIST=\
+	libarchive/test/test_compat_bzip2_1.tbz.uu			\
+	libarchive/test/test_compat_bzip2_2.tbz.uu			\
 	libarchive/test/test_compat_gtar_1.tgz.uu			\
+	libarchive/test/test_compat_gzip_1.tgz.uu			\
+	libarchive/test/test_compat_gzip_2.tgz.uu			\
 	libarchive/test/test_compat_tar_hardlink_1.tar.uu		\
 	libarchive/test/test_compat_zip_1.zip.uu			\
+	libarchive/test/test_fuzz_1.iso.uu				\
+	libarchive/test/test_pax_filename_encoding.tar.gz.uu		\
 	libarchive/test/test_read_format_gtar_sparse_1_13.tgz.uu	\
 	libarchive/test/test_read_format_gtar_sparse_1_17.tgz.uu	\
 	libarchive/test/test_read_format_gtar_sparse_1_17_posix00.tgz.uu \
 	libarchive/test/test_read_format_gtar_sparse_1_17_posix01.tgz.uu \
 	libarchive/test/test_read_format_gtar_sparse_1_17_posix10.tgz.uu \
-	libarchive/test/test_read_format_gtar_sparse_1_17_posix10_modified.tar.uu
+	libarchive/test/test_read_format_gtar_sparse_1_17_posix10_modified.tar.uu \
+	libarchive/test/test_read_format_isorr_bz2.iso.bz2.uu		\
+	libarchive/test/test_read_format_tar_empty_filename.tar.uu	\
+	libarchive/test/test_read_format_zip.zip.uu
 
-libarchive_test_REFFILES=\
-	test_compat_gtar_1.tgz			\
-	test_compat_tar_hardlink_1.tar		\
-	test_compat_zip_1.zip			\
-	test_read_format_gtar_sparse_1_13.tgz	\
-	test_read_format_gtar_sparse_1_17.tgz	\
-	test_read_format_gtar_sparse_1_17_posix00.tgz \
-	test_read_format_gtar_sparse_1_17_posix01.tgz \
-	test_read_format_gtar_sparse_1_17_posix10.tgz \
-	test_read_format_gtar_sparse_1_17_posix10_modified.tar
-
-# BSD make prefers $> here, GNU make prefers $<; $? works for both.
-test_compat_gtar_1.tgz: libarchive/test/test_compat_gtar_1.tgz.uu
-	cat $? | uudecode
-
-test_compat_tar_hardlink_1.tar: libarchive/test/test_compat_tar_hardlink_1.tar.uu
-	cat $? | uudecode
-
-test_compat_zip_1.zip: libarchive/test/test_compat_zip_1.zip.uu
-	cat $? | uudecode
-
-test_read_format_gtar_sparse_1_13.tgz: libarchive/test/test_read_format_gtar_sparse_1_13.tgz.uu
-	cat $? | uudecode
-
-test_read_format_gtar_sparse_1_17.tgz: libarchive/test/test_read_format_gtar_sparse_1_17.tgz.uu
-	cat $? | uudecode
-
-test_read_format_gtar_sparse_1_17_posix00.tgz: libarchive/test/test_read_format_gtar_sparse_1_17_posix00.tgz.uu
-	cat $? | uudecode
-
-test_read_format_gtar_sparse_1_17_posix01.tgz: libarchive/test/test_read_format_gtar_sparse_1_17_posix01.tgz.uu
-	cat $? | uudecode
-
-test_read_format_gtar_sparse_1_17_posix10.tgz: libarchive/test/test_read_format_gtar_sparse_1_17_posix10.tgz.uu
-	cat $? | uudecode
-
-test_read_format_gtar_sparse_1_17_posix10_modified.tar: libarchive/test/test_read_format_gtar_sparse_1_17_posix10_modified.tar.uu
-	cat $? | uudecode
 
 #
 #
@@ -293,17 +284,18 @@ bsdtar_SOURCES=				\
 		tar/bsdtar.c		\
 		tar/bsdtar.h		\
 		tar/bsdtar_platform.h	\
+		tar/cmdline.c		\
 		tar/getdate.y		\
 		tar/matching.c		\
 		tar/read.c		\
+		tar/siginfo.c		\
+		tar/subst.c		\
 		tar/tree.c		\
 		tar/tree.h		\
 		tar/util.c		\
 		tar/write.c
 
-bsdtar_DEPENDENCIES= libarchive.la		\
-		libarchive/archive_entry.h	\
-		libarchive/archive.h
+bsdtar_DEPENDENCIES= libarchive.la
 
 if STATIC_BSDTAR
 bsdtar_static= -static
@@ -333,28 +325,35 @@ bsdtar_test_SOURCES=						\
 	tar/getdate.c						\
 	tar/test/main.c						\
 	tar/test/test.h						\
+	tar/test/test_0.c					\
 	tar/test/test_basic.c					\
 	tar/test/test_copy.c					\
 	tar/test/test_getdate.c					\
 	tar/test/test_help.c					\
+	tar/test/test_option_q.c				\
+	tar/test/test_option_T.c				\
+	tar/test/test_patterns.c				\
 	tar/test/test_stdio.c					\
+	tar/test/test_strip_components.c			\
+	tar/test/test_symlink_dir.c				\
 	tar/test/test_version.c
 
-bsdtar_test_EXTRA_DIST=						\
-	tar/test/old
-
-bsdtar_test_CPPFLAGS= -I$(top_srcdir)/libarchive -I$(top_builddir)/tar/test
+bsdtar_test_CPPFLAGS= -I$(top_builddir)/tar/test
 
 tar/test/list.h: Makefile
 	cat $(top_srcdir)/tar/test/test_*.c | grep DEFINE_TEST > tar/test/list.h
 
 if BUILD_BSDTAR
 bsdtar_test_programs= bsdtar_test
-bsdtar_TESTS_ENVIRONMENT= BSDTAR=`cd $(top_builddir);/bin/pwd`/bsdtar BSDTAR_TEST_FILES=`cd $(top_builddir);/bin/pwd`
+bsdtar_TESTS_ENVIRONMENT= BSDTAR=`cd $(top_builddir);/bin/pwd`/bsdtar BSDTAR_TEST_FILES=`cd $(top_srcdir);/bin/pwd`/tar/test
 else
 bsdtar_test_programs=
 bsdtar_TESTS_ENVIRONMENT=
 endif
+
+bsdtar_test_EXTRA_DIST=			\
+	tar/test/test_patterns_2.tgz.uu	\
+	tar/test/test_patterns_3.tgz.uu
 
 
 #
@@ -374,9 +373,7 @@ bsdcpio_SOURCES=			\
 		cpio/pathmatch.c	\
 		cpio/pathmatch.h
 
-bsdcpio_DEPENDENCIES = libarchive.la		\
-		libarchive/archive_entry.h	\
-		libarchive/archive.h
+bsdcpio_DEPENDENCIES = libarchive.la
 
 
 if STATIC_BSDCPIO
@@ -411,17 +408,18 @@ bsdcpio_test_SOURCES=						\
 	cpio/pathmatch.c					\
 	cpio/test/main.c					\
 	cpio/test/test.h					\
+	cpio/test/test_0.c					\
 	cpio/test/test_basic.c					\
 	cpio/test/test_format_newc.c				\
 	cpio/test/test_gcpio_compat.c				\
-	cpio/test/test_option_a.c				\
 	cpio/test/test_option_B.c				\
+	cpio/test/test_option_L.c				\
+	cpio/test/test_option_a.c				\
 	cpio/test/test_option_c.c				\
 	cpio/test/test_option_d.c				\
+	cpio/test/test_option_ell.c				\
 	cpio/test/test_option_f.c				\
 	cpio/test/test_option_help.c				\
-	cpio/test/test_option_L.c				\
-	cpio/test/test_option_ell.c				\
 	cpio/test/test_option_m.c				\
 	cpio/test/test_option_t.c				\
 	cpio/test/test_option_u.c				\
@@ -429,31 +427,22 @@ bsdcpio_test_SOURCES=						\
 	cpio/test/test_option_y.c				\
 	cpio/test/test_option_z.c				\
 	cpio/test/test_owner_parse.c				\
+	cpio/test/test_passthrough_dotdot.c			\
+	cpio/test/test_passthrough_reverse.c			\
 	cpio/test/test_pathmatch.c
 
-bsdcpio_test_CPPFLAGS= -I$(top_srcdir)/libarchive -I$(top_builddir)/cpio/test
+bsdcpio_test_CPPFLAGS= -I$(top_builddir)/libarchive -I$(top_srcdir)/libarchive -I$(top_builddir)/cpio/test
 
 cpio/test/list.h: Makefile
 	cat $(top_srcdir)/cpio/test/test_*.c | grep DEFINE_TEST > cpio/test/list.h
 
 if BUILD_BSDCPIO
 bsdcpio_test_programs= bsdcpio_test
-bsdcpio_TESTS_ENVIRONMENT= BSDCPIO=`cd $(top_builddir);/bin/pwd`/bsdcpio BSDCPIO_TEST_FILES=`cd $(top_builddir);/bin/pwd`
+bsdcpio_TESTS_ENVIRONMENT= BSDCPIO=`cd $(top_builddir);/bin/pwd`/bsdcpio BSDCPIO_TEST_FILES=`cd $(top_srcdir);/bin/pwd`/cpio/test
 else
 bsdcpio_test_programs=
 bsdcpio_TESTS_ENVIRONMENT=
 endif
-
-bsdcpio_test_REFFILES=\
-	test_gcpio_compat_ref.bin	\
-	test_gcpio_compat_ref.crc	\
-	test_gcpio_compat_ref.newc	\
-	test_gcpio_compat_ref.ustar	\
-	test_option_f.cpio		\
-	test_option_m.cpio		\
-	test_option_t.cpio		\
-	test_option_t.stdout		\
-	test_option_tv.stdout
 
 bsdcpio_test_EXTRA_DIST=			\
 	cpio/test/test_gcpio_compat_ref.bin.uu	\
@@ -465,31 +454,3 @@ bsdcpio_test_EXTRA_DIST=			\
 	cpio/test/test_option_t.cpio.uu		\
 	cpio/test/test_option_t.stdout.uu	\
 	cpio/test/test_option_tv.stdout.uu
-
-test_gcpio_compat_ref.bin: cpio/test/test_gcpio_compat_ref.bin.uu
-	cat $? | uudecode
-
-test_gcpio_compat_ref.crc: cpio/test/test_gcpio_compat_ref.crc.uu
-	cat $? | uudecode
-
-test_gcpio_compat_ref.newc: cpio/test/test_gcpio_compat_ref.newc.uu
-	cat $? | uudecode
-
-test_gcpio_compat_ref.ustar: cpio/test/test_gcpio_compat_ref.ustar.uu
-	cat $? | uudecode
-
-test_option_f.cpio: cpio/test/test_option_f.cpio.uu
-	cat $? | uudecode
-
-test_option_m.cpio: cpio/test/test_option_m.cpio.uu
-	cat $? | uudecode
-
-test_option_t.cpio: cpio/test/test_option_t.cpio.uu
-	cat $? | uudecode
-
-test_option_t.stdout: cpio/test/test_option_t.stdout.uu
-	cat $? | uudecode
-
-test_option_tv.stdout: cpio/test/test_option_tv.stdout.uu
-	cat $? | uudecode
-

@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD$");
+__FBSDID("$FreeBSD: src/usr.bin/cpio/test/test_option_L.c,v 1.2 2008/08/24 06:21:00 kientzle Exp $");
 
 DEFINE_TEST(test_option_L)
 {
@@ -46,20 +46,22 @@ DEFINE_TEST(test_option_L)
 
 	close(filelist);
 
-	r = systemf("cat filelist | %s -pd --quiet copy >copy.out 2>copy.err", testprog);
+	r = systemf("cat filelist | %s -pd copy >copy.out 2>copy.err", testprog);
 	assertEqualInt(r, 0);
 	assertEqualInt(0, lstat("copy/symlink", &st));
 	failure("Regular -p without -L should preserve symlinks.");
 	assert(S_ISLNK(st.st_mode));
 
-	r = systemf("cat filelist | %s -pd -L --quiet copy-L >copy-L.out 2>copy-L.err", testprog);
+	r = systemf("cat filelist | %s -pd -L copy-L >copy-L.out 2>copy-L.err", testprog);
 	assertEqualInt(r, 0);
+	assertEmptyFile("copy-L.out");
+	assertFileContents("1 block\n", 8, "copy-L.err");
 	assertEqualInt(0, lstat("copy-L/symlink", &st));
-	failure("-pL should dereference symlinks and turn them into files.");
+	failure("-pdL should dereference symlinks and turn them into files.");
 	assert(!S_ISLNK(st.st_mode));
 
-	r = systemf("cat filelist | %s -o --quiet >archive.out 2>archive.err", testprog);
-	failure("Error invoking %s -o --quiet", testprog);
+	r = systemf("cat filelist | %s -o >archive.out 2>archive.err", testprog);
+	failure("Error invoking %s -o ", testprog);
 	assertEqualInt(r, 0);
 
 	assertEqualInt(0, mkdir("unpack", 0755));
@@ -69,8 +71,8 @@ DEFINE_TEST(test_option_L)
 	assertEqualInt(0, lstat("unpack/symlink", &st));
 	assert(S_ISLNK(st.st_mode));
 
-	r = systemf("cat filelist | %s -oL --quiet >archive-L.out 2>archive-L.err", testprog);
-	failure("Error invoking %s -oL --quiet", testprog);
+	r = systemf("cat filelist | %s -oL >archive-L.out 2>archive-L.err", testprog);
+	failure("Error invoking %s -oL", testprog);
 	assertEqualInt(r, 0);
 
 	assertEqualInt(0, mkdir("unpack-L", 0755));

@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD$");
+__FBSDID("$FreeBSD: src/usr.bin/cpio/test/test_format_newc.c,v 1.2 2008/08/22 02:09:10 kientzle Exp $");
 
 static int
 is_hex(const char *p, size_t l)
@@ -66,9 +66,9 @@ DEFINE_TEST(test_format_newc)
 	int fd, list;
 	int r;
 	int devmajor, devminor, ino, gid;
-	time_t t, now;
+	time_t t, t2, now;
 	char *p, *e;
-	size_t s;
+	size_t s, fs, ns;
 	mode_t oldmask;
 
 	oldmask = umask(0);
@@ -90,6 +90,9 @@ DEFINE_TEST(test_format_newc)
 	assertEqualInt(0, link("file1", "hardlink"));
 	assertEqualInt(9, write(list, "hardlink\n", 9));
 
+	/* Another hardlink, but this one won't be archived. */
+	assertEqualInt(0, link("file1", "hardlink2"));
+
 	/* "symlink" */
 	assertEqualInt(0, symlink("file1", "symlink"));
 	assertEqualInt(8, write(list, "symlink\n", 8));
@@ -103,12 +106,13 @@ DEFINE_TEST(test_format_newc)
 
 	/* Use the cpio program to create an archive. */
 	close(list);
-	r = systemf("%s -o --format=newc --quiet <list >newc.out 2>newc.err",
+	r = systemf("%s -o --format=newc <list >newc.out 2>newc.err",
 	    testprog);
-	assertEqualInt(r, 0);
+	if (!assertEqualInt(r, 0))
+		return;
 
 	/* Verify that nothing went to stderr. */
-	assertEmptyFile("newc.err");
+	assertFileContents("2 blocks\n", 9, "newc.err");
 
 	/* Verify that stdout is a well-formed cpio file in "newc" format. */
 	p = slurpfile(&s, "newc.out");
@@ -127,51 +131,30 @@ DEFINE_TEST(test_format_newc)
 	assertEqualInt(0x81a4, from_hex(e + 14, 8)); /* Mode */
 	assertEqualInt(from_hex(e + 22, 8), getuid()); /* uid */
 	gid = from_hex(e + 30, 8); /* gid */
-	assertEqualMem(e + 38, "00000002", 8); /* nlink */
+	assertEqualMem(e + 38, "00000003", 8); /* nlink */
 	t = from_hex(e + 46, 8); /* mtime */
 	failure("t=0x%08x now=0x%08x=%d", t, now, now);
 	assert(t <= now); /* File wasn't created in future. */
 	failure("t=0x%08x now - 2=0x%08x = %d", t, now - 2, now - 2);
 	assert(t >= now - 2); /* File was created w/in last 2 secs. */
-#if 0
-	/* TODO: FIX THIS!!! */
 	failure("newc format stores body only with last appearance of a link\n"
 	    "       first appearance should be empty, so this file size\n"
 	    "       field should be zero");
 	assertEqualInt(0, from_hex(e + 54, 8)); /* File size */
-#else
-	skipping("Known bug in writing hardlinks to newc files.\n  This bug will be fixed before bsdcpio 1.0 is released.\n  Note that this is not a bug in libarchive's implementation of newc format,\n  it is a bug in bsdcpio not properly marking subsequent links to a file.");
-#endif
+	fs = from_hex(e + 54, 8);
+	fs += 3 & -fs;
 	devmajor = from_hex(e + 62, 8); /* devmajor */
 	devminor = from_hex(e + 70, 8); /* devminor */
 	assert(is_hex(e + 78, 8)); /* rdevmajor */
 	assert(is_hex(e + 86, 8)); /* rdevminor */
 	assertEqualMem(e + 94, "00000006", 8); /* Name size */
+	ns = from_hex(e + 94, 8);
+	ns += 3 & (-ns - 2);
 	assertEqualInt(0, from_hex(e + 102, 8)); /* check field */
 	assertEqualMem(e + 110, "file1\0", 6); /* Name contents */
 	/* Since there's another link, no file contents here. */
 	/* But add in file size so that an error here doesn't cascade. */
-	e += 116 + from_hex(e + 54, 8) + (3 & -from_hex(e + 54, 8));
-
-	/* Hardlink identical to "file1" */
-	assert(is_hex(e, 110));
-	assertEqualMem(e + 0, "070701", 6); /* Magic */
-	assertEqualInt(ino, from_hex(e + 6, 8)); /* ino */
-	assertEqualInt(0x81a4, from_hex(e + 14, 8)); /* Mode */
-	assertEqualInt(from_hex(e + 22, 8), getuid()); /* uid */
-	assertEqualInt(gid, from_hex(e + 30, 8)); /* gid */
-	assertEqualMem(e + 38, "00000002", 8); /* nlink */
-	assertEqualInt(t, from_hex(e + 46, 8)); /* mtime */
-	assertEqualInt(10, from_hex(e + 54, 8)); /* File size */
-	assertEqualInt(devmajor, from_hex(e + 62, 8)); /* devmajor */
-	assertEqualInt(devminor, from_hex(e + 70, 8)); /* devminor */
-	assert(is_hex(e + 78, 8)); /* rdevmajor */
-	assert(is_hex(e + 86, 8)); /* rdevminor */
-	assertEqualMem(e + 94, "00000009", 8); /* Name size */
-	assertEqualInt(0, from_hex(e + 102, 8)); /* check field */
-	assertEqualMem(e + 110, "hardlink\0\0", 10); /* Name contents */
-	assertEqualMem(e + 120, "123456789\0\0\0", 12); /* File contents */
-	e += 120 + from_hex(e + 54, 8) + (3 & -from_hex(e + 54, 8));
+	e += 110 + fs + ns;
 
 	/* "symlink" pointing to "file1" */
 	assert(is_hex(e, 110));
@@ -181,17 +164,23 @@ DEFINE_TEST(test_format_newc)
 	assertEqualInt(from_hex(e + 22, 8), getuid()); /* uid */
 	assertEqualInt(gid, from_hex(e + 30, 8)); /* gid */
 	assertEqualMem(e + 38, "00000001", 8); /* nlink */
-	assertEqualInt(t, from_hex(e + 46, 8)); /* mtime */
+	t2 = from_hex(e + 46, 8); /* mtime */
+	failure("First entry created at t=0x%08x this entry created at t2=0x%08x", t, t2);
+	assert(t2 == t || t2 == t + 1); /* Almost same as first entry. */
 	assertEqualMem(e + 54, "00000005", 8); /* File size */
+	fs = from_hex(e + 54, 8);
+	fs += 3 & -fs;
 	assertEqualInt(devmajor, from_hex(e + 62, 8)); /* devmajor */
 	assertEqualInt(devminor, from_hex(e + 70, 8)); /* devminor */
 	assert(is_hex(e + 78, 8)); /* rdevmajor */
 	assert(is_hex(e + 86, 8)); /* rdevminor */
 	assertEqualMem(e + 94, "00000008", 8); /* Name size */
+	ns = from_hex(e + 94, 8);
+	ns += 3 & (-ns - 2);
 	assertEqualInt(0, from_hex(e + 102, 8)); /* check field */
 	assertEqualMem(e + 110, "symlink\0\0\0", 10); /* Name contents */
-	assertEqualMem(e + 120, "file1\0\0\0", 8); /* symlink target */
-	e += 120 + from_hex(e + 54, 8) + (3 & -from_hex(e + 54, 8));
+	assertEqualMem(e + 110 + ns, "file1\0\0\0", 8); /* symlink target */
+	e += 110 + fs + ns;
 
 	/* "dir" */
 	assert(is_hex(e, 110));
@@ -201,18 +190,51 @@ DEFINE_TEST(test_format_newc)
 	assertEqualInt(from_hex(e + 22, 8), getuid()); /* uid */
 	assertEqualInt(gid, from_hex(e + 30, 8)); /* gid */
 	assertEqualMem(e + 38, "00000002", 8); /* nlink */
-	assertEqualInt(t, from_hex(e + 46, 8)); /* mtime */
+	t2 = from_hex(e + 46, 8); /* mtime */
+	failure("First entry created at t=0x%08x this entry created at t2=0x%08x", t, t2);
+	assert(t2 == t || t2 == t + 1); /* Almost same as first entry. */
 	assertEqualMem(e + 54, "00000000", 8); /* File size */
+	fs = from_hex(e + 54, 8);
+	fs += 3 & -fs;
 	assertEqualInt(devmajor, from_hex(e + 62, 8)); /* devmajor */
 	assertEqualInt(devminor, from_hex(e + 70, 8)); /* devminor */
 	assert(is_hex(e + 78, 8)); /* rdevmajor */
 	assert(is_hex(e + 86, 8)); /* rdevminor */
 	assertEqualMem(e + 94, "00000004", 8); /* Name size */
+	ns = from_hex(e + 94, 8);
+	ns += 3 & (-ns - 2);
 	assertEqualInt(0, from_hex(e + 102, 8)); /* check field */
 	assertEqualMem(e + 110, "dir\0\0\0", 6); /* Name contents */
-	e += 116;
+	e += 110 + fs + ns;
 
-	/* TODO: Verify other types of entries. */
+	/* Hardlink identical to "file1" */
+	/* Since we only wrote two of the three links to this
+	 * file, this link should get deferred by the hardlink logic. */
+	assert(is_hex(e, 110));
+	assertEqualMem(e + 0, "070701", 6); /* Magic */
+	failure("If these aren't the same, then the hardlink detection failed to match them.");
+	assertEqualInt(ino, from_hex(e + 6, 8)); /* ino */
+	assertEqualInt(0x81a4, from_hex(e + 14, 8)); /* Mode */
+	assertEqualInt(from_hex(e + 22, 8), getuid()); /* uid */
+	assertEqualInt(gid, from_hex(e + 30, 8)); /* gid */
+	assertEqualMem(e + 38, "00000003", 8); /* nlink */
+	t2 = from_hex(e + 46, 8); /* mtime */
+	failure("First entry created at t=0x%08x this entry created at t2=0x%08x", t, t2);
+	assert(t2 == t || t2 == t + 1); /* Almost same as first entry. */
+	assertEqualInt(10, from_hex(e + 54, 8)); /* File size */
+	fs = from_hex(e + 54, 8);
+	fs += 3 & -fs;
+	assertEqualInt(devmajor, from_hex(e + 62, 8)); /* devmajor */
+	assertEqualInt(devminor, from_hex(e + 70, 8)); /* devminor */
+	assert(is_hex(e + 78, 8)); /* rdevmajor */
+	assert(is_hex(e + 86, 8)); /* rdevminor */
+	assertEqualMem(e + 94, "00000009", 8); /* Name size */
+	ns = from_hex(e + 94, 8);
+	ns += 3 & (-ns - 2);
+	assertEqualInt(0, from_hex(e + 102, 8)); /* check field */
+	assertEqualMem(e + 110, "hardlink\0\0", 10); /* Name contents */
+	assertEqualMem(e + 110 + ns, "123456789\0\0\0", 12); /* File contents */
+	e += 110 + ns + fs;
 
 	/* Last entry is end-of-archive marker. */
 	assert(is_hex(e, 110));

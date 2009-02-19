@@ -23,9 +23,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_disk_perms.c,v 1.8 2008/01/01 22:28:04 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_disk_perms.c,v 1.11 2008/12/06 06:01:50 kientzle Exp $");
 
-#if ARCHIVE_VERSION_STAMP >= 1009000
+#if ARCHIVE_VERSION_NUMBER >= 1009000
 
 #define UMASK 022
 
@@ -125,7 +125,7 @@ defaultgid(void)
 
 DEFINE_TEST(test_write_disk_perms)
 {
-#if ARCHIVE_VERSION_STAMP < 1009000
+#if ARCHIVE_VERSION_NUMBER < 1009000
 	skipping("archive_write_disk interface");
 #else
 	struct archive *a;
@@ -186,7 +186,7 @@ DEFINE_TEST(test_write_disk_perms)
 	/* Check original perms. */
 	assert(0 == stat("dir_overwrite_0744", &st));
 	failure("dir_overwrite_0744: st.st_mode=%o", st.st_mode);
-	assert((st.st_mode & 07777) == 0744);
+	assert((st.st_mode & 0777) == 0744);
 	/* Overwrite shouldn't edit perms. */
 	assert((ae = archive_entry_new()) != NULL);
 	archive_entry_copy_pathname(ae, "dir_overwrite_0744");
@@ -197,7 +197,7 @@ DEFINE_TEST(test_write_disk_perms)
 	/* Make sure they're unchanged. */
 	assert(0 == stat("dir_overwrite_0744", &st));
 	failure("dir_overwrite_0744: st.st_mode=%o", st.st_mode);
-	assert((st.st_mode & 07777) == 0744);
+	assert((st.st_mode & 0777) == 0744);
 
 	/* Write a regular file with SUID bit, but don't use _EXTRACT_PERM. */
 	assert((ae = archive_entry_new()) != NULL);
@@ -272,7 +272,7 @@ DEFINE_TEST(test_write_disk_perms)
 		 * Current user must belong to at least two groups or
 		 * else we can't test setting the GID to another group.
 		 */
-		printf("Current user can't test gid restore: must belong to more than one group.\n");
+		skipping("Current user can't test gid restore: must belong to more than one group.");
 	} else {
 		/*
 		 * Write a regular file with ARCHIVE_EXTRACT_PERM & SGID bit
@@ -363,10 +363,10 @@ DEFINE_TEST(test_write_disk_perms)
 		assertEqualIntA(a,ARCHIVE_WARN,archive_write_finish_entry(a));
 	}
 
-#if ARCHIVE_API_VERSION > 1
-	assert(0 == archive_write_finish(a));
-#else
+#if ARCHIVE_VERSION_NUMBER < 2000000
 	archive_write_finish(a);
+#else
+	assert(0 == archive_write_finish(a));
 #endif
 	archive_entry_free(ae);
 
@@ -385,7 +385,7 @@ DEFINE_TEST(test_write_disk_perms)
 
 	assert(0 == stat("dir_overwrite_0744", &st));
 	failure("dir_overwrite_0744: st.st_mode=%o", st.st_mode);
-	assert((st.st_mode & 07777) == 0744);
+	assert((st.st_mode & 0777) == 0744);
 
 	assert(0 == stat("file_no_suid", &st));
 	failure("file_0755: st.st_mode=%o", st.st_mode);

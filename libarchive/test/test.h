@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libarchive/test/test.h,v 1.8 2008/02/19 05:52:30 kientzle Exp $
+ * $FreeBSD: src/lib/libarchive/test/test.h,v 1.10 2008/06/15 10:35:22 kientzle Exp $
  */
 
 /* Every test program should #include "test.h" as the first thing. */
@@ -31,10 +31,21 @@
  * The goal of this file (and the matching test.c) is to
  * simplify the very repetitive test-*.c test programs.
  */
-#ifndef _FILE_OFFSET_BITS
-#define _FILE_OFFSET_BITS 64
+#if defined(HAVE_CONFIG_H)
+/* Most POSIX platforms use the 'configure' script to build config.h */
+#include "../../config.h"
+#elif defined(__FreeBSD__)
+/* Building as part of FreeBSD system requires a pre-built config.h. */
+#include "../config_freebsd.h"
+#elif defined(_WIN32)
+/* Win32 can't run the 'configure' script. */
+#include "../config_windows.h"
+#else
+/* Warn if the library hasn't been (automatically or manually) configured. */
+#error Oops: No config.h and no pre-built configuration in test.h.
 #endif
 
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -48,20 +59,6 @@
 
 #ifdef USE_DMALLOC
 #include <dmalloc.h>
-#endif
-
-#if defined(HAVE_CONFIG_H)
-/* Most POSIX platforms use the 'configure' script to build config.h */
-#include "../../config.h"
-#elif defined(__FreeBSD__)
-/* Building as part of FreeBSD system requires a pre-built config.h. */
-#include "../config_freebsd.h"
-#elif defined(_WIN32)
-/* Win32 can't run the 'configure' script. */
-#include "../config_windows.h"
-#else
-/* Warn if the library hasn't been (automatically or manually) configured. */
-#error Oops: No config.h and no pre-built configuration in test.h.
 #endif
 
 /* No non-FreeBSD platform will have __FBSDID, so just define it here. */
@@ -101,6 +98,15 @@
 /* Assert that a file is empty; supports printf-style arguments. */
 #define assertEmptyFile		\
   test_setup(__FILE__, __LINE__);test_assert_empty_file
+/* Assert that a file exists; supports printf-style arguments. */
+#define assertFileExists		\
+  test_setup(__FILE__, __LINE__);test_assert_file_exists
+/* Assert that a file exists; supports printf-style arguments. */
+#define assertFileNotExists		\
+  test_setup(__FILE__, __LINE__);test_assert_file_not_exists
+/* Assert that file contents match a string; supports printf-style arguments. */
+#define assertFileContents             \
+  test_setup(__FILE__, __LINE__);test_assert_file_contents
 
 /*
  * This would be simple with C99 variadic macros, but I don't want to
@@ -116,12 +122,15 @@ void failure(const char *fmt, ...);
 void test_setup(const char *, int);
 void test_skipping(const char *fmt, ...);
 int test_assert(const char *, int, int, const char *, void *);
-void test_assert_empty_file(const char *, ...);
-void test_assert_equal_file(const char *, const char *, ...);
-void test_assert_equal_int(const char *, int, int, const char *, int, const char *, void *);
-void test_assert_equal_string(const char *, int, const char *v1, const char *, const char *v2, const char *, void *);
-void test_assert_equal_wstring(const char *, int, const wchar_t *v1, const char *, const wchar_t *v2, const char *, void *);
-void test_assert_equal_mem(const char *, int, const char *, const char *, const char *, const char *, size_t, const char *, void *);
+int test_assert_empty_file(const char *, ...);
+int test_assert_equal_file(const char *, const char *, ...);
+int test_assert_equal_int(const char *, int, int, const char *, int, const char *, void *);
+int test_assert_equal_string(const char *, int, const char *v1, const char *, const char *v2, const char *, void *);
+int test_assert_equal_wstring(const char *, int, const wchar_t *v1, const char *, const wchar_t *v2, const char *, void *);
+int test_assert_equal_mem(const char *, int, const char *, const char *, const char *, const char *, size_t, const char *, void *);
+int test_assert_file_contents(const void *, int, const char *, ...);
+int test_assert_file_exists(const char *, ...);
+int test_assert_file_not_exists(const char *, ...);
 
 /* Like sprintf, then system() */
 int systemf(const char * fmt, ...);
@@ -130,12 +139,8 @@ int systemf(const char * fmt, ...);
 /* Supports printf-style args: slurpfile(NULL, "%s/myfile", refdir); */
 char *slurpfile(size_t *, const char *fmt, ...);
 
-/*
- * Global vars
- */
-
-/* Directory holding reference files. */
-char *refdir;
+/* Extracts named reference file to the current directory. */
+void extract_reference_file(const char *);
 
 /*
  * Special interfaces for libarchive test harness.

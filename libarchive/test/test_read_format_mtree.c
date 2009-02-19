@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_format_mtree.c,v 1.1 2008/01/01 22:28:04 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_format_mtree.c,v 1.4 2008/09/18 04:13:36 kientzle Exp $");
 
 /* Single entry with a hardlink. */
 static unsigned char archive[] = {
@@ -32,18 +32,18 @@ static unsigned char archive[] = {
 	"dir type=dir\n"
 	" file\\040with\\040space type=file uid=18\n"
 	" ..\n"
-	"file\\04with\\040space\n"
+	"file\\04with\\040space type=file\n"
 	"dir2 type=dir\n"
 	" dir3a type=dir\n"
-	"  indir3a\n"
+	"  indir3a type=file\n"
 	"dir2/fullindir2 type=file mode=0777\n"
 	"  ..\n"
-	" indir2\n"
+	" indir2 type=file\n"
 	" dir3b type=dir\n"
-	"  indir3b\n"
+	"  indir3b type=file\n"
 	"  ..\n"
 	" ..\n"
-	"notindir\n"
+	"notindir type=file\n"
 	"dir2/fullindir2 mode=0644\n"
 };
 
@@ -60,7 +60,7 @@ DEFINE_TEST(test_read_format_mtree)
 	assertEqualIntA(a, ARCHIVE_OK,
 	    archive_read_open_memory(a, archive, sizeof(archive)));
 	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt(archive_format(a), ARCHIVE_FORMAT_MTREE_V1);
+	assertEqualInt(archive_format(a), ARCHIVE_FORMAT_MTREE);
 	assertEqualString(archive_entry_pathname(ae), "file");
 	assertEqualInt(archive_entry_uid(ae), 18);
 	assert(S_ISREG(archive_entry_mode(ae)));
@@ -103,10 +103,10 @@ DEFINE_TEST(test_read_format_mtree)
 
 	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
 	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
-#if ARCHIVE_API_VERSION > 1
-	assertEqualInt(ARCHIVE_OK, archive_read_finish(a));
-#else
+#if ARCHIVE_VERSION_NUMBER < 2000000
 	archive_read_finish(a);
+#else
+	assertEqualInt(ARCHIVE_OK, archive_read_finish(a));
 #endif
 }
 

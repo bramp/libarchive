@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/usr.bin/tar/bsdtar.h,v 1.29 2008/01/02 00:21:27 kientzle Exp $
+ * $FreeBSD: src/usr.bin/tar/bsdtar.h,v 1.37 2008/12/06 07:37:14 kientzle Exp $
  */
 
 #include "bsdtar_platform.h"
@@ -57,6 +57,7 @@ struct bsdtar {
 	char		  create_compression; /* j, y, or z */
 	const char	 *compress_program;
 	char		  option_absolute_paths; /* -P */
+	char		  option_chroot; /* --chroot */
 	char		  option_dont_traverse_mounts; /* --one-file-system */
 	char		  option_fast_read; /* --fast-read */
 	char		  option_honor_nodump; /* --nodump */
@@ -64,6 +65,7 @@ struct bsdtar {
 	char		  option_no_owner; /* -o */
 	char		  option_no_subdirs; /* -n */
 	char		  option_null; /* --null */
+	char		  option_numeric_owner; /* --numeric-owner */
 	char		  option_stdout; /* -O */
 	char		  option_totals; /* --totals */
 	char		  option_unlink_first; /* -U */
@@ -78,6 +80,7 @@ struct bsdtar {
 	const char	 *progname;
 	int		  argc;
 	char		**argv;
+	const char	 *optarg;
 	size_t		  gs_width; /* For 'list_item' in read.c */
 	size_t		  u_width; /* for 'list_item' in read.c */
 	uid_t		  user_uid; /* UID running this program */
@@ -89,16 +92,47 @@ struct bsdtar {
 	 * Data for various subsystems.  Full definitions are located in
 	 * the file where they are used.
 	 */
+	struct archive_entry_linkresolver *resolver;
 	struct archive_dir	*archive_dir;	/* for write.c */
 	struct name_cache	*gname_cache;	/* for write.c */
-	struct links_cache	*links_cache;	/* for write.c */
+	char			*buff;		/* for write.c */
 	struct matching		*matching;	/* for matching.c */
 	struct security		*security;	/* for read.c */
 	struct name_cache	*uname_cache;	/* for write.c */
+	struct siginfo_data	*siginfo;	/* for siginfo.c */
+	struct substitution	*substitution;	/* for subst.c */
 };
 
+/* Fake short equivalents for long options that otherwise lack them. */
+enum {
+	OPTION_CHECK_LINKS = 1,
+	OPTION_CHROOT,
+	OPTION_EXCLUDE,
+	OPTION_FORMAT,
+	OPTION_HELP,
+	OPTION_INCLUDE,
+	OPTION_KEEP_NEWER_FILES,
+	OPTION_NEWER_CTIME,
+	OPTION_NEWER_CTIME_THAN,
+	OPTION_NEWER_MTIME,
+	OPTION_NEWER_MTIME_THAN,
+	OPTION_NODUMP,
+	OPTION_NO_SAME_OWNER,
+	OPTION_NO_SAME_PERMISSIONS,
+	OPTION_NULL,
+	OPTION_NUMERIC_OWNER,
+	OPTION_ONE_FILE_SYSTEM,
+	OPTION_POSIX,
+	OPTION_STRIP_COMPONENTS,
+	OPTION_TOTALS,
+	OPTION_USE_COMPRESS_PROGRAM,
+	OPTION_VERSION
+};
+
+
 void	bsdtar_errc(struct bsdtar *, int _eval, int _code,
-	    const char *fmt, ...);
+	    const char *fmt, ...) __LA_DEAD;
+int	bsdtar_getopt(struct bsdtar *);
 void	bsdtar_warnc(struct bsdtar *, int _code, const char *fmt, ...);
 void	cleanup_exclusions(struct bsdtar *);
 void	do_chdir(struct bsdtar *);
@@ -113,12 +147,23 @@ int	process_lines(struct bsdtar *bsdtar, const char *pathname,
 	    int (*process)(struct bsdtar *, const char *));
 void	safe_fprintf(FILE *, const char *fmt, ...);
 void	set_chdir(struct bsdtar *, const char *newdir);
+void	siginfo_init(struct bsdtar *);
+void	siginfo_setinfo(struct bsdtar *, const char * oper,
+	    const char * path, int64_t size);
+void	siginfo_printinfo(struct bsdtar *, off_t progress);
+void	siginfo_done(struct bsdtar *);
 void	tar_mode_c(struct bsdtar *bsdtar);
 void	tar_mode_r(struct bsdtar *bsdtar);
 void	tar_mode_t(struct bsdtar *bsdtar);
 void	tar_mode_u(struct bsdtar *bsdtar);
 void	tar_mode_x(struct bsdtar *bsdtar);
 int	unmatched_inclusions(struct bsdtar *bsdtar);
+int	unmatched_inclusions_warn(struct bsdtar *bsdtar, const char *msg);
 void	usage(struct bsdtar *);
 int	yes(const char *fmt, ...);
 
+#if HAVE_REGEX_H
+void	add_substitution(struct bsdtar *, const char *);
+int	apply_substitution(struct bsdtar *, const char *, char **, int);
+void	cleanup_substitution(struct bsdtar *);
+#endif

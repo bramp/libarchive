@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libarchive/archive_read_private.h,v 1.4 2008/01/03 17:54:26 des Exp $
+ * $FreeBSD: src/lib/libarchive/archive_read_private.h,v 1.7 2008/12/06 06:45:15 kientzle Exp $
  */
 
 #ifndef ARCHIVE_READ_PRIVATE_H_INCLUDED
@@ -31,6 +31,75 @@
 #include "archive.h"
 #include "archive_string.h"
 #include "archive_private.h"
+
+struct archive_read;
+struct archive_reader;
+struct archive_read_source;
+
+/*
+ * A "reader" knows how to provide blocks.  That can include something
+ * that reads blocks from disk or socket or a transformation layer
+ * that reads blocks from another source and transforms them.  This
+ * includes decompression and decryption filters.
+ *
+ * How bidding works:
+ *   * The bid manager reads the first block from the current source.
+ *   * It shows that block to each registered bidder.
+ *   * The winning bidder is initialized (with the block and information
+ *     about the source)
+ *   * The winning bidder becomes the new source and the process repeats
+ * This ends only when no reader provides a non-zero bid.
+ */
+struct archive_reader {
+	/* Configuration data for the reader. */
+	void *data;
+	/* Bidder is handed the initial block from its source. */
+	int (*bid)(struct archive_reader *, const void *buff, size_t);
+	/* Init() is given the archive, upstream source, and the initial
+	 * block above.  It returns a populated source structure. */
+	struct archive_read_source *(*init)(struct archive_read *,
+	    struct archive_reader *, struct archive_read_source *source,
+	    const void *, size_t);
+	/* Release the reader and any configuration data it allocated. */
+	int (*free)(struct archive_reader *);
+};
+
+/*
+ * A "source" is an instance of a reader.  This structure is
+ * allocated and initialized by the init() method of a reader
+ * above.
+ */
+struct archive_read_source {
+	/* Essentially all sources will need these values, so
+	 * just declare them here. */
+	struct archive_reader *reader; /* Reader that I'm an instance of. */
+	struct archive_read_source *upstream; /* Who I get blocks from. */
+	struct archive_read *archive; /* associated archive. */
+	/* Return next block. */
+	ssize_t (*read)(struct archive_read_source *, const void **);
+	/* Skip forward this many bytes. */
+	int64_t (*skip)(struct archive_read_source *self, int64_t request);
+	/* Close (recursively) and free(self). */
+	int (*close)(struct archive_read_source *self);
+	/* My private data. */
+	void *data;
+};
+
+/*
+ * The client source is almost the same as an internal source.
+ *
+ * TODO: Make archive_read_source and archive_read_client identical so
+ * that users of the library can easily register their own
+ * transformation filters.  This will probably break the API/ABI and
+ * so should be deferred until libarchive 3.0.
+ */
+struct archive_read_client {
+	archive_open_callback	*opener;
+	archive_read_callback	*reader;
+	archive_skip_callback	*skipper;
+	archive_close_callback	*closer;
+	void			*data;
+};
 
 struct archive_read {
 	struct archive	archive;
@@ -41,10 +110,6 @@ struct archive_read {
 	dev_t		  skip_file_dev;
 	ino_t		  skip_file_ino;
 
-	/* Utility:  Pointer to a block of nulls. */
-	const unsigned char	*nulls;
-	size_t			 null_length;
-
 	/*
 	 * Used by archive_read_data() to track blocks and copy
 	 * data to client buffers, filling gaps with zero bytes.
@@ -54,81 +119,37 @@ struct archive_read {
 	off_t		  read_data_output_offset;
 	size_t		  read_data_remaining;
 
-	/* Callbacks to open/read/write/close archive stream. */
-	archive_open_callback	*client_opener;
-	archive_read_callback	*client_reader;
-	archive_skip_callback	*client_skipper;
-	archive_write_callback	*client_writer;
-	archive_close_callback	*client_closer;
-	void			*client_data;
+	/* Callbacks to open/read/write/close client archive stream. */
+	struct archive_read_client client;
 
-	/*
-	 * Blocking information.  Note that bytes_in_last_block is
-	 * misleadingly named; I should find a better name.  These
-	 * control the final output from all compressors, including
-	 * compression_none.
-	 */
-	int		  bytes_per_block;
-	int		  bytes_in_last_block;
+	/* Registered readers. */
+	struct archive_reader readers[8];
 
-	/*
-	 * These control whether data within a gzip/bzip2 compressed
-	 * stream gets padded or not.  If pad_uncompressed is set,
-	 * the data will be padded to a full block before being
-	 * compressed.  The pad_uncompressed_byte determines the value
-	 * that will be used for padding.  Note that these have no
-	 * effect on compression "none."
-	 */
-	int		  pad_uncompressed;
-	int		  pad_uncompressed_byte; /* TODO: Support this. */
+	/* Source */
+	struct archive_read_source *source;
 
 	/* File offset of beginning of most recently-read header. */
 	off_t		  header_position;
 
-	/*
-	 * Decompressors have a very specific lifecycle:
-	 *    public setup function initializes a slot in this table
-	 *    'config' holds minimal configuration data
-	 *    bid() examines a block of data and returns a bid [1]
-	 *    init() is called for successful bidder
-	 *    'data' is initialized by init()
-	 *    read() returns a pointer to the next block of data
-	 *    consume() indicates how much data is used
-	 *    skip() ignores bytes of data
-	 *    finish() cleans up and frees 'data' and 'config'
-	 *
-	 * [1] General guideline: bid the number of bits that you actually
-	 * test, e.g., 16 if you test a 2-byte magic value.
-	 */
-	struct decompressor_t {
-		void *config;
-		void *data;
-		int	(*bid)(const void *buff, size_t);
-		int	(*init)(struct archive_read *,
-			    const void *buff, size_t);
-		int	(*finish)(struct archive_read *);
-		ssize_t	(*read_ahead)(struct archive_read *,
-			    const void **, size_t);
-		ssize_t	(*consume)(struct archive_read *, size_t);
-		off_t	(*skip)(struct archive_read *, off_t);
-	}	decompressors[4];
 
-	/* Pointer to current decompressor. */
-	struct decompressor_t *decompressor;
+	/* Used by reblocking logic. */
+	char		*buffer;
+	size_t		 buffer_size;
+	char		*next;		/* Current read location. */
+	size_t		 avail;		/* Bytes in my buffer. */
+	const void	*client_buff;	/* Client buffer information. */
+	size_t		 client_total;
+	const char	*client_next;
+	size_t		 client_avail;
+	char		 end_of_file;
+	char		 fatal;
 
 	/*
 	 * Format detection is mostly the same as compression
-	 * detection, with two significant differences: The bidders
+	 * detection, with one significant difference: The bidders
 	 * use the read_ahead calls above to examine the stream rather
 	 * than having the supervisor hand them a block of data to
-	 * examine, and the auction is repeated for every header.
-	 * Winning bidders should set the archive_format and
-	 * archive_format_name appropriately.  Bid routines should
-	 * check archive_format and decline to bid if the format of
-	 * the last header was incompatible.
-	 *
-	 * Again, write support is considerably simpler because there's
-	 * no need for an auction.
+	 * examine.
 	 */
 
 	struct archive_format_descriptor {
@@ -140,18 +161,6 @@ struct archive_read {
 		int	(*cleanup)(struct archive_read *);
 	}	formats[8];
 	struct archive_format_descriptor	*format; /* Active format. */
-
-	/*
-	 * Pointers to format-specific functions for writing.  They're
-	 * initialized by archive_write_set_format_XXX() calls.
-	 */
-	int	(*format_init)(struct archive *); /* Only used on write. */
-	int	(*format_finish)(struct archive *);
-	int	(*format_finish_entry)(struct archive *);
-	int 	(*format_write_header)(struct archive *,
-		    struct archive_entry *);
-	ssize_t	(*format_write_data)(struct archive *,
-		    const void *buff, size_t);
 
 	/*
 	 * Various information needed by archive_extract.
@@ -168,12 +177,13 @@ int	__archive_read_register_format(struct archive_read *a,
 	    int (*read_data_skip)(struct archive_read *),
 	    int (*cleanup)(struct archive_read *));
 
-struct decompressor_t
-	*__archive_read_register_compression(struct archive_read *a,
-	    int (*bid)(const void *, size_t),
-	    int (*init)(struct archive_read *, const void *, size_t));
+struct archive_reader
+	*__archive_read_get_reader(struct archive_read *a);
 
 const void
-	*__archive_read_ahead(struct archive_read *, size_t);
-
+	*__archive_read_ahead(struct archive_read *, size_t, ssize_t *);
+ssize_t
+	__archive_read_consume(struct archive_read *, size_t);
+int64_t
+	__archive_read_skip(struct archive_read *, int64_t);
 #endif
