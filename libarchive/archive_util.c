@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_util.c,v 1.16 2007/12/30 04:58:21 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_util.c,v 1.19 2008/10/21 12:10:30 des Exp $");
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -38,29 +38,49 @@ __FBSDID("$FreeBSD: src/lib/libarchive/archive_util.c,v 1.16 2007/12/30 04:58:21
 
 #include "archive.h"
 #include "archive_private.h"
+#include "archive_string.h"
 
+#if ARCHIVE_VERSION_NUMBER < 3000000
+/* These disappear in libarchive 3.0 */
+/* Deprecated. */
 int
 archive_api_feature(void)
 {
 	return (ARCHIVE_API_FEATURE);
 }
 
+/* Deprecated. */
 int
 archive_api_version(void)
 {
 	return (ARCHIVE_API_VERSION);
 }
 
+/* Deprecated synonym for archive_version_number() */
 int
 archive_version_stamp(void)
 {
-	return (ARCHIVE_VERSION_STAMP);
+	return (archive_version_number());
 }
 
+/* Deprecated synonym for archive_version_string() */
 const char *
 archive_version(void)
 {
-	return (ARCHIVE_LIBRARY_VERSION);
+	return (archive_version_string());
+}
+#endif
+
+int
+archive_version_number(void)
+{
+	return (ARCHIVE_VERSION_NUMBER);
+}
+
+const char *
+archive_version_string(void)
+{
+	return (ARCHIVE_VERSION_STRING);
 }
 
 int
@@ -148,6 +168,7 @@ archive_set_error(struct archive *a, int error_number, const char *fmt, ...)
 
 	va_start(ap, fmt);
 	archive_string_vsprintf(&(a->error_string), fmt, ap);
+	va_end(ap);
 	if (error_number > 0) {
 		archive_strcat(&(a->error_string), ": ");
 #ifdef HAVE_STRERROR_R
@@ -164,7 +185,6 @@ archive_set_error(struct archive *a, int error_number, const char *fmt, ...)
 		archive_strcat(&(a->error_string), errp);
 	}
 	a->error = a->error_string.s;
-	va_end(ap);
 }
 
 void

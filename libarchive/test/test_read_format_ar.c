@@ -26,9 +26,9 @@
  */
 
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_format_ar.c,v 1.4 2007/07/06 15:43:11 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_format_ar.c,v 1.6 2008/09/01 05:38:33 kientzle Exp $");
 
-#if ARCHIVE_VERSION_STAMP >= 1009000
+#if ARCHIVE_VERSION_NUMBER >= 1009000
 /*
  * This "archive" is created by "GNU ar". Here we try to verify
  * our GNU format handling functionality.
@@ -59,7 +59,7 @@ char buff[64];
 
 DEFINE_TEST(test_read_format_ar)
 {
-#if ARCHIVE_VERSION_STAMP < 1009000
+#if ARCHIVE_VERSION_NUMBER < 1009000
 	skipping("test_read_support_format_ar()");
 #else
 	struct archive_entry *ae;
@@ -75,9 +75,7 @@ DEFINE_TEST(test_read_format_ar)
 	assertEqualInt(0, archive_entry_mtime(ae));
 	assertEqualInt(0, archive_entry_uid(ae));
 	assertEqualInt(0, archive_entry_gid(ae));
-	assertEqualInt(40, archive_entry_size(ae));
-	assertEqualIntA(a, 40, archive_read_data(a, buff, 50));
-	assert(0 == memcmp(buff, "yyytttsssaaafff.o/\nhhhhjjjjkkkkllll.o/\n\n", 40));
+	assertEqualInt(0, archive_entry_size(ae));
 
 	/* First Entry */
 	assertA(0 == archive_read_next_header(a, &ae));
@@ -112,10 +110,10 @@ DEFINE_TEST(test_read_format_ar)
 	/* Test EOF */
 	assertA(1 == archive_read_next_header(a, &ae));
 	assert(0 == archive_read_close(a));
-#if ARCHIVE_API_VERSION > 1
-	assert(0 == archive_read_finish(a));
-#else
+#if ARCHIVE_VERSION_NUMBER < 2000000
 	archive_read_finish(a);
+#else
+	assert(0 == archive_read_finish(a));
 #endif
 #endif
 }

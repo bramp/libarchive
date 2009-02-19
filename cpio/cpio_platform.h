@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD$
+ * $FreeBSD: src/usr.bin/cpio/cpio_platform.h,v 1.2 2008/12/06 07:15:42 kientzle Exp $
  */
 
 /*
@@ -79,6 +79,14 @@
 #define	CPIO_FILESIZE_TYPE	unsigned long
 #define	CPIO_FILESIZE_PRINTF	"%lu"
 #endif
+#endif
+
+/* How to mark functions that don't return. */
+#if defined(__GNUC__) && (__GNUC__ > 2 || \
+                          (__GNUC__ == 2 && __GNUC_MINOR__ >= 5))
+#define __LA_DEAD       __attribute__((__noreturn__))
+#else
+#define __LA_DEAD
 #endif
 
 #endif /* !CPIO_PLATFORM_H_INCLUDED */

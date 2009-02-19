@@ -26,7 +26,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_format_ar.c,v 1.8 2008/02/19 05:54:24 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_format_ar.c,v 1.12 2008/12/17 19:02:42 kientzle Exp $");
 
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -83,8 +83,7 @@ static int	archive_read_format_ar_read_header(struct archive_read *a,
 		    struct archive_entry *e);
 static uint64_t	ar_atol8(const char *p, unsigned char_cnt);
 static uint64_t	ar_atol10(const char *p, unsigned char_cnt);
-static int	ar_parse_gnu_filename_table(struct archive_read *, struct ar *,
-		    const void *, size_t);
+static int	ar_parse_gnu_filename_table(struct archive_read *a);
 static int	ar_parse_common_header(struct ar *ar, struct archive_entry *,
 		    const char *h);
 
@@ -136,7 +135,6 @@ static int
 archive_read_format_ar_bid(struct archive_read *a)
 {
 	struct ar *ar;
-	ssize_t bytes_read;
 	const void *h;
 
 	if (a->archive.archive_format != 0 &&
@@ -150,8 +148,7 @@ archive_read_format_ar_bid(struct archive_read *a)
 	 * Verify the 8-byte file signature.
 	 * TODO: Do we need to check more than this?
 	 */
-	bytes_read = (a->decompressor->read_ahead)(a, &h, 8);
-	if (bytes_read < 8)
+	if ((h = __archive_read_ahead(a, 8, NULL)) == NULL)
 		return (-1);
 	if (strncmp((const char*)h, "!<arch>\n", 8) == 0) {
 		return (64);
@@ -168,7 +165,7 @@ archive_read_format_ar_read_header(struct archive_read *a,
 	uint64_t number; /* Used to hold parsed numbers before validation. */
 	ssize_t bytes_read;
 	size_t bsd_name_length, entry_size;
-	char *p;
+	char *p, *st;
 	const void *b;
 	const char *h;
 	int r;
@@ -180,24 +177,22 @@ archive_read_format_ar_read_header(struct archive_read *a,
 		 * We are now at the beginning of the archive,
 		 * so we need first consume the ar global header.
 		 */
-		(a->decompressor->consume)(a, 8);
+		__archive_read_consume(a, 8);
 		/* Set a default format code for now. */
 		a->archive.archive_format = ARCHIVE_FORMAT_AR;
 	}
 
 	/* Read the header for the next file entry. */
-	bytes_read = (a->decompressor->read_ahead)(a, &b, 60);
-	if (bytes_read < 60) {
+	if ((b = __archive_read_ahead(a, 60, &bytes_read)) == NULL)
 		/* Broken header. */
 		return (ARCHIVE_EOF);
-	}
-	(a->decompressor->consume)(a, 60);
+	__archive_read_consume(a, 60);
 	h = (const char *)b;
 
 	/* Verify the magic signature on the file header. */
 	if (strncmp(h + AR_fmag_offset, "`\n", 2) != 0) {
 		archive_set_error(&a->archive, EINVAL,
-		    "Consistency check failed");
+		    "Incorrect file header signature");
 		return (ARCHIVE_WARN);
 	}
 
@@ -277,22 +272,36 @@ archive_read_format_ar_read_header(struct archive_read *a,
 			return (ARCHIVE_FATAL);
 		}
 		entry_size = (size_t)number;
+		if (entry_size == 0) {
+			archive_set_error(&a->archive, EINVAL,
+			    "Invalid string table");
+			return (ARCHIVE_WARN);
+		}
+		if (ar->strtab != NULL) {
+			archive_set_error(&a->archive, EINVAL,
+			    "More than one string tables exist");
+			return (ARCHIVE_WARN);
+		}
+
 		/* Read the filename table into memory. */
-		bytes_read = (a->decompressor->read_ahead)(a, &b, entry_size);
-		if (bytes_read <= 0)
-			return (ARCHIVE_FATAL);
-		if ((size_t)bytes_read < entry_size) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-			    "Truncated input file");
+		st = malloc(entry_size);
+		if (st == NULL) {
+			archive_set_error(&a->archive, ENOMEM,
+			    "Can't allocate filename table buffer");
 			return (ARCHIVE_FATAL);
 		}
-		/*
-		 * Don't consume the contents, so the client will
-		 * also get a shot at reading it.
-		 */
+		ar->strtab = st;
+		ar->strtab_size = entry_size;
+		if ((b = __archive_read_ahead(a, entry_size, NULL)) == NULL)
+			return (ARCHIVE_FATAL);
+		memcpy(st, b, entry_size);
+		__archive_read_consume(a, entry_size);
+		/* All contents are consumed. */
+		ar->entry_bytes_remaining = 0;
+		archive_entry_set_size(entry, ar->entry_bytes_remaining);
 
 		/* Parse the filename table. */
-		return (ar_parse_gnu_filename_table(a, ar, b, entry_size));
+		return (ar_parse_gnu_filename_table(a));
 	}
 
 	/*
@@ -331,26 +340,27 @@ archive_read_format_ar_read_header(struct archive_read *a,
 
 		/* Parse the size of the name, adjust the file size. */
 		number = ar_atol10(h + AR_name_offset + 3, AR_name_size - 3);
-		if ((off_t)number > ar->entry_bytes_remaining) {
+		bsd_name_length = (size_t)number;
+		/* Guard against the filename + trailing NUL
+		 * overflowing a size_t and against the filename size
+		 * being larger than the entire entry. */
+		if (number > (uint64_t)(bsd_name_length + 1)
+		    || (off_t)bsd_name_length > ar->entry_bytes_remaining) {
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "Bad input file size");
 			return (ARCHIVE_FATAL);
 		}
-		bsd_name_length = (size_t)number;
 		ar->entry_bytes_remaining -= bsd_name_length;
 		/* Adjust file size reported to client. */
 		archive_entry_set_size(entry, ar->entry_bytes_remaining);
 
 		/* Read the long name into memory. */
-		bytes_read = (a->decompressor->read_ahead)(a, &b, bsd_name_length);
-		if (bytes_read <= 0)
-			return (ARCHIVE_FATAL);
-		if ((size_t)bytes_read < bsd_name_length) {
+		if ((b = __archive_read_ahead(a, bsd_name_length, NULL)) == NULL) {
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "Truncated input file");
 			return (ARCHIVE_FATAL);
 		}
-		(a->decompressor->consume)(a, bsd_name_length);
+		__archive_read_consume(a, bsd_name_length);
 
 		/* Store it in the entry. */
 		p = (char *)malloc(bsd_name_length + 1);
@@ -430,7 +440,7 @@ archive_read_format_ar_read_data(struct archive_read *a,
 	ar = (struct ar *)(a->format->data);
 
 	if (ar->entry_bytes_remaining > 0) {
-		bytes_read = (a->decompressor->read_ahead)(a, buff, 1);
+		*buff = __archive_read_ahead(a, 1, &bytes_read);
 		if (bytes_read == 0) {
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "Truncated ar archive");
@@ -444,16 +454,16 @@ archive_read_format_ar_read_data(struct archive_read *a,
 		*offset = ar->entry_offset;
 		ar->entry_offset += bytes_read;
 		ar->entry_bytes_remaining -= bytes_read;
-		(a->decompressor->consume)(a, (size_t)bytes_read);
+		__archive_read_consume(a, (size_t)bytes_read);
 		return (ARCHIVE_OK);
 	} else {
 		while (ar->entry_padding > 0) {
-			bytes_read = (a->decompressor->read_ahead)(a, buff, 1);
+			*buff = __archive_read_ahead(a, 1, &bytes_read);
 			if (bytes_read <= 0)
 				return (ARCHIVE_FATAL);
 			if (bytes_read > ar->entry_padding)
 				bytes_read = (ssize_t)ar->entry_padding;
-			(a->decompressor->consume)(a, (size_t)bytes_read);
+			__archive_read_consume(a, (size_t)bytes_read);
 			ar->entry_padding -= bytes_read;
 		}
 		*buff = NULL;
@@ -468,20 +478,11 @@ archive_read_format_ar_skip(struct archive_read *a)
 {
 	off_t bytes_skipped;
 	struct ar* ar;
-	int r = ARCHIVE_OK;
-	const void *b;		/* Dummy variables */
-	size_t s;
-	off_t o;
 
 	ar = (struct ar *)(a->format->data);
-	if (a->decompressor->skip == NULL) {
-		while (r == ARCHIVE_OK)
-			r = archive_read_format_ar_read_data(a, &b, &s, &o);
-		return (r);
-	}
 
-	bytes_skipped = (a->decompressor->skip)(a, ar->entry_bytes_remaining +
-	    ar->entry_padding);
+	bytes_skipped = __archive_read_skip(a,
+	    ar->entry_bytes_remaining + ar->entry_padding);
 	if (bytes_skipped < 0)
 		return (ARCHIVE_FATAL);
 
@@ -492,31 +493,15 @@ archive_read_format_ar_skip(struct archive_read *a)
 }
 
 static int
-ar_parse_gnu_filename_table(struct archive_read *a, struct ar *ar,
-    const void *h, size_t size)
+ar_parse_gnu_filename_table(struct archive_read *a)
 {
+	struct ar *ar;
 	char *p;
+	size_t size;
 
-	if (ar->strtab != NULL) {
-		archive_set_error(&a->archive, EINVAL,
-		    "More than one string tables exist");
-		return (ARCHIVE_WARN);
-	}
+	ar = (struct ar*)(a->format->data);
+	size = ar->strtab_size;
 
-	if (size == 0) {
-		archive_set_error(&a->archive, EINVAL, "Invalid string table");
-		return (ARCHIVE_WARN);
-	}
-
-	ar->strtab_size = size;
-	ar->strtab = malloc(size);
-	if (ar->strtab == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
-		    "Can't allocate string table buffer");
-		return (ARCHIVE_FATAL);
-	}
-
-	(void)memcpy(ar->strtab, h, size);
 	for (p = ar->strtab; p < ar->strtab + size - 1; ++p) {
 		if (*p == '/') {
 			*p++ = '\0';

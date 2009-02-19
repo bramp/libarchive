@@ -23,11 +23,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD$");
-
+__FBSDID("$FreeBSD: src/usr.bin/cpio/test/test_gcpio_compat.c,v 1.2 2008/08/22 02:27:06 kientzle Exp $");
 
 static void
-unpack_test(const char *from, const char *options)
+unpack_test(const char *from, const char *options, const char *se)
 {
 	struct stat st, st2;
 	char buff[128];
@@ -40,14 +39,16 @@ unpack_test(const char *from, const char *options)
 	/*
 	 * Use cpio to unpack the sample archive
 	 */
-	r = systemf("%s -i --quiet %s < %s/%s >unpack.out 2>unpack.err",
-	    testprog, options, refdir, from);
-	failure("Error invoking %s -i --quiet %s < %s/%s",
-	    testprog, options, refdir, from);
+	extract_reference_file(from);
+	r = systemf("%s -i %s < %s >unpack.out 2>unpack.err",
+	    testprog, options, from);
+	failure("Error invoking %s -i %s < %s",
+	    testprog, options, from);
 	assertEqualInt(r, 0);
 
 	/* Verify that nothing went to stderr. */
-	assertEmptyFile("unpack.err");
+	failure("Error invoking %s -i %s < %s", testprog, options, from);
+	assertFileContents(se, strlen(se), "unpack.err");
 
 	/*
 	 * Verify unpacked files.
@@ -117,10 +118,11 @@ DEFINE_TEST(test_gcpio_compat)
 	oldumask = umask(0);
 
 	/* Dearchive sample files with a variety of options. */
-	unpack_test("test_gcpio_compat_ref.bin", "");
-	unpack_test("test_gcpio_compat_ref.crc", "");
-	unpack_test("test_gcpio_compat_ref.newc", "");
-	unpack_test("test_gcpio_compat_ref.ustar", "");
+	unpack_test("test_gcpio_compat_ref.bin", "", "1 block\n");
+	unpack_test("test_gcpio_compat_ref.crc", "", "2 blocks\n");
+	unpack_test("test_gcpio_compat_ref.newc", "", "2 blocks\n");
+	/* gcpio-2.9 only reads 6 blocks here */
+	unpack_test("test_gcpio_compat_ref.ustar", "", "7 blocks\n");
 
 	umask(oldumask);
 }
