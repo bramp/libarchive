@@ -1,7 +1,8 @@
 This package was debianized by John Goerzen <jgoerzen@complete.org> on
 Mon, 10 Oct 2005 19:24:56 -0500.
 
-It was downloaded from http://people.freebsd.org/~kientzle/libarchive/
+It was downloaded from http://code.google.com/p/libarchive/
+  old versions from http://people.freebsd.org/~kientzle/libarchive/
 
 Copyright Holder: Tim Kientzle <kientzle@acm.org> 
 
