@@ -1,3 +1,12 @@
+libarchive (2.6.1-1) unstable; urgency=low
+
+  * New Upstream Version
+  * Update homepage.  Closes: #514835.
+  * Clean up Debian rules.  Patch partially from Bernhard R. Link.
+    Closes: #480495.
+
+ -- John Goerzen <jgoerzen@complete.org>  Thu, 19 Feb 2009 09:28:57 -0600
+
 libarchive (2.4.17-2) unstable; urgency=high
 
   [ John Goerzen ]
