@@ -32,8 +32,14 @@ __FBSDID("$FreeBSD: src/usr.bin/cpio/cpio.c,v 1.15 2008/12/06 07:30:40 kientzle 
 #include <archive.h>
 #include <archive_entry.h>
 
+#ifdef HAVE_SYS_MKDEV_H
+#include <sys/mkdev.h>
+#endif
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
 #endif
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
