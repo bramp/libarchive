@@ -1,3 +1,9 @@
+libarchive (2.6.2-1) unstable; urgency=low
+
+  * New Upstream Version.  Closes: #516577.
+
+ -- John Goerzen <jgoerzen@complete.org>  Thu, 12 Mar 2009 09:32:31 -0500
+
 libarchive (2.6.1-1) unstable; urgency=low
 
   * New Upstream Version
