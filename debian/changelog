@@ -1,8 +1,8 @@
 libarchive (2.8.0-1) UNRELEASED; urgency=low
 
-  * Set myself as maintainer.
+  * Set myself as maintainer (Closes: #570539).
     + co-maintainers welcome!
-  * Imported Upstream version 2.8.0
+  * Imported Upstream version 2.8.0 (Closes: #559158)
   * Drop debian revision in symbols file.
   * Updated symbols for 2.8
   * Update rules for new build directory (config.aux -> build/autoconf)
