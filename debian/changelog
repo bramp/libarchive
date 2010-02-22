@@ -1,3 +1,19 @@
+libarchive (2.8.0-1) UNRELEASED; urgency=low
+
+  * Set myself as maintainer.
+    + co-maintainers welcome!
+  * Imported Upstream version 2.8.0
+  * Drop debian revision in symbols file.
+  * Updated symbols for 2.8
+  * Update rules for new build directory (config.aux -> build/autoconf)
+  * Replace ${Source-Version} with ${source:Version} in control file.
+  * Drop debian/shlibs.local.ex
+  * Bump debhelper compatibility level to 5.
+  * Stop trying to install non-existant usr/share/pkgconfig
+  * Update Vcs fields to point to new collab-maint repository.
+
+ -- Andreas Henriksson <andreas@fatal.se>  Mon, 22 Feb 2010 06:49:13 +0100
+
 libarchive (2.6.2-2) unstable; urgency=low
 
   * Orphaning the package; set maintainer to QA group.
