@@ -11,8 +11,10 @@ libarchive (2.8.0-1) UNRELEASED; urgency=low
   * Bump debhelper compatibility level to 5.
   * Stop trying to install non-existant usr/share/pkgconfig
   * Update Vcs fields to point to new collab-maint repository.
+  * Update debian/copyright
+  * Bump Standards-Version to 3.8.4
 
- -- Andreas Henriksson <andreas@fatal.se>  Mon, 22 Feb 2010 06:49:13 +0100
+ -- Andreas Henriksson <andreas@fatal.se>  Mon, 22 Feb 2010 18:50:50 +0100
 
 libarchive (2.6.2-2) unstable; urgency=low
 
