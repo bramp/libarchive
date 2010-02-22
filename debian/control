@@ -2,7 +2,7 @@ Source: libarchive
 Priority: optional
 Maintainer: Andreas Henriksson <andreas@fatal.se>
 Build-Depends: debhelper (>= 5.0.0), autotools-dev, libbz2-dev, zlib1g-dev, libacl1-dev, e2fslibs-dev, libattr1-dev, bison, libtool, sharutils
-Standards-Version: 3.7.2
+Standards-Version: 3.8.4
 Section: libs
 Vcs-Browser: http://git.debian.org/?p=collab-maint/pkg-libarchive.git
 Vcs-Git: git://git.debian.org/collab-maint/pkg-libarchive.git
