@@ -5,22 +5,22 @@ libarchive.so.2 libarchive1 #MINVER#
  __archive_entry_acl_parse_w@Base 2.0.25
  __archive_errx@Base 2.0.25
  __archive_read_ahead@Base 2.4.14
- __archive_read_consume@Base 2.6.1-1
- __archive_read_get_reader@Base 2.6.1-1
+ __archive_read_consume@Base 2.6.1
+ __archive_read_get_reader@Base 2.6.1
 #MISSING: 2.6.1-1# __archive_read_register_compression@Base 2.0.25
  __archive_read_register_format@Base 2.0.25
- __archive_read_skip@Base 2.6.1-1
+ __archive_read_skip@Base 2.6.1
  __archive_strappend_char@Base 2.0.25
  __archive_strappend_int@Base 2.0.25
- __archive_strappend_w_mbs@Base 2.6.1-1
- __archive_strappend_w_utf8@Base 2.6.1-1
+ __archive_strappend_w_mbs@Base 2.6.1
+ __archive_strappend_w_utf8@Base 2.6.1
  __archive_string_append@Base 2.0.25
- __archive_string_concat@Base 2.6.1-1
+ __archive_string_concat@Base 2.6.1
  __archive_string_copy@Base 2.2.3
  __archive_string_ensure@Base 2.0.25
  __archive_string_free@Base 2.0.25
- __archive_string_sprintf@Base 2.6.1-1
- __archive_string_utf8_w@Base 2.6.1-1
+ __archive_string_sprintf@Base 2.6.1
+ __archive_string_utf8_w@Base 2.6.1
  __archive_string_vsprintf@Base 2.0.25
  __archive_strncat@Base 2.0.25
  __archive_write_format_header_ustar@Base 2.0.25
@@ -38,14 +38,14 @@ libarchive.so.2 libarchive1 #MINVER#
  archive_entry_acl_reset@Base 2.0.25
  archive_entry_acl_text_w@Base 2.0.25
  archive_entry_atime@Base 2.0.25
- archive_entry_atime_is_set@Base 2.6.1-1
+ archive_entry_atime_is_set@Base 2.6.1
  archive_entry_atime_nsec@Base 2.0.25
- archive_entry_birthtime@Base 2.6.1-1
- archive_entry_birthtime_is_set@Base 2.6.1-1
- archive_entry_birthtime_nsec@Base 2.6.1-1
+ archive_entry_birthtime@Base 2.6.1
+ archive_entry_birthtime_is_set@Base 2.6.1
+ archive_entry_birthtime_nsec@Base 2.6.1
  archive_entry_clear@Base 2.0.25
  archive_entry_clone@Base 2.0.25
- archive_entry_copy_fflags_text@Base 2.6.1-1
+ archive_entry_copy_fflags_text@Base 2.6.1
  archive_entry_copy_fflags_text_w@Base 2.0.25
  archive_entry_copy_gname@Base 2.4.11
  archive_entry_copy_gname_w@Base 2.0.25
@@ -55,14 +55,14 @@ libarchive.so.2 libarchive1 #MINVER#
  archive_entry_copy_link_w@Base 2.4.14
  archive_entry_copy_pathname@Base 2.0.25
  archive_entry_copy_pathname_w@Base 2.0.25
- archive_entry_copy_sourcepath@Base 2.6.1-1
+ archive_entry_copy_sourcepath@Base 2.6.1
  archive_entry_copy_stat@Base 2.0.25
  archive_entry_copy_symlink@Base 2.0.25
  archive_entry_copy_symlink_w@Base 2.0.25
  archive_entry_copy_uname@Base 2.4.11
  archive_entry_copy_uname_w@Base 2.0.25
  archive_entry_ctime@Base 2.0.25
- archive_entry_ctime_is_set@Base 2.6.1-1
+ archive_entry_ctime_is_set@Base 2.6.1
  archive_entry_ctime_nsec@Base 2.0.25
  archive_entry_dev@Base 2.0.25
  archive_entry_devmajor@Base 2.2.3
@@ -84,7 +84,7 @@ libarchive.so.2 libarchive1 #MINVER#
  archive_entry_linkresolver_set_strategy@Base 2.4.14
  archive_entry_mode@Base 2.0.25
  archive_entry_mtime@Base 2.0.25
- archive_entry_mtime_is_set@Base 2.6.1-1
+ archive_entry_mtime_is_set@Base 2.6.1
  archive_entry_mtime_nsec@Base 2.0.25
  archive_entry_new@Base 2.0.25
  archive_entry_nlink@Base 2.2.3
@@ -94,7 +94,7 @@ libarchive.so.2 libarchive1 #MINVER#
  archive_entry_rdevmajor@Base 2.0.25
  archive_entry_rdevminor@Base 2.0.25
  archive_entry_set_atime@Base 2.0.25
- archive_entry_set_birthtime@Base 2.6.1-1
+ archive_entry_set_birthtime@Base 2.6.1
  archive_entry_set_ctime@Base 2.0.25
  archive_entry_set_dev@Base 2.2.3
  archive_entry_set_devmajor@Base 2.2.3
@@ -119,8 +119,8 @@ libarchive.so.2 libarchive1 #MINVER#
  archive_entry_set_uid@Base 2.0.25
  archive_entry_set_uname@Base 2.0.25
  archive_entry_size@Base 2.0.25
- archive_entry_size_is_set@Base 2.6.1-1
- archive_entry_sourcepath@Base 2.6.1-1
+ archive_entry_size_is_set@Base 2.6.1
+ archive_entry_sourcepath@Base 2.6.1
  archive_entry_stat@Base 2.0.25
  archive_entry_strmode@Base 2.4.11
  archive_entry_symlink@Base 2.0.25
@@ -128,15 +128,15 @@ libarchive.so.2 libarchive1 #MINVER#
  archive_entry_uid@Base 2.0.25
  archive_entry_uname@Base 2.0.25
  archive_entry_uname_w@Base 2.0.25
- archive_entry_unset_atime@Base 2.6.1-1
- archive_entry_unset_birthtime@Base 2.6.1-1
- archive_entry_unset_ctime@Base 2.6.1-1
- archive_entry_unset_mtime@Base 2.6.1-1
- archive_entry_unset_size@Base 2.6.1-1
- archive_entry_update_gname_utf8@Base 2.6.1-1
- archive_entry_update_link_utf8@Base 2.6.1-1
- archive_entry_update_pathname_utf8@Base 2.6.1-1
- archive_entry_update_uname_utf8@Base 2.6.1-1
+ archive_entry_unset_atime@Base 2.6.1
+ archive_entry_unset_birthtime@Base 2.6.1
+ archive_entry_unset_ctime@Base 2.6.1
+ archive_entry_unset_mtime@Base 2.6.1
+ archive_entry_unset_size@Base 2.6.1
+ archive_entry_update_gname_utf8@Base 2.6.1
+ archive_entry_update_link_utf8@Base 2.6.1
+ archive_entry_update_pathname_utf8@Base 2.6.1
+ archive_entry_update_uname_utf8@Base 2.6.1
  archive_entry_xattr_add_entry@Base 2.0.25
  archive_entry_xattr_clear@Base 2.0.25
  archive_entry_xattr_count@Base 2.0.25
@@ -154,7 +154,7 @@ libarchive.so.2 libarchive1 #MINVER#
  archive_read_data_into_buffer@Base 2.0.25
  archive_read_data_into_fd@Base 2.0.25
  archive_read_data_skip@Base 2.0.25
- archive_read_extract2@Base 2.6.1-1
+ archive_read_extract2@Base 2.6.1
  archive_read_extract@Base 2.0.25
  archive_read_extract_set_progress_callback@Base 2.0.25
  archive_read_extract_set_skip_file@Base 2.0.25
@@ -174,7 +174,7 @@ libarchive.so.2 libarchive1 #MINVER#
  archive_read_support_compression_bzip2@Base 2.0.25
  archive_read_support_compression_compress@Base 2.0.25
  archive_read_support_compression_gzip@Base 2.0.25
- archive_read_support_compression_lzma@Base 2.6.1-1
+ archive_read_support_compression_lzma@Base 2.6.1
  archive_read_support_compression_none@Base 2.0.25
  archive_read_support_compression_program@Base 2.2.3
  archive_read_support_format_all@Base 2.0.25
@@ -188,9 +188,9 @@ libarchive.so.2 libarchive1 #MINVER#
  archive_read_support_format_zip@Base 2.0.25
  archive_set_error@Base 2.0.25
  archive_version@Base 2.0.25
- archive_version_number@Base 2.6.1-1
+ archive_version_number@Base 2.6.1
  archive_version_stamp@Base 2.4.11
- archive_version_string@Base 2.6.1-1
+ archive_version_string@Base 2.6.1
  archive_write_close@Base 2.0.25
  archive_write_data@Base 2.0.25
  archive_write_data_block@Base 2.0.25
@@ -215,7 +215,7 @@ libarchive.so.2 libarchive1 #MINVER#
  archive_write_set_bytes_in_last_block@Base 2.0.25
  archive_write_set_bytes_per_block@Base 2.0.25
  archive_write_set_compression_bzip2@Base 2.0.25
- archive_write_set_compression_compress@Base 2.6.1-1
+ archive_write_set_compression_compress@Base 2.6.1
  archive_write_set_compression_gzip@Base 2.0.25
  archive_write_set_compression_none@Base 2.0.25
  archive_write_set_compression_program@Base 2.2.3
@@ -225,7 +225,7 @@ libarchive.so.2 libarchive1 #MINVER#
  archive_write_set_format_by_name@Base 2.0.25
  archive_write_set_format_cpio@Base 2.0.25
  archive_write_set_format_cpio_newc@Base 2.4.11
- archive_write_set_format_mtree@Base 2.6.1-1
+ archive_write_set_format_mtree@Base 2.6.1
  archive_write_set_format_pax@Base 2.0.25
  archive_write_set_format_pax_restricted@Base 2.0.25
  archive_write_set_format_shar@Base 2.0.25
