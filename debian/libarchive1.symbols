@@ -4,14 +4,18 @@ libarchive.so.2 libarchive1 #MINVER#
  __archive_create_child@Base 2.2.3
  __archive_entry_acl_parse_w@Base 2.0.25
  __archive_errx@Base 2.0.25
+ __archive_parse_options@Base 2.8.0
  __archive_read_ahead@Base 2.4.14
  __archive_read_consume@Base 2.6.1
- __archive_read_get_reader@Base 2.6.1
-#MISSING: 2.6.1-1# __archive_read_register_compression@Base 2.0.25
+ __archive_read_filter_ahead@Base 2.8.0
+ __archive_read_filter_consume@Base 2.8.0
+ __archive_read_filter_skip@Base 2.8.0
+ __archive_read_get_bidder@Base 2.8.0
+ __archive_read_program@Base 2.8.0
  __archive_read_register_format@Base 2.0.25
  __archive_read_skip@Base 2.6.1
+ __archive_read_skip_lenient@Base 2.8.0
  __archive_strappend_char@Base 2.0.25
- __archive_strappend_int@Base 2.0.25
  __archive_strappend_w_mbs@Base 2.6.1
  __archive_strappend_w_utf8@Base 2.6.1
  __archive_string_append@Base 2.0.25
@@ -76,9 +80,9 @@ libarchive.so.2 libarchive1 #MINVER#
  archive_entry_gname_w@Base 2.0.25
  archive_entry_hardlink@Base 2.0.25
  archive_entry_hardlink_w@Base 2.0.25
+ archive_entry_ino64@Base 2.8.0
  archive_entry_ino@Base 2.0.25
  archive_entry_linkify@Base 2.4.14
-#MISSING: 2.6.1-1# archive_entry_linkresolve@Base 2.4.11
  archive_entry_linkresolver_free@Base 2.4.11
  archive_entry_linkresolver_new@Base 2.4.11
  archive_entry_linkresolver_set_strategy@Base 2.4.14
@@ -104,6 +108,7 @@ libarchive.so.2 libarchive1 #MINVER#
  archive_entry_set_gid@Base 2.0.25
  archive_entry_set_gname@Base 2.0.25
  archive_entry_set_hardlink@Base 2.0.25
+ archive_entry_set_ino64@Base 2.8.0
  archive_entry_set_ino@Base 2.2.3
  archive_entry_set_link@Base 2.0.25
  archive_entry_set_mode@Base 2.0.25
@@ -134,8 +139,10 @@ libarchive.so.2 libarchive1 #MINVER#
  archive_entry_unset_mtime@Base 2.6.1
  archive_entry_unset_size@Base 2.6.1
  archive_entry_update_gname_utf8@Base 2.6.1
+ archive_entry_update_hardlink_utf8@Base 2.8.0
  archive_entry_update_link_utf8@Base 2.6.1
  archive_entry_update_pathname_utf8@Base 2.6.1
+ archive_entry_update_symlink_utf8@Base 2.8.0
  archive_entry_update_uname_utf8@Base 2.6.1
  archive_entry_xattr_add_entry@Base 2.0.25
  archive_entry_xattr_clear@Base 2.0.25
@@ -144,6 +151,7 @@ libarchive.so.2 libarchive1 #MINVER#
  archive_entry_xattr_reset@Base 2.0.25
  archive_errno@Base 2.0.25
  archive_error_string@Base 2.0.25
+ archive_file_count@Base 2.8.0
  archive_format@Base 2.0.25
  archive_format_name@Base 2.0.25
  archive_position_compressed@Base 2.0.25
@@ -154,6 +162,16 @@ libarchive.so.2 libarchive1 #MINVER#
  archive_read_data_into_buffer@Base 2.0.25
  archive_read_data_into_fd@Base 2.0.25
  archive_read_data_skip@Base 2.0.25
+ archive_read_disk_entry_from_file@Base 2.8.0
+ archive_read_disk_gname@Base 2.8.0
+ archive_read_disk_new@Base 2.8.0
+ archive_read_disk_set_gname_lookup@Base 2.8.0
+ archive_read_disk_set_standard_lookup@Base 2.8.0
+ archive_read_disk_set_symlink_hybrid@Base 2.8.0
+ archive_read_disk_set_symlink_logical@Base 2.8.0
+ archive_read_disk_set_symlink_physical@Base 2.8.0
+ archive_read_disk_set_uname_lookup@Base 2.8.0
+ archive_read_disk_uname@Base 2.8.0
  archive_read_extract2@Base 2.6.1
  archive_read_extract@Base 2.0.25
  archive_read_extract_set_progress_callback@Base 2.0.25
@@ -161,6 +179,7 @@ libarchive.so.2 libarchive1 #MINVER#
  archive_read_finish@Base 2.0.25
  archive_read_header_position@Base 2.0.25
  archive_read_new@Base 2.0.25
+ archive_read_next_header2@Base 2.8.0
  archive_read_next_header@Base 2.0.25
  archive_read_open2@Base 2.0.25
  archive_read_open@Base 2.0.25
@@ -170,6 +189,9 @@ libarchive.so.2 libarchive1 #MINVER#
  archive_read_open_filename@Base 2.0.25
  archive_read_open_memory2@Base 2.0.25
  archive_read_open_memory@Base 2.0.25
+ archive_read_set_filter_options@Base 2.8.0
+ archive_read_set_format_options@Base 2.8.0
+ archive_read_set_options@Base 2.8.0
  archive_read_support_compression_all@Base 2.0.25
  archive_read_support_compression_bzip2@Base 2.0.25
  archive_read_support_compression_compress@Base 2.0.25
@@ -177,6 +199,10 @@ libarchive.so.2 libarchive1 #MINVER#
  archive_read_support_compression_lzma@Base 2.6.1
  archive_read_support_compression_none@Base 2.0.25
  archive_read_support_compression_program@Base 2.2.3
+ archive_read_support_compression_program_signature@Base 2.8.0
+ archive_read_support_compression_rpm@Base 2.8.0
+ archive_read_support_compression_uu@Base 2.8.0
+ archive_read_support_compression_xz@Base 2.8.0
  archive_read_support_format_all@Base 2.0.25
  archive_read_support_format_ar@Base 2.2.3
  archive_read_support_format_cpio@Base 2.0.25
@@ -184,7 +210,9 @@ libarchive.so.2 libarchive1 #MINVER#
  archive_read_support_format_gnutar@Base 2.0.25
  archive_read_support_format_iso9660@Base 2.0.25
  archive_read_support_format_mtree@Base 2.4.11
+ archive_read_support_format_raw@Base 2.8.0
  archive_read_support_format_tar@Base 2.0.25
+ archive_read_support_format_xar@Base 2.8.0
  archive_read_support_format_zip@Base 2.0.25
  archive_set_error@Base 2.0.25
  archive_version@Base 2.0.25
@@ -217,8 +245,11 @@ libarchive.so.2 libarchive1 #MINVER#
  archive_write_set_compression_bzip2@Base 2.0.25
  archive_write_set_compression_compress@Base 2.6.1
  archive_write_set_compression_gzip@Base 2.0.25
+ archive_write_set_compression_lzma@Base 2.8.0
  archive_write_set_compression_none@Base 2.0.25
  archive_write_set_compression_program@Base 2.2.3
+ archive_write_set_compression_xz@Base 2.8.0
+ archive_write_set_compressor_options@Base 2.8.0
  archive_write_set_format@Base 2.0.25
  archive_write_set_format_ar_bsd@Base 2.2.3
  archive_write_set_format_ar_svr4@Base 2.2.3
@@ -226,9 +257,12 @@ libarchive.so.2 libarchive1 #MINVER#
  archive_write_set_format_cpio@Base 2.0.25
  archive_write_set_format_cpio_newc@Base 2.4.11
  archive_write_set_format_mtree@Base 2.6.1
+ archive_write_set_format_options@Base 2.8.0
  archive_write_set_format_pax@Base 2.0.25
  archive_write_set_format_pax_restricted@Base 2.0.25
  archive_write_set_format_shar@Base 2.0.25
  archive_write_set_format_shar_dump@Base 2.0.25
  archive_write_set_format_ustar@Base 2.0.25
+ archive_write_set_format_zip@Base 2.8.0
+ archive_write_set_options@Base 2.8.0
  archive_write_set_skip_file@Base 2.0.25
