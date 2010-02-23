@@ -1,4 +1,4 @@
-libarchive (2.8.0-1) UNRELEASED; urgency=low
+libarchive (2.8.0-1) unstable; urgency=low
 
   * Set myself as maintainer (Closes: #570539).
     + co-maintainers welcome!
@@ -23,7 +23,7 @@ libarchive (2.8.0-1) UNRELEASED; urgency=low
   * Add Build-Depends on libxml2-dev for xar support.
   * Explicitly give --without-openssl to configure.
 
- -- Andreas Henriksson <andreas@fatal.se>  Tue, 23 Feb 2010 20:32:11 +0100
+ -- Andreas Henriksson <andreas@fatal.se>  Tue, 23 Feb 2010 20:50:25 +0100
 
 libarchive (2.6.2-2) unstable; urgency=low
 
