@@ -4,6 +4,7 @@ Maintainer: Andreas Henriksson <andreas@fatal.se>
 Build-Depends: debhelper (>= 5.0.0),
                autotools-dev,
                libbz2-dev,
+               liblzma-dev,
                zlib1g-dev,
                libacl1-dev,
                e2fslibs-dev,
