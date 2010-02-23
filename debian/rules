@@ -44,7 +44,7 @@ ifneq "$(wildcard /usr/share/misc/config.guess)" ""
 	cp -f /usr/share/misc/config.guess build/autoconf/config.guess
 endif
 	# Add here commands to configure the package.
-	$(SHELL) ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info CFLAGS="$(CFLAGS)" LDFLAGS=" -Wl,-z,defs" --enable-bsdcpio=shared --enable-bsdtar=shared
+	$(SHELL) ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info CFLAGS="$(CFLAGS)" LDFLAGS=" -Wl,-z,defs" --enable-bsdcpio=shared --enable-bsdtar=shared --without-openssl
 
 update-patch-series:
 	git rm -rf $(CURDIR)/debian/patches || true
