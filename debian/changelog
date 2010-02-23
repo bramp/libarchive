@@ -17,8 +17,13 @@ libarchive (2.8.0-1) UNRELEASED; urgency=low
   * Added patch to fix gvfsd-archive problems:
     + 0001-Clear-archive_error_number-in-archive_clear_error.patch
     (from http://bugs.gentoo.org/show_bug.cgi?id=289260#c1 )
+  * Switch to dpkg-source 3.0 (quilt) format
+  * Split Build-Depends on multiple lines.
+  * Add liblzma-dev to Build-Depends for lzma support.
+  * Add Build-Depends on libxml2-dev for xar support.
+  * Explicitly give --without-openssl to configure.
 
- -- Andreas Henriksson <andreas@fatal.se>  Tue, 23 Feb 2010 19:53:25 +0100
+ -- Andreas Henriksson <andreas@fatal.se>  Tue, 23 Feb 2010 20:32:11 +0100
 
 libarchive (2.6.2-2) unstable; urgency=low
 
