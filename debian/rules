@@ -46,6 +46,12 @@ endif
 	# Add here commands to configure the package.
 	$(SHELL) ./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info CFLAGS="$(CFLAGS)" LDFLAGS=" -Wl,-z,defs" --enable-bsdcpio=shared --enable-bsdtar=shared
 
+update-patch-series:
+	git rm -rf $(CURDIR)/debian/patches || true
+	mkdir -p $(CURDIR)/debian/patches
+	git format-patch -o $(CURDIR)/debian/patches patches ^upstream | \
+                xargs -r -n 1 basename > $(CURDIR)/debian/patches/series
+	git add $(CURDIR)/debian/patches/*
 
 build-indep:
 build-arch: build-stamp
@@ -122,4 +128,4 @@ binary-arch: install
 
 binary: binary-indep binary-arch
 build: build-indep build-arch
-.PHONY: build build-arch build-indep clean binary-indep binary-arch binary install
+.PHONY: build build-arch build-indep clean binary-indep binary-arch binary install update-patch-series
