@@ -86,9 +86,12 @@ install: build-arch
 
 	# Add here commands to install the package into debian/tmp
 	$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
+	# install so.1 backwards compat symlink and lintian override.
 	ln -s -T libarchive.so.2 debian/tmp/usr/lib/libarchive.so.1
 	install -d debian/tmp/usr/share/lintian/overrides/
 	install -m 0644 debian/lintian-override debian/tmp/usr/share/lintian/overrides/libarchive1
+	# clean libarchive.la to avoid unneccesary libarchive-dev deps.
+	sed -i "/dependency_libs/ s/'.*'/''/" debian/tmp/usr/lib/libarchive.la
 
 binary-indep: 
 
