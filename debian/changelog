@@ -1,3 +1,13 @@
+libarchive (2.8.0-2) unstable; urgency=low
+
+  * Clean up libarchive.la file. (Closes: #571468)
+    - Thanks to Sune Vuorela for suggesting this fix.
+  * Update patch series:
+    + added two patches matching revision 1990, 1991 from upstream
+      regarding PATH_MAX hopefully fixing build on Hurd.
+
+ -- Andreas Henriksson <andreas@fatal.se>  Thu, 25 Feb 2010 22:31:13 +0100
+
 libarchive (2.8.0-1) unstable; urgency=low
 
   * Set myself as maintainer (Closes: #570539).
