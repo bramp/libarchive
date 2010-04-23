@@ -232,4 +232,4 @@ HISTORY
      appear?  Who invented it?	When did HP come out with their variant?  When
      did Sun introduce ACLs and extended attributes? XXX
 
-FreeBSD 8.0			October 5, 2007 		   FreeBSD 8.0
+FreeBSD 9.0			October 5, 2007 		   FreeBSD 9.0

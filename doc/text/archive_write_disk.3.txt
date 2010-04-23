@@ -254,4 +254,4 @@ BUGS
      There should be a corresponding archive_read_disk interface that walks a
      directory heirarchy and returns archive entry objects.
 
-FreeBSD 8.0			August 5, 2008			   FreeBSD 8.0
+FreeBSD 9.0			August 5, 2008			   FreeBSD 9.0

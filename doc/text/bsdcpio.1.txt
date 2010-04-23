@@ -247,4 +247,4 @@ BUGS
      mats cannot support files over 4 gigabytes, except for the ``odc'' vari-
      ant, which can support files up to 8 gigabytes.
 
-FreeBSD 8.0		       December 21, 2007		   FreeBSD 8.0
+FreeBSD 9.0		       December 21, 2007		   FreeBSD 9.0

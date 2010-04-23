@@ -238,4 +238,4 @@ SEE ALSO
      ar(1), cpio(1), mkisofs(1), shar(1), tar(1), zip(1), zlib(3), cpio(5),
      mtree(5), tar(5)
 
-FreeBSD 8.0		       December 27, 2009		   FreeBSD 8.0
+FreeBSD 9.0		       December 27, 2009		   FreeBSD 9.0

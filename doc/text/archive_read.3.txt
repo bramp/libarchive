@@ -493,4 +493,4 @@ BUGS
      format of an empty file by inspecting the contents, so this library
      treats empty files as having a special ``empty'' format.
 
-FreeBSD 8.0			April 13, 2009			   FreeBSD 8.0
+FreeBSD 9.0			April 13, 2009			   FreeBSD 9.0

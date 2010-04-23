@@ -201,4 +201,4 @@ BUGS
      such methods are implemented, the ``hybrid'' symbolic link mode will make
      sense.
 
-FreeBSD 8.0			March 10, 2009			   FreeBSD 8.0
+FreeBSD 9.0			March 10, 2009			   FreeBSD 9.0
