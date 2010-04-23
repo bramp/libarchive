@@ -1,14 +1,14 @@
-From f610393145ec7724152485397c700ebf7cd8b0c5 Mon Sep 17 00:00:00 2001
+From 86086ccd17f16cadc627a53e6cc53b7b0da0fd0b Mon Sep 17 00:00:00 2001
 From: Andreas Henriksson <andreas@fatal.se>
 Date: Thu, 25 Feb 2010 22:29:49 +0100
-Subject: [PATCH 2/3] Patch from upstream (revision 1990)
+Subject: [PATCH 1/2] Patch from upstream (revision 1990)
 
 ---
  libarchive/archive_read_disk_entry_from_file.c |   15 +++++++++++++--
  1 files changed, 13 insertions(+), 2 deletions(-)
 
 diff --git a/libarchive/archive_read_disk_entry_from_file.c b/libarchive/archive_read_disk_entry_from_file.c
-index e3795de..a34cce1 100644
+index 6acc096..3aff3cf 100644
 --- a/libarchive/archive_read_disk_entry_from_file.c
 +++ b/libarchive/archive_read_disk_entry_from_file.c
 @@ -163,15 +163,26 @@ archive_read_disk_entry_from_file(struct archive *_a,
@@ -41,5 +41,5 @@ index e3795de..a34cce1 100644
  #endif
  
 -- 
-1.7.0
+1.7.0.5
 
