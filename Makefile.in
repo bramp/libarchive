@@ -95,8 +95,8 @@ libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES) $(noinst_LTLIBRARIES)
 libarchive_la_LIBADD =
 am__libarchive_la_SOURCES_DIST = libarchive/archive_check_magic.c \
-	libarchive/archive_endian.h libarchive/archive_entry.c \
-	libarchive/archive_entry.h \
+	libarchive/archive_crc32.h libarchive/archive_endian.h \
+	libarchive/archive_entry.c libarchive/archive_entry.h \
 	libarchive/archive_entry_copy_stat.c \
 	libarchive/archive_entry_link_resolver.c \
 	libarchive/archive_entry_private.h \
@@ -335,8 +335,8 @@ am_bsdtar_test_OBJECTS = tar/bsdtar_test-getdate.$(OBJEXT) \
 bsdtar_test_OBJECTS = $(am_bsdtar_test_OBJECTS)
 bsdtar_test_LDADD = $(LDADD)
 am__libarchive_test_SOURCES_DIST = libarchive/archive_check_magic.c \
-	libarchive/archive_endian.h libarchive/archive_entry.c \
-	libarchive/archive_entry.h \
+	libarchive/archive_crc32.h libarchive/archive_endian.h \
+	libarchive/archive_entry.c libarchive/archive_entry.h \
 	libarchive/archive_entry_copy_stat.c \
 	libarchive/archive_entry_link_resolver.c \
 	libarchive/archive_entry_private.h \
@@ -910,8 +910,8 @@ DISTCLEANFILES = \
 #
 include_HEADERS = libarchive/archive.h libarchive/archive_entry.h
 libarchive_la_SOURCES = libarchive/archive_check_magic.c \
-	libarchive/archive_endian.h libarchive/archive_entry.c \
-	libarchive/archive_entry.h \
+	libarchive/archive_crc32.h libarchive/archive_endian.h \
+	libarchive/archive_entry.c libarchive/archive_entry.h \
 	libarchive/archive_entry_copy_stat.c \
 	libarchive/archive_entry_link_resolver.c \
 	libarchive/archive_entry_private.h \

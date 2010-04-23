@@ -546,4 +546,4 @@ BUGS
      There are alternative long options for many of the short options that are
      deliberately not documented.
 
-FreeBSD 8.0			 Oct 12, 2009			   FreeBSD 8.0
+FreeBSD 9.0			 Oct 12, 2009			   FreeBSD 9.0

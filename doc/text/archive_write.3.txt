@@ -483,4 +483,4 @@ BUGS
      correctly restore device nodes with large device numbers from archives
      created by this library.
 
-FreeBSD 8.0			 May 11, 2008			   FreeBSD 8.0
+FreeBSD 9.0			 May 11, 2008			   FreeBSD 9.0

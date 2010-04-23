@@ -598,4 +598,4 @@ HISTORY
      This documentation was written as part of the libarchive and bsdtar
      project by Tim Kientzle <kientzle@FreeBSD.org>.
 
-FreeBSD 8.0		       December 27, 2009		   FreeBSD 8.0
+FreeBSD 9.0		       December 27, 2009		   FreeBSD 9.0

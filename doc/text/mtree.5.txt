@@ -155,4 +155,4 @@ HISTORY
      added in FreeBSD 4.0, and mostly comes from NetBSD.  The ``full'' entry
      format was added by NetBSD.
 
-FreeBSD 8.0			August 20, 2007 		   FreeBSD 8.0
+FreeBSD 9.0			August 20, 2007 		   FreeBSD 9.0
