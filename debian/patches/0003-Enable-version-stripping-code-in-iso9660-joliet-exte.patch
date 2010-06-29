@@ -1,0 +1,34 @@
+From fc1ba3823799da5b78c815d568d8f0012f3f907e Mon Sep 17 00:00:00 2001
+From: Andreas Henriksson <andreas@fatal.se>
+Date: Tue, 29 Jun 2010 16:14:48 +0200
+Subject: [PATCH 3/3] Enable version-stripping code in iso9660 joliet extension parsing.
+
+Tested by Mike Qin (see http://bugs.debian.org/587316 ).
+Acknowledged by upstream.
+---
+ libarchive/archive_read_support_format_iso9660.c |    2 --
+ 1 files changed, 0 insertions(+), 2 deletions(-)
+
+diff --git a/libarchive/archive_read_support_format_iso9660.c b/libarchive/archive_read_support_format_iso9660.c
+index 0c640c8..3bfb5c3 100644
+--- a/libarchive/archive_read_support_format_iso9660.c
++++ b/libarchive/archive_read_support_format_iso9660.c
+@@ -1749,7 +1749,6 @@ parse_file_info(struct archive_read *a, struct file_info *parent,
+ 		}
+ 		*wp = L'\0';
+ 
+-#if 0 /* untested code, is it at all useful on Joliet? */
+ 		/* trim trailing first version and dot from filename.
+ 		 *
+ 		 * Remember we where in UTF-16BE land!
+@@ -1769,7 +1768,6 @@ parse_file_info(struct archive_read *a, struct file_info *parent,
+ 		/* Chop off trailing '.' from filenames. */
+ 		if (*(wp-1) == '.')
+ 			*(--wp) = L'\0';
+-#endif
+ 
+ 		/* store the result in the file name field. */
+ 		archive_strappend_w_utf8(&file->name, wbuff);
+-- 
+1.7.1
+
