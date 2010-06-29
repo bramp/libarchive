@@ -1,3 +1,12 @@
+libarchive (2.8.3-2) UNRELEASED; urgency=low
+
+  * Update debian/watch for new code.google.com layout.
+  * update patch series:
+    + added 0003-Enable-version-stripping-code-in-iso9660-joliet-exte.patch
+      (Closes: #587316)
+
+ -- Andreas Henriksson <andreas@fatal.se>  Tue, 29 Jun 2010 18:09:54 +0200
+
 libarchive (2.8.3-1) unstable; urgency=low
 
   * Imported Upstream version 2.8.3
