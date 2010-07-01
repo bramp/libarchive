@@ -1,7 +1,7 @@
 From fc1ba3823799da5b78c815d568d8f0012f3f907e Mon Sep 17 00:00:00 2001
 From: Andreas Henriksson <andreas@fatal.se>
 Date: Tue, 29 Jun 2010 16:14:48 +0200
-Subject: [PATCH 3/3] Enable version-stripping code in iso9660 joliet extension parsing.
+Subject: [PATCH 3/4] Enable version-stripping code in iso9660 joliet extension parsing.
 
 Tested by Mike Qin (see http://bugs.debian.org/587316 ).
 Acknowledged by upstream.
