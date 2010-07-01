@@ -1,14 +1,14 @@
-From 5e4b58226f63960f6408c8029fd62583913a87a5 Mon Sep 17 00:00:00 2001
+From 2ec43cc0e6f7d39a1570a7daf02a23aec8015626 Mon Sep 17 00:00:00 2001
 From: Andreas Henriksson <andreas@fatal.se>
 Date: Thu, 25 Feb 2010 22:30:06 +0100
-Subject: [PATCH 2/4] Patch from upstream (revision 1991)
+Subject: [PATCH 2/5] Patch from upstream (revision 1991)
 
 ---
  libarchive/archive_write_disk.c |    4 ++--
  1 files changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/libarchive/archive_write_disk.c b/libarchive/archive_write_disk.c
-index f61ae17..40e81b3 100644
+index caf958e..60699e0 100644
 --- a/libarchive/archive_write_disk.c
 +++ b/libarchive/archive_write_disk.c
 @@ -434,7 +434,7 @@ _archive_write_header(struct archive *_a, struct archive_entry *entry)
