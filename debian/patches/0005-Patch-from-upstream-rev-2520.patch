@@ -1,7 +1,7 @@
 From bf4a8ba5a2f7a72d73765b95540acf56b0180990 Mon Sep 17 00:00:00 2001
 From: Andreas Henriksson <andreas@fatal.se>
 Date: Thu, 1 Jul 2010 18:13:46 +0200
-Subject: [PATCH 5/5] Patch from upstream (rev 2520)
+Subject: [PATCH 5/6] Patch from upstream (rev 2520)
 
 Fix version/dot stripping code in joliet extension of iso9660.
 ---
