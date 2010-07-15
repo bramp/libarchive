@@ -1,4 +1,4 @@
-libarchive (2.8.3-2) UNRELEASED; urgency=low
+libarchive (2.8.4-1) UNRELEASED; urgency=low
 
   * Update debian/watch for new code.google.com layout.
   * update patch series:
@@ -8,8 +8,12 @@ libarchive (2.8.3-2) UNRELEASED; urgency=low
     + added 0005-Patch-from-upstream-rev-2520.patch
       - Enable version stripping code in iso9660/joliet (Closes: #587316)
   * Imported Upstream version 2.8.4
+  * update-patch-series:
+    + added 0006-Patch-from-upstream-rev-2521.patch
+    + added 0007-Ignore-ENOSYS-error-when-sett... (Closes: #588925)
+      - Big thanks to Modestas Vainius for awesome debugging!
 
- -- Andreas Henriksson <andreas@fatal.se>  Thu, 01 Jul 2010 18:15:44 +0200
+ -- Andreas Henriksson <andreas@fatal.se>  Thu, 15 Jul 2010 13:37:54 +0200
 
 libarchive (2.8.3-1) unstable; urgency=low
 
