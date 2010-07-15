@@ -1,4 +1,4 @@
-libarchive (2.8.4-1) UNRELEASED; urgency=low
+libarchive (2.8.4-1) unstable; urgency=low
 
   * Update debian/watch for new code.google.com layout.
   * update patch series:
@@ -13,7 +13,7 @@ libarchive (2.8.4-1) UNRELEASED; urgency=low
     + added 0007-Ignore-ENOSYS-error-when-sett... (Closes: #588925)
       - Big thanks to Modestas Vainius for awesome debugging!
 
- -- Andreas Henriksson <andreas@fatal.se>  Thu, 15 Jul 2010 13:37:54 +0200
+ -- Andreas Henriksson <andreas@fatal.se>  Thu, 15 Jul 2010 14:45:06 +0200
 
 libarchive (2.8.3-1) unstable; urgency=low
 
