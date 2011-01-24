@@ -1,7 +1,7 @@
 From 54d3e89da103d7925b15df232fab5fc41844f0b0 Mon Sep 17 00:00:00 2001
 From: Andreas Henriksson <andreas@fatal.se>
 Date: Tue, 20 Jul 2010 11:33:45 +0200
-Subject: [PATCH 7/7] Patch from upstream (rev 2537)
+Subject: [PATCH 7/8] Patch from upstream (rev 2537)
 
 Replaces previous patch "0007-Ignore-ENOSYS-error-when-sett..."
 with upstream commit fixing the same issue.
@@ -50,5 +50,5 @@ index 60699e0..8f5d868 100644
  						warning_done = 1;
  						archive_set_error(&a->archive, errno,
 -- 
-1.7.1
+1.7.2.3
 
