@@ -6,8 +6,9 @@ libarchive (2.8.4-2) UNRELEASED; urgency=low
        "0007-Ignore-ENOSYS-error-when-sett...", in favor of upstream
        revision 2537 added as "0007-Patch-from-upstream-rev-2537.patch")
     + add 0008-Patch-from-upstream-rev-2888.patch (Closes: #610079)
+    + add 0009-Patch-from-upstream-rev-2940.patch (Closes: #610783)
 
- -- Andreas Henriksson <andreas@fatal.se>  Mon, 24 Jan 2011 13:33:40 +0100
+ -- Andreas Henriksson <andreas@fatal.se>  Wed, 26 Jan 2011 10:31:02 +0100
 
 libarchive (2.8.4-1) unstable; urgency=low
 
