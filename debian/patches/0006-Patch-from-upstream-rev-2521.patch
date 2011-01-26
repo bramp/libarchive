@@ -1,7 +1,7 @@
 From d54057a68d909662b143c8117e7c18000d0f55d4 Mon Sep 17 00:00:00 2001
 From: Andreas Henriksson <andreas@fatal.se>
 Date: Fri, 2 Jul 2010 09:41:10 +0200
-Subject: [PATCH 6/8] Patch from upstream (rev 2521).
+Subject: [PATCH 6/9] Patch from upstream (rev 2521).
 
 Disable dot stripping code since it's still broken
 and noone has been able to figure it out (yet).

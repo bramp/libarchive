@@ -1,0 +1,43 @@
+From c6d0fa02a18a29cd69db2fe53652be393fddd2ed Mon Sep 17 00:00:00 2001
+From: Andreas Henriksson <andreas@fatal.se>
+Date: Wed, 26 Jan 2011 10:24:02 +0100
+Subject: [PATCH 9/9] Patch from upstream (rev 2940)
+
+Steal upstream commit that fixes problems with reading xorriso
+generated iso files, like the i386/amd64 Debian Squeeze install images.
+
+Thanks to Michihiro NAKAJIMA for pointing out the revision and
+Thomas Schmitt for analyzing the problems.
+
+http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=610783
+---
+ libarchive/archive_read_support_format_iso9660.c |    7 +++++--
+ 1 files changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/libarchive/archive_read_support_format_iso9660.c b/libarchive/archive_read_support_format_iso9660.c
+index 8661532..74e1ec9 100644
+--- a/libarchive/archive_read_support_format_iso9660.c
++++ b/libarchive/archive_read_support_format_iso9660.c
+@@ -1809,14 +1809,17 @@ parse_file_info(struct archive_read *a, struct file_info *parent,
+ 	 * NOTE: Old mkisofs did not record that FILE SERIAL NUMBER
+ 	 * in ISO images.
+ 	 */
+-	if (file->size == 0 && location >= 0)
++	if (file->size == 0 && location >= 0) {
+ 		/* If file->size is zero, its location points wrong place.
+ 		 * Dot not use it for file number.
+ 		 * When location has negative value, it can be used
+ 		 * for file number.
+ 		 */
+ 		file->number = -1;
+-	else
++		/* Do not appear before any directoy entries. */
++		if (file->offset == 0)
++			file->offset = -1;
++	} else
+ 		file->number = (int64_t)(uint32_t)location;
+ 
+ 	/* Rockridge extensions overwrite information from above. */
+-- 
+1.7.2.3
+

@@ -1,7 +1,7 @@
 From 7dd5b2d10c01d28201d5f592f259fc71e8dba388 Mon Sep 17 00:00:00 2001
 From: Andreas Henriksson <andreas@fatal.se>
 Date: Thu, 1 Jul 2010 18:12:22 +0200
-Subject: [PATCH 4/8] Patch from upstream (rev 2514)
+Subject: [PATCH 4/9] Patch from upstream (rev 2514)
 
 Enable version stripping code in joliet extension support for iso9660.
 
