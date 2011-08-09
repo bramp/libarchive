@@ -1,7 +1,6 @@
-From c6d0fa02a18a29cd69db2fe53652be393fddd2ed Mon Sep 17 00:00:00 2001
 From: Andreas Henriksson <andreas@fatal.se>
 Date: Wed, 26 Jan 2011 10:24:02 +0100
-Subject: [PATCH 9/9] Patch from upstream (rev 2940)
+Subject: Patch from upstream (rev 2940)
 
 Steal upstream commit that fixes problems with reading xorriso
 generated iso files, like the i386/amd64 Debian Squeeze install images.
@@ -39,5 +38,3 @@ index 8661532..74e1ec9 100644
  
  	/* Rockridge extensions overwrite information from above. */
 -- 
-1.7.2.3
-

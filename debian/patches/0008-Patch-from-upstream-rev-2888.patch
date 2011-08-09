@@ -1,7 +1,6 @@
-From 9f5b7ebb4b8c036e57d65dfe6a5adc100ee7ef78 Mon Sep 17 00:00:00 2001
 From: Andreas Henriksson <andreas@fatal.se>
 Date: Mon, 24 Jan 2011 13:26:35 +0100
-Subject: [PATCH 8/9] Patch from upstream (rev 2888)
+Subject: Patch from upstream (rev 2888)
 
 Backport upstream rev 2888 to fix build on hurd.
 
@@ -34,5 +33,3 @@ index 8f5d868..08a695d 100644
  	if (strlen(tail) <= PATH_MAX)
  		return;
 -- 
-1.7.2.3
-

@@ -1,7 +1,6 @@
-From 8c9682f91a6e881d4afe87e5cd04d5add8baadea Mon Sep 17 00:00:00 2001
 From: Andreas Henriksson <andreas@fatal.se>
 Date: Thu, 25 Feb 2010 22:29:49 +0100
-Subject: [PATCH 1/9] Patch from upstream (revision 1990)
+Subject: Patch from upstream (revision 1990)
 
 ---
  libarchive/archive_read_disk_entry_from_file.c |   15 +++++++++++++--
@@ -41,5 +40,3 @@ index 7473c50..27671df 100644
  #endif
  
 -- 
-1.7.2.3
-

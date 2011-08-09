@@ -1,7 +1,6 @@
-From ae26261cba929b506827526f9fc29f1e48696391 Mon Sep 17 00:00:00 2001
 From: Andreas Henriksson <andreas@fatal.se>
 Date: Thu, 25 Feb 2010 22:30:06 +0100
-Subject: [PATCH 2/9] Patch from upstream (revision 1991)
+Subject: Patch from upstream (revision 1991)
 
 ---
  libarchive/archive_write_disk.c |    4 ++--
@@ -30,5 +29,3 @@ index caf958e..60699e0 100644
  edit_deep_directories(struct archive_write_disk *a)
  {
 -- 
-1.7.2.3
-

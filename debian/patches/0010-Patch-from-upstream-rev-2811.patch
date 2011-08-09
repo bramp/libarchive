@@ -1,0 +1,54 @@
+From: Andreas Henriksson <andreas@fatal.se>
+Date: Tue, 9 Aug 2011 15:10:46 +0200
+Subject: Patch from upstream (rev 2811)
+
+Steal upstream commit that disables some tests related to lzma and xz.
+You can't always assume that a higher compression level results in a smaller
+compressed result.... This fixes testsuite failures.
+---
+ libarchive/test/test_write_compress_lzma.c |    7 ++++++-
+ libarchive/test/test_write_compress_xz.c   |    6 +++++-
+ 2 files changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/libarchive/test/test_write_compress_lzma.c b/libarchive/test/test_write_compress_lzma.c
+index 0b45691..30e1b7e 100644
+--- a/libarchive/test/test_write_compress_lzma.c
++++ b/libarchive/test/test_write_compress_lzma.c
+@@ -185,10 +185,15 @@ DEFINE_TEST(test_write_compress_lzma)
+ 	archive_write_close(a);
+ 	assert(0 == archive_write_finish(a));
+ 
+-	/* Level 0 really does result in larger data. */
++	/* It would be nice to assert that compression-level=0 produced
++	 * consistently larger/smaller results than the default compression,
++	 * but the results here vary a lot depending on the version of liblzma
++	 * being used. */
++	/* 
+ 	failure("Compression-level=0 wrote %d bytes; default wrote %d bytes",
+ 	    (int)used2, (int)used1);
+ 	assert(used2 > used1);
++	*/
+ 
+ 	assert((a = archive_read_new()) != NULL);
+ 	assertA(0 == archive_read_support_format_all(a));
+diff --git a/libarchive/test/test_write_compress_xz.c b/libarchive/test/test_write_compress_xz.c
+index 88db2e6..d5c4c95 100644
+--- a/libarchive/test/test_write_compress_xz.c
++++ b/libarchive/test/test_write_compress_xz.c
+@@ -193,10 +193,14 @@ DEFINE_TEST(test_write_compress_xz)
+ 	archive_write_close(a);
+ 	assert(0 == archive_write_finish(a));
+ 
+-	/* Level 0 really does result in larger data. */
++	/* I would like to assert that compression-level=0 results in
++	 * larger data than the default compression, but that's not true
++	 * for all versions of liblzma. */
++	/*
+ 	failure("Compression-level=0 wrote %d bytes; default wrote %d bytes",
+ 	    (int)used2, (int)used1);
+ 	assert(used2 > used1);
++	*/
+ 
+ 	assert((a = archive_read_new()) != NULL);
+ 	assertA(0 == archive_read_support_format_all(a));
+-- 
