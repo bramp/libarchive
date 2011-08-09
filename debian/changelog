@@ -1,4 +1,4 @@
-libarchive (2.8.4-2) UNRELEASED; urgency=low
+libarchive (2.8.4-2) unstable; urgency=low
 
   * update-patch-series:
     + replace local patch with upstream commit.
@@ -8,7 +8,7 @@ libarchive (2.8.4-2) UNRELEASED; urgency=low
     + add 0008-Patch-from-upstream-rev-2888.patch (Closes: #610079)
     + add 0009-Patch-from-upstream-rev-2940.patch (Closes: #610783)
 
- -- Andreas Henriksson <andreas@fatal.se>  Wed, 26 Jan 2011 10:31:02 +0100
+ -- Andreas Henriksson <andreas@fatal.se>  Tue, 09 Aug 2011 13:39:10 +0200
 
 libarchive (2.8.4-1) unstable; urgency=low
 
