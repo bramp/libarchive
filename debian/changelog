@@ -1,3 +1,11 @@
+libarchive (2.8.4-3) UNRELEASED; urgency=low
+
+  * Add 0010-Patch-from-upstream-rev-2811.patch
+  * Drop "update-patch-series" target from debian/rules
+  * Convert package to dh7
+
+ -- Andreas Henriksson <andreas@fatal.se>  Tue, 09 Aug 2011 16:06:20 +0200
+
 libarchive (2.8.4-2) unstable; urgency=low
 
   * update-patch-series:
