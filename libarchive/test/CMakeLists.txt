@@ -33,6 +33,7 @@ IF(ENABLE_TEST)
     test_extattr_freebsd.c
     test_fuzz.c
     test_link_resolver.c
+    test_open_failure.c
     test_open_fd.c
     test_open_file.c
     test_open_filename.c
@@ -60,7 +61,7 @@ IF(ENABLE_TEST)
     test_read_format_gtar_gz.c
     test_read_format_gtar_lzma.c
     test_read_format_gtar_sparse.c
-    test_read_format_iso_gz.c
+    test_read_format_iso_Z.c
     test_read_format_iso_multi_extent.c
     test_read_format_isojoliet_bz2.c
     test_read_format_isojoliet_long.c

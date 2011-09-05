@@ -38,7 +38,6 @@ EXTRA_DIST= \
 	build/clean.sh			\
 	build/cmake			\
 	build/version			\
-	build/windows			\
 	contrib				\
 	doc				\
 	examples			\
@@ -242,6 +241,7 @@ libarchive_test_SOURCES=					\
 	libarchive/test/test_fuzz.c				\
 	libarchive/test/test_entry_strmode.c			\
 	libarchive/test/test_link_resolver.c			\
+	libarchive/test/test_open_failure.c			\
 	libarchive/test/test_open_fd.c				\
 	libarchive/test/test_open_file.c			\
 	libarchive/test/test_open_filename.c			\
@@ -269,7 +269,7 @@ libarchive_test_SOURCES=					\
 	libarchive/test/test_read_format_gtar_gz.c		\
 	libarchive/test/test_read_format_gtar_lzma.c		\
 	libarchive/test/test_read_format_gtar_sparse.c		\
-	libarchive/test/test_read_format_iso_gz.c		\
+	libarchive/test/test_read_format_iso_Z.c		\
 	libarchive/test/test_read_format_iso_multi_extent.c	\
 	libarchive/test/test_read_format_isojoliet_bz2.c	\
 	libarchive/test/test_read_format_isojoliet_long.c	\
@@ -366,6 +366,7 @@ libarchive_test_EXTRA_DIST=\
 	libarchive/test/test_read_format_gtar_sparse_1_17_posix10.tar.uu \
 	libarchive/test/test_read_format_gtar_sparse_1_17_posix10_modified.tar.uu \
 	libarchive/test/test_read_format_iso.iso.Z.uu			\
+	libarchive/test/test_read_format_iso_2.iso.Z.uu			\
 	libarchive/test/test_read_format_iso_joliet.iso.Z.uu		\
 	libarchive/test/test_read_format_iso_joliet_long.iso.Z.uu	\
 	libarchive/test/test_read_format_iso_joliet_rockridge.iso.Z.uu	\
