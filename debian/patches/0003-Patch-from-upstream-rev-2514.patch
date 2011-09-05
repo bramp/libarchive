@@ -10,10 +10,10 @@ http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=587316
  1 files changed, 0 insertions(+), 2 deletions(-)
 
 diff --git a/libarchive/archive_read_support_format_iso9660.c b/libarchive/archive_read_support_format_iso9660.c
-index fdef3fb..8dcfeb4 100644
+index 813df7a..595c333 100644
 --- a/libarchive/archive_read_support_format_iso9660.c
 +++ b/libarchive/archive_read_support_format_iso9660.c
-@@ -1755,7 +1755,6 @@ parse_file_info(struct archive_read *a, struct file_info *parent,
+@@ -1672,7 +1672,6 @@ parse_file_info(struct archive_read *a, struct file_info *parent,
  		}
  		*wp = L'\0';
  
@@ -21,7 +21,7 @@ index fdef3fb..8dcfeb4 100644
  		/* trim trailing first version and dot from filename.
  		 *
  		 * Remember we where in UTF-16BE land!
-@@ -1775,7 +1774,6 @@ parse_file_info(struct archive_read *a, struct file_info *parent,
+@@ -1692,7 +1691,6 @@ parse_file_info(struct archive_read *a, struct file_info *parent,
  		/* Chop off trailing '.' from filenames. */
  		if (*(wp-1) == '.')
  			*(--wp) = L'\0';

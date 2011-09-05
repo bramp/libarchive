@@ -8,10 +8,10 @@ Fix version/dot stripping code in joliet extension of iso9660.
  1 files changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/libarchive/archive_read_support_format_iso9660.c b/libarchive/archive_read_support_format_iso9660.c
-index 8dcfeb4..2d3a855 100644
+index 595c333..d6c46e5 100644
 --- a/libarchive/archive_read_support_format_iso9660.c
 +++ b/libarchive/archive_read_support_format_iso9660.c
-@@ -1766,13 +1766,13 @@ parse_file_info(struct archive_read *a, struct file_info *parent,
+@@ -1683,13 +1683,13 @@ parse_file_info(struct archive_read *a, struct file_info *parent,
  		 *       *, /, :, ;, ? and \.
  		 */
  		/* Chop off trailing ';1' from files. */

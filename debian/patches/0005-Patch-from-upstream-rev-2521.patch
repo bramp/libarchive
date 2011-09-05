@@ -9,10 +9,10 @@ and noone has been able to figure it out (yet).
  1 files changed, 2 insertions(+), 0 deletions(-)
 
 diff --git a/libarchive/archive_read_support_format_iso9660.c b/libarchive/archive_read_support_format_iso9660.c
-index 2d3a855..8661532 100644
+index d6c46e5..37cb9a7 100644
 --- a/libarchive/archive_read_support_format_iso9660.c
 +++ b/libarchive/archive_read_support_format_iso9660.c
-@@ -1771,9 +1771,11 @@ parse_file_info(struct archive_read *a, struct file_info *parent,
+@@ -1688,9 +1688,11 @@ parse_file_info(struct archive_read *a, struct file_info *parent,
  			*wp = L'\0';
  		}
  

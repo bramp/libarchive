@@ -7,7 +7,7 @@ Subject: Patch from upstream (revision 1991)
  1 files changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/libarchive/archive_write_disk.c b/libarchive/archive_write_disk.c
-index caf958e..60699e0 100644
+index f6f72c2..67eb032 100644
 --- a/libarchive/archive_write_disk.c
 +++ b/libarchive/archive_write_disk.c
 @@ -434,7 +434,7 @@ _archive_write_header(struct archive *_a, struct archive_entry *entry)

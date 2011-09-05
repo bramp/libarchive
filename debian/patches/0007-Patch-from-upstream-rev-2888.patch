@@ -12,7 +12,7 @@ http://code.google.com/p/libarchive/source/detail?r=2888
  1 files changed, 1 insertions(+), 2 deletions(-)
 
 diff --git a/libarchive/archive_write_disk.c b/libarchive/archive_write_disk.c
-index 8f5d868..08a695d 100644
+index 8192031..3ca08e1 100644
 --- a/libarchive/archive_write_disk.c
 +++ b/libarchive/archive_write_disk.c
 @@ -351,6 +351,7 @@ _archive_write_header(struct archive *_a, struct archive_entry *entry)
