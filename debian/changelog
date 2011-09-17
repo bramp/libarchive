@@ -1,8 +1,26 @@
-libarchive (2.8.5-2) UNRELEASED; urgency=low
+libarchive (2.8.5-2) unstable; urgency=low
 
-  * Prepare new release.
+  * Add gbp.conf to enable pristine-tar to true by default.
+  * Add myself to uploaders field.
+  * Add default options to fail on any upstream changes during a build.
+  * Bump Standards-Version to 3.9.2.
+  * Remove duplicate "Section" field.
+  * Remove unnecessary use of *.dirs dh files.
+  * Remove unneeded build-deps.
+  * Provide patch that implements changes made after running autoreconf -vif.
+  * Remove generic comments from debian/rules.
+  * Support parallel builds.
+  * Remove commented lines from install file.
+  * Add docs to all packages except the shared library package.
+  * Remove unneeded use of 'debian/tmp' in path for install files.
+  * Provide different mechanism to install symlink for libarchive1 package.
+  * Move all manpages for libarchive1 to libarchive-dev.
+  * Move libarchive-dev control stanza up. This will make libarchive-dev the
+    default package for installing files into, such as the README.Debian.
+  * Convert libarchive into multiarch library package.
+  * Update Vcs-* entries.
 
- -- Andres Mejia <amejia@debian.org>  Sat, 17 Sep 2011 16:55:45 -0400
+ -- Andres Mejia <amejia@debian.org>  Sat, 17 Sep 2011 18:50:11 -0400
 
 libarchive (2.8.5-1) unstable; urgency=low
 
