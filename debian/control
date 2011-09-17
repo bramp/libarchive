@@ -1,6 +1,7 @@
 Source: libarchive
 Priority: optional
 Maintainer: Andreas Henriksson <andreas@fatal.se>
+Uploaders: Andres Mejia <amejia@debian.org>
 Build-Depends: debhelper (>= 7),
                autotools-dev,
                libbz2-dev,
