@@ -14,7 +14,7 @@ Build-Depends: debhelper (>= 7),
                bison,
                libtool,
                sharutils
-Standards-Version: 3.8.4
+Standards-Version: 3.9.2
 Section: libs
 Homepage: http://code.google.com/p/libarchive/
 Vcs-Browser: http://git.debian.org/?p=collab-maint/pkg-libarchive.git
