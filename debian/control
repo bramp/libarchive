@@ -14,8 +14,8 @@ Build-Depends: debhelper (>= 8.1.3~),
 Standards-Version: 3.9.2
 Section: libs
 Homepage: http://code.google.com/p/libarchive/
-Vcs-Browser: http://git.debian.org/?p=collab-maint/pkg-libarchive.git
-Vcs-Git: git://git.debian.org/collab-maint/pkg-libarchive.git
+Vcs-Browser: http://anonscm.debian.org/gitweb/?p=collab-maint/libarchive.git
+Vcs-Git: git://anonscm.debian.org/collab-maint/libarchive.git
 
 Package: libarchive-dev
 Section: libdevel
