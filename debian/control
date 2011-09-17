@@ -21,7 +21,6 @@ Vcs-Browser: http://git.debian.org/?p=collab-maint/pkg-libarchive.git
 Vcs-Git: git://git.debian.org/collab-maint/pkg-libarchive.git
 
 Package: libarchive1
-Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Single library to read/write tar, cpio, pax, zip, iso9660, etc.
