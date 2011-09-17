@@ -1,7 +1,11 @@
 #!/usr/bin/make -f
+
+DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+
 %:
 	dh $@ --parallel
 
 # see debian bug #418637 and libarchive1.lintian-overrides
 override_dh_link:
-	dh_link -plibarchive1 usr/lib/libarchive.so.2 usr/lib/libarchive.so.1
+	dh_link -plibarchive1 usr/lib/$(DEB_HOST_MULTIARCH)/libarchive.so.2 \
+		usr/lib/$(DEB_HOST_MULTIARCH)/libarchive.so.1
