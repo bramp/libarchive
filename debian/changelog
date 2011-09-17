@@ -1,3 +1,9 @@
+libarchive (2.8.5-2) UNRELEASED; urgency=low
+
+  * Prepare new release.
+
+ -- Andres Mejia <amejia@debian.org>  Sat, 17 Sep 2011 16:55:45 -0400
+
 libarchive (2.8.5-1) unstable; urgency=low
 
   * Add 0010-Patch-from-upstream-rev-2811.patch
