@@ -131,4 +131,3 @@ Description: cpio(1) from FreeBSD, using libarchive
  .
   * GNU tar support. Libarchive reads most GNU tar archives. If there
     is demand, this can be improved further.
-
