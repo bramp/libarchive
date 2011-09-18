@@ -1,3 +1,9 @@
+libarchive (2.8.5-4) UNRELEASED; urgency=low
+
+  * Prepare for next release.
+
+ -- Andres Mejia <amejia@debian.org>  Sun, 18 Sep 2011 15:06:12 -0400
+
 libarchive (2.8.5-3) unstable; urgency=low
 
   * Fix upgrade breakage because of manpages being moved from libarchive1 to
