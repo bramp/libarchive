@@ -3,8 +3,9 @@ libarchive (2.8.5-3) unstable; urgency=low
   * Fix upgrade breakage because of manpages being moved from libarchive1 to
     libarchive-dev. (Closes: #641978)
   * Make short descriptions for packages unique.
+  * Explicitly set config options to be used during builds.
 
- -- Andres Mejia <amejia@debian.org>  Sun, 18 Sep 2011 10:15:57 -0400
+ -- Andres Mejia <amejia@debian.org>  Sun, 18 Sep 2011 10:25:34 -0400
 
 libarchive (2.8.5-2) unstable; urgency=low
 
