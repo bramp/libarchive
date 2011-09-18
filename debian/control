@@ -1,7 +1,7 @@
 Source: libarchive
 Priority: optional
-Maintainer: Andreas Henriksson <andreas@fatal.se>
-Uploaders: Andres Mejia <amejia@debian.org>
+Maintainer: Debian Libarchive Maintainers <ah-libarchive@debian.org>
+Uploaders: Andreas Henriksson <andreas@fatal.se>, Andres Mejia <amejia@debian.org>
 Build-Depends: debhelper (>= 8.1.3~),
                libbz2-dev,
                liblzma-dev,
