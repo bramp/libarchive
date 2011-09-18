@@ -23,7 +23,7 @@ Architecture: any
 Depends: libarchive1 (= ${binary:Version}), ${misc:Depends}
 Replaces: libarchive1 (<< 2.8.5-3)
 Breaks: libarchive1 (<< 2.8.5-3)
-Description: Single library to read/write tar, cpio, pax, zip, iso9660, etc.
+Description: Multi-format archive and compression library (development files)
  The libarchive library provides a flexible interface for reading and
  writing streaming archive files such as tar and cpio.  The library is
  inherently stream-oriented; readers serially iterate through the archive,
@@ -50,7 +50,7 @@ Architecture: any
 Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Single library to read/write tar, cpio, pax, zip, iso9660, etc.
+Description: Multi-format archive and compression library (shared library)
  The libarchive library provides a flexible interface for reading and
  writing streaming archive files such as tar and cpio.  The library is
  inherently stream-oriented; readers serially iterate through the archive,
