@@ -42,8 +42,8 @@ Description: Multi-format archive and compression library (development files)
  is built using libarchive.  The bsdcpio Debian package is also built
  using libarchive.
  .
- There is also a manpage, tar(5), in libarchive1 that provides
- an excellent description of the various tar file formats.
+ There is also a manpage, tar(5), that provides an excellent description
+ of the various tar file formats.
 
 Package: libarchive1
 Architecture: any
@@ -67,9 +67,6 @@ Description: Multi-format archive and compression library (shared library)
  .
  The bsdtar Debian package, which is the default tar(1) on FreeBSD,
  is built using libarchive.
- .
- There is also a manpage, tar(5), that provides an excellent description
- of the various tar file formats.
 
 Package: bsdtar
 Architecture: any
