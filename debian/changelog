@@ -1,8 +1,12 @@
 libarchive (2.8.5-4) UNRELEASED; urgency=low
 
-  * Prepare for next release.
+  [ Andres Mejia ]
+  * Improve each packages' long description.
 
- -- Andres Mejia <amejia@debian.org>  Sun, 18 Sep 2011 15:06:12 -0400
+  [ Samuel Thibault ]
+  * Skip libacl1-dev build dependency on hurd (Closes: #645403)
+
+ -- Andreas Henriksson <andreas@fatal.se>  Sun, 16 Oct 2011 14:08:41 +0200
 
 libarchive (2.8.5-3) unstable; urgency=low
 
