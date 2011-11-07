@@ -77,6 +77,8 @@ archive_entry_stat(struct archive_entry *entry)
 	st->st_rdev = archive_entry_rdev(entry);
 	st->st_size = archive_entry_size(entry);
 	st->st_mode = archive_entry_mode(entry);
+	st->st_blocks = (st->st_size + 511) / 512;
+	st->st_blksize = 4096;
 
 	/*
 	 * On systems that support high-res timestamps, copy that
